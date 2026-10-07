@@ -7,6 +7,14 @@
 let cachedGalleryItems = [];
 let cachedInquiries = [];
 
+// Helper to determine if we are running in static hosting (GitHub Pages, file protocol, or static HTML)
+function isStaticMode() {
+  return window.location.hostname.includes('github.io') ||
+         window.location.protocol === 'file:' ||
+         window.location.pathname.endsWith('.html') ||
+         (window.location.port === '' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1'));
+}
+
 // Built-in Toast Notification Utility
 function showToast(message, type = 'success') {
   let container = document.getElementById('toast-container');
@@ -61,10 +69,7 @@ function escapeHtml(str) {
 // 1. Modal Control Functions
 function openUploadModal() {
   const modal = document.getElementById('uploadPhotoModal');
-  if (!modal) {
-    console.error('uploadPhotoModal not found');
-    return;
-  }
+  if (!modal) return;
   const form = document.getElementById('uploadGalleryForm');
   if (form) form.reset();
 
@@ -95,10 +100,7 @@ function openEditModalById(event, id) {
   const numId = Number(id);
   const item = cachedGalleryItems.find(x => Number(x.id) === numId);
   const modal = document.getElementById('editPhotoModal');
-  if (!modal) {
-    console.error('editPhotoModal not found');
-    return;
-  }
+  if (!modal) return;
 
   document.getElementById('editPhotoId').value = item ? item.id : numId;
   document.getElementById('editPhotoTitle').value = item ? (item.title || '') : '';
@@ -141,6 +143,26 @@ async function savePhotoEdit() {
     submitBtn.innerText = 'Saving changes...';
   }
 
+  if (isStaticMode()) {
+    const item = cachedGalleryItems.find(x => Number(x.id) === Number(id));
+    if (item) {
+      item.title = title;
+      item.description = description;
+      item.category = category;
+      try {
+        localStorage.setItem('vpsa_static_gallery', JSON.stringify(cachedGalleryItems));
+      } catch (err) {}
+    }
+    showToast('Gallery item updated successfully!', 'success');
+    closeEditModal();
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerText = 'Save Changes';
+    }
+    await loadAdminGallery();
+    return;
+  }
+
   try {
     const res = await fetch(`/api/gallery/${id}`, {
       method: 'PUT',
@@ -172,7 +194,17 @@ async function deleteGalleryItem(event, id) {
   if (event && event.stopPropagation) event.stopPropagation();
   if (event && event.preventDefault) event.preventDefault();
   
-  if (!confirm('Are you sure you want to permanently delete this photo from the gallery and server storage?')) {
+  if (!confirm('Are you sure you want to delete this photo from the gallery?')) {
+    return;
+  }
+
+  if (isStaticMode()) {
+    cachedGalleryItems = cachedGalleryItems.filter(x => Number(x.id) !== Number(id));
+    try {
+      localStorage.setItem('vpsa_static_gallery', JSON.stringify(cachedGalleryItems));
+    } catch (err) {}
+    showToast('Photo removed successfully.', 'success');
+    await loadAdminGallery();
     return;
   }
 
@@ -238,21 +270,32 @@ async function loadAdminGallery() {
   const container = document.getElementById('adminGalleryGrid');
   if (!container) return;
 
-  try {
-    const res = await fetch('/api/gallery', {
-      credentials: 'include',
-      headers: getAuthHeaders(false)
-    });
-
-    if (!res.ok) throw new Error('Static fallback');
-
-    const data = await res.json();
-    if (data.success) {
-      cachedGalleryItems = data.data || [];
+  if (isStaticMode()) {
+    try {
+      const stored = localStorage.getItem('vpsa_static_gallery');
+      if (stored) {
+        cachedGalleryItems = JSON.parse(stored);
+      } else {
+        cachedGalleryItems = [...STATIC_SAMPLE_GALLERY];
+        localStorage.setItem('vpsa_static_gallery', JSON.stringify(cachedGalleryItems));
+      }
+    } catch (e) {
+      cachedGalleryItems = [...STATIC_SAMPLE_GALLERY];
     }
-  } catch (err) {
-    // Fallback for GitHub Pages
-    if (!cachedGalleryItems || cachedGalleryItems.length === 0) {
+  } else {
+    try {
+      const res = await fetch('/api/gallery', {
+        credentials: 'include',
+        headers: getAuthHeaders(false)
+      });
+
+      if (!res.ok) throw new Error('Static fallback');
+
+      const data = await res.json();
+      if (data.success) {
+        cachedGalleryItems = data.data || [];
+      }
+    } catch (err) {
       cachedGalleryItems = [...STATIC_SAMPLE_GALLERY];
     }
   }
@@ -286,21 +329,32 @@ async function loadAdminInquiries() {
   const tbody = document.getElementById('inquiriesTableBody');
   if (!tbody) return;
 
-  try {
-    const res = await fetch('/api/enquiries', {
-      credentials: 'include',
-      headers: getAuthHeaders(false)
-    });
-
-    if (!res.ok) throw new Error('Static fallback');
-
-    const data = await res.json();
-    if (data.success) {
-      cachedInquiries = data.data || [];
+  if (isStaticMode()) {
+    try {
+      const stored = localStorage.getItem('vpsa_static_inquiries');
+      if (stored) {
+        cachedInquiries = JSON.parse(stored);
+      } else {
+        cachedInquiries = [...STATIC_SAMPLE_INQUIRIES];
+        localStorage.setItem('vpsa_static_inquiries', JSON.stringify(cachedInquiries));
+      }
+    } catch (e) {
+      cachedInquiries = [...STATIC_SAMPLE_INQUIRIES];
     }
-  } catch (err) {
-    // Fallback for GitHub Pages
-    if (!cachedInquiries || cachedInquiries.length === 0) {
+  } else {
+    try {
+      const res = await fetch('/api/enquiries', {
+        credentials: 'include',
+        headers: getAuthHeaders(false)
+      });
+
+      if (!res.ok) throw new Error('Static fallback');
+
+      const data = await res.json();
+      if (data.success) {
+        cachedInquiries = data.data || [];
+      }
+    } catch (err) {
       cachedInquiries = [...STATIC_SAMPLE_INQUIRIES];
     }
   }
@@ -354,6 +408,19 @@ async function loadAdminInquiries() {
 }
 
 async function updateInquiryStatus(id, status) {
+  if (isStaticMode()) {
+    const item = cachedInquiries.find(x => x.id === id);
+    if (item) {
+      item.status = status;
+      try {
+        localStorage.setItem('vpsa_static_inquiries', JSON.stringify(cachedInquiries));
+      } catch (err) {}
+    }
+    showToast('Status updated successfully.', 'success');
+    loadAdminInquiries();
+    return;
+  }
+
   try {
     const res = await fetch(`/api/enquiries/${id}/status`, {
       method: 'PATCH',
@@ -369,7 +436,6 @@ async function updateInquiryStatus(id, status) {
     }
   } catch (err) {}
 
-  // Client-side state update for static preview
   const item = cachedInquiries.find(x => x.id === id);
   if (item) item.status = status;
   showToast('Status updated successfully.', 'success');
@@ -378,6 +444,17 @@ async function updateInquiryStatus(id, status) {
 
 async function deleteInquiry(id) {
   if (!confirm('Are you sure you want to delete this inquiry record?')) return;
+
+  if (isStaticMode()) {
+    cachedInquiries = cachedInquiries.filter(x => x.id !== id);
+    try {
+      localStorage.setItem('vpsa_static_inquiries', JSON.stringify(cachedInquiries));
+    } catch (err) {}
+    showToast('Enquiry deleted successfully.', 'success');
+    loadAdminInquiries();
+    return;
+  }
+
   try {
     const res = await fetch(`/api/enquiries/${id}`, {
       method: 'DELETE',
@@ -391,7 +468,6 @@ async function deleteInquiry(id) {
     }
   } catch (err) {}
 
-  // Client-side delete for static preview
   cachedInquiries = cachedInquiries.filter(x => x.id !== id);
   showToast('Enquiry deleted successfully.', 'success');
   loadAdminInquiries();
@@ -403,19 +479,33 @@ async function loadAdminAuditLogs() {
   if (!tbody) return;
 
   let logs = [];
-  try {
-    const res = await fetch('/api/audit-logs', {
-      credentials: 'include',
-      headers: getAuthHeaders(false)
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && data.data) logs = data.data;
+  if (isStaticMode()) {
+    try {
+      const stored = localStorage.getItem('vpsa_static_logs');
+      if (stored) {
+        logs = JSON.parse(stored);
+      } else {
+        logs = [...STATIC_SAMPLE_LOGS];
+        localStorage.setItem('vpsa_static_logs', JSON.stringify(logs));
+      }
+    } catch (e) {
+      logs = [...STATIC_SAMPLE_LOGS];
     }
-  } catch (err) {}
+  } else {
+    try {
+      const res = await fetch('/api/audit-logs', {
+        credentials: 'include',
+        headers: getAuthHeaders(false)
+      });
 
-  if (logs.length === 0) logs = STATIC_SAMPLE_LOGS;
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.data) logs = data.data;
+      }
+    } catch (err) {}
+
+    if (logs.length === 0) logs = STATIC_SAMPLE_LOGS;
+  }
 
   tbody.innerHTML = logs.map(log => `
     <tr>
@@ -426,6 +516,39 @@ async function loadAdminAuditLogs() {
       <td><code style="font-family: monospace; color: #0284c7; background: #f0f9ff; padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.8rem;">${escapeHtml(log.ip_address || '127.0.0.1')}</code></td>
     </tr>
   `).join('');
+}
+
+// Export Inquiries as CSV
+function exportInquiriesCSV() {
+  if (!cachedInquiries || cachedInquiries.length === 0) {
+    showToast('No inquiries available to export.', 'error');
+    return;
+  }
+
+  const headers = ['ID', 'Date', 'Full Name', 'Company', 'Email', 'Mobile', 'Variety', 'Quantity', 'Destination', 'Status', 'Message'];
+  const rows = cachedInquiries.map(item => [
+    item.id,
+    new Date(item.created_at).toLocaleDateString(),
+    `"${(item.full_name || '').replace(/"/g, '""')}"`,
+    `"${(item.company_name || '').replace(/"/g, '""')}"`,
+    `"${(item.email || '').replace(/"/g, '""')}"`,
+    `"${(item.country_code || '') + ' ' + (item.mobile_number || '')}"`,
+    `"${(item.product_variety || '').replace(/"/g, '""')}"`,
+    `"${(item.quantity || '').replace(/"/g, '""')}"`,
+    `"${(item.destination || '').replace(/"/g, '""')}"`,
+    item.status || 'new',
+    `"${(item.message || '').replace(/"/g, '""')}"`
+  ]);
+
+  const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `VPSA_Banana_Wholesale_Leads_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast('Leads exported successfully as CSV!', 'success');
 }
 
 // Global exposure for direct HTML onclick attributes
@@ -486,6 +609,18 @@ window.resetToStep1 = resetToStep1;
 
 // 6. DOM Initialization
 document.addEventListener('DOMContentLoaded', () => {
+  // Helper for SHA-256 cryptographic hashing
+  async function sha256Hex(str) {
+    try {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (e) {
+      return null;
+    }
+  }
+
+  const EXPECTED_HASH = '47174ca5bd0df2d05206f5d3e8d0191d04d844785668102916e06202e2737976'; // VPSA#Secure2026!
+
   // Check if we are on the Admin Login page
   const loginForm = document.getElementById('adminLoginForm');
   if (loginForm) {
@@ -512,18 +647,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (errorMsg) errorMsg.style.display = 'none';
     }
 
-    // Helper for SHA-256 cryptographic hashing
-    async function sha256Hex(str) {
-      try {
-        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-      } catch (e) {
-        return null;
-      }
-    }
-
-    const EXPECTED_HASH = '47174ca5bd0df2d05206f5d3e8d0191d04d844785668102916e06202e2737976'; // VPSA#Secure2026!
-
     // Step 1: Credential Verification
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -537,12 +660,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (errorMsg) errorMsg.style.display = 'none';
 
-      const isStaticHost = window.location.hostname.includes('github.io') ||
-                           window.location.protocol === 'file:' ||
-                           window.location.pathname.endsWith('.html') ||
-                           (window.location.port === '' && !window.location.hostname.includes('localhost'));
-
-      if (isStaticHost) {
+      if (isStaticMode()) {
         const passHash = await sha256Hex(password);
         if (username.toLowerCase() === 'admin' && (passHash === EXPECTED_HASH || password === 'VPSA#Secure2026!')) {
           currentTempToken = 'demo-2fa-token';
@@ -674,12 +792,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (errorMsg) errorMsg.style.display = 'none';
 
-        const isStaticHost = window.location.hostname.includes('github.io') ||
-                             window.location.protocol === 'file:' ||
-                             window.location.pathname.endsWith('.html') ||
-                             (window.location.port === '' && !window.location.hostname.includes('localhost'));
-
-        if (isStaticHost) {
+        if (isStaticMode()) {
           currentBackupCodes = ['VPSA-7482-9104', 'VPSA-8821-3401', 'VPSA-1934-8829', 'VPSA-6291-0482'];
           sessionStorage.setItem('vpsa_token', 'demo-session-token');
           localStorage.setItem('vpsa_token', 'demo-session-token');
@@ -765,11 +878,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const proceedBtn = document.getElementById('proceedToDashboardBtn');
     if (proceedBtn) {
       proceedBtn.addEventListener('click', () => {
-        const isStaticHost = window.location.hostname.includes('github.io') ||
-                             window.location.protocol === 'file:' ||
-                             window.location.pathname.endsWith('.html') ||
-                             (window.location.port === '' && !window.location.hostname.includes('localhost'));
-        const redirect = isStaticHost ? 'admin-dashboard.html' : '/admin/dashboard';
+        const redirect = isStaticMode() ? 'admin-dashboard.html' : '/admin/dashboard';
         window.location.href = redirect;
       });
     }
@@ -793,12 +902,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (errorMsg) errorMsg.style.display = 'none';
 
-        const isStaticHost = window.location.hostname.includes('github.io') ||
-                             window.location.protocol === 'file:' ||
-                             window.location.pathname.endsWith('.html') ||
-                             (window.location.port === '' && !window.location.hostname.includes('localhost'));
-
-        if (isStaticHost) {
+        if (isStaticMode()) {
           sessionStorage.setItem('vpsa_token', 'demo-session-token');
           localStorage.setItem('vpsa_token', 'demo-session-token');
           window.location.href = 'admin-dashboard.html';
@@ -841,14 +945,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Dashboard Page logic
   if (document.getElementById('adminDashboard')) {
-    const isStaticHost = window.location.hostname.includes('github.io') ||
-                         window.location.protocol === 'file:' ||
-                         window.location.pathname.endsWith('.html') ||
-                         (window.location.port === '' && !window.location.hostname.includes('localhost'));
-
     // If on static hosting and not logged in, redirect to login
     const token = sessionStorage.getItem('vpsa_token') || localStorage.getItem('vpsa_token');
-    if (!token && isStaticHost) {
+    if (!token && isStaticMode()) {
       window.location.href = 'admin-login.html';
       return;
     }
@@ -867,16 +966,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('adminLogoutBtn');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', async () => {
-        try {
-          await fetch('/api/auth/logout', { 
-            method: 'POST',
-            credentials: 'include',
-            headers: getAuthHeaders(false)
-          });
-        } catch (e) {}
+        if (!isStaticMode()) {
+          try {
+            await fetch('/api/auth/logout', { 
+              method: 'POST',
+              credentials: 'include',
+              headers: getAuthHeaders(false)
+            });
+          } catch (e) {}
+        }
         sessionStorage.removeItem('vpsa_token');
         localStorage.removeItem('vpsa_token');
-        window.location.href = isStaticHost ? 'admin-login.html' : '/admin/login';
+        window.location.href = isStaticMode() ? 'admin-login.html' : '/admin/login';
       });
     }
 
@@ -972,8 +1073,39 @@ document.addEventListener('DOMContentLoaded', () => {
           submitBtn.innerText = 'Uploading photo...';
         }
 
-        const formData = new FormData(uploadForm);
+        if (isStaticMode()) {
+          const title = document.getElementById('uploadPhotoTitle').value.trim();
+          const category = document.getElementById('uploadPhotoCategory').value;
+          const description = document.getElementById('uploadPhotoDesc').value.trim();
 
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            const newItem = {
+              id: Date.now(),
+              title: title || 'New Farm Photo',
+              category: category || 'farms',
+              description: description || '',
+              image_url: evt.target.result
+            };
+            cachedGalleryItems.unshift(newItem);
+            try {
+              localStorage.setItem('vpsa_static_gallery', JSON.stringify(cachedGalleryItems));
+            } catch (err) {}
+            showToast('Image uploaded and published successfully!', 'success');
+            uploadForm.reset();
+            closeUploadModal();
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Upload & Publish Photo';
+            }
+            loadAdminGallery();
+          };
+          reader.readAsDataURL(fileInput.files[0]);
+          return;
+        }
+
+        // Live backend upload
+        const formData = new FormData(uploadForm);
         try {
           const res = await fetch('/api/gallery', {
             method: 'POST',
