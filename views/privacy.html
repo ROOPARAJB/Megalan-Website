@@ -38,7 +38,17 @@
         </ul>
       </nav>
       <div class="nav-actions">
-        <a href="/contact" class="btn btn-primary btn-sm">Request Quote</a>
+        <div class="lang-selector-wrapper">
+          <select id="langSelect" class="lang-select" aria-label="Select Language">
+            <option value="en">🇬🇧 English</option>
+            <option value="ta">🇮🇳 தமிழ் (Tamil)</option>
+            <option value="hi">🇮🇳 हिंदी (Hindi)</option>
+            <option value="ml">🇮🇳 മലയാളം (Malayalam)</option>
+            <option value="te">🇮🇳 తెలుగు (Telugu)</option>
+            <option value="ar">🇦🇪 العربية (Arabic)</option>
+          </select>
+        </div>
+        <a href="/contact" class="btn btn-primary btn-sm" data-i18n="nav_cta">Request Quote</a>
         <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle menu">☰</button>
       </div>
     </div>
@@ -166,6 +176,7 @@
     </div>
   </footer>
 
+  <script src="/js/i18n.js?v=5.0"></script>
   <script src="/js/main.js?v=2.1"></script>
 </body>
 </html>

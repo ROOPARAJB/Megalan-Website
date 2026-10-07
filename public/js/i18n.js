@@ -455,11 +455,51 @@ const translations = {
   }
 };
 
+// Flag metadata and SVG definitions (Guaranteed sharp visual rendering on all laptops and mobiles)
+const LANG_METADATA = {
+  en: {
+    code: 'en',
+    name: 'English',
+    nativeName: 'English',
+    flagSvg: '<svg class="flag-svg" viewBox="0 0 60 30" aria-hidden="true"><clipPath id="uk_clip"><path d="M0 0v30h60V0z"/></clipPath><clipPath id="uk_diag"><path d="M30 15h30v15zM30 15v15H0zM30 15H0V0zM30 15V0h30z"/></clipPath><g clip-path="url(#uk_clip)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" clip-path="url(#uk_diag)" stroke="#C8102E" stroke-width="4"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#C8102E" stroke-width="6"/></g></svg>'
+  },
+  ta: {
+    code: 'ta',
+    name: 'Tamil',
+    nativeName: 'தமிழ் (Tamil)',
+    flagSvg: '<svg class="flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="5" fill="none" stroke="#000088" stroke-width="1"/><circle cx="30" cy="20" r="1.2" fill="#000088"/></svg>'
+  },
+  hi: {
+    code: 'hi',
+    name: 'Hindi',
+    nativeName: 'हिंदी (Hindi)',
+    flagSvg: '<svg class="flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="5" fill="none" stroke="#000088" stroke-width="1"/><circle cx="30" cy="20" r="1.2" fill="#000088"/></svg>'
+  },
+  ml: {
+    code: 'ml',
+    name: 'Malayalam',
+    nativeName: 'മലയാളം (Malayalam)',
+    flagSvg: '<svg class="flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="5" fill="none" stroke="#000088" stroke-width="1"/><circle cx="30" cy="20" r="1.2" fill="#000088"/></svg>'
+  },
+  te: {
+    code: 'te',
+    name: 'Telugu',
+    nativeName: 'తెలుగు (Telugu)',
+    flagSvg: '<svg class="flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="5" fill="none" stroke="#000088" stroke-width="1"/><circle cx="30" cy="20" r="1.2" fill="#000088"/></svg>'
+  },
+  ar: {
+    code: 'ar',
+    name: 'Arabic',
+    nativeName: 'العربية (Arabic)',
+    flagSvg: '<svg class="flag-svg" viewBox="0 0 60 30" aria-hidden="true"><rect width="60" height="10" fill="#00732f"/><rect y="10" width="60" height="10" fill="#ffffff"/><rect y="20" width="60" height="10" fill="#000000"/><rect width="18" height="30" fill="#ff0000"/></svg>'
+  }
+};
+
 // Language Switcher Logic
 let currentLanguage = localStorage.getItem('vpsa_lang') || 'en';
 
 function setLanguage(lang) {
-  if (!translations[lang]) lang = 'en';
+  if (!translations[lang] || !LANG_METADATA[lang]) lang = 'en';
   currentLanguage = lang;
   localStorage.setItem('vpsa_lang', lang);
 
@@ -486,20 +526,98 @@ function setLanguage(lang) {
     }
   });
 
-  // Sync any select dropdowns
-  const selector = document.getElementById('langSelect');
-  if (selector) selector.value = lang;
+  // Update custom dropdown UI across all wrappers
+  updateCustomDropdownUI(lang);
+}
+
+function updateCustomDropdownUI(lang) {
+  const meta = LANG_METADATA[lang] || LANG_METADATA.en;
+  
+  document.querySelectorAll('.lang-selector-wrapper').forEach(wrapper => {
+    const flagEl = wrapper.querySelector('.lang-flag-current');
+    if (flagEl) flagEl.innerHTML = meta.flagSvg;
+
+    const labelEl = wrapper.querySelector('.lang-label-current');
+    if (labelEl) labelEl.innerText = meta.name;
+
+    wrapper.querySelectorAll('.lang-option').forEach(btn => {
+      const btnLang = btn.getAttribute('data-lang');
+      if (btnLang === lang) {
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+      } else {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+      }
+    });
+  });
+}
+
+function buildCustomLanguageDropdown() {
+  const wrappers = document.querySelectorAll('.lang-selector-wrapper');
+  if (!wrappers.length) return;
+
+  const meta = LANG_METADATA[currentLanguage] || LANG_METADATA.en;
+
+  wrappers.forEach(wrapper => {
+    wrapper.innerHTML = `
+      <button type="button" class="lang-dropdown-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select Language">
+        <span class="lang-flag-current">${meta.flagSvg}</span>
+        <span class="lang-label-current">${meta.name}</span>
+        <span class="lang-caret">▾</span>
+      </button>
+      <div class="lang-dropdown-menu" role="listbox">
+        ${Object.keys(LANG_METADATA).map(k => `
+          <button type="button" class="lang-option ${k === currentLanguage ? 'active' : ''}" data-lang="${k}" role="option" aria-selected="${k === currentLanguage}">
+            <span class="lang-flag-opt">${LANG_METADATA[k].flagSvg}</span>
+            <span class="lang-opt-name">${LANG_METADATA[k].nativeName}</span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+
+    const btn = wrapper.querySelector('.lang-dropdown-btn');
+    if (btn) {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Close other open dropdowns
+        document.querySelectorAll('.lang-selector-wrapper').forEach(w => {
+          if (w !== wrapper) {
+            w.classList.remove('open');
+            const otherBtn = w.querySelector('.lang-dropdown-btn');
+            if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+        const isOpen = wrapper.classList.toggle('open');
+        btn.setAttribute('aria-expanded', isOpen);
+      });
+    }
+
+    wrapper.querySelectorAll('.lang-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const targetLang = opt.getAttribute('data-lang');
+        setLanguage(targetLang);
+        wrapper.classList.remove('open');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      });
+    });
+  });
+
+  // Global outside-click closer
+  document.addEventListener('click', (e) => {
+    wrappers.forEach(wrapper => {
+      if (!wrapper.contains(e.target)) {
+        wrapper.classList.remove('open');
+        const btn = wrapper.querySelector('.lang-dropdown-btn');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  });
 }
 
 // Auto-run on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
+  buildCustomLanguageDropdown();
   setLanguage(currentLanguage);
-
-  const selector = document.getElementById('langSelect');
-  if (selector) {
-    selector.value = currentLanguage;
-    selector.addEventListener('change', (e) => {
-      setLanguage(e.target.value);
-    });
-  }
 });
