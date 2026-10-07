@@ -579,8 +579,16 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
       } catch (err) {
-        // Fallback for GitHub Pages static hosting
-        if (username.toLowerCase() === 'admin' && password.length >= 4) {
+        // Cryptographic password validation for static GitHub Pages hosting
+        async function sha256Hex(str) {
+          const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+          return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        const passHash = await sha256Hex(password);
+        const EXPECTED_HASH = '47174ca5bd0df2d05206f5d3e8d0191d04d844785668102916e06202e2737976'; // VPSA#Secure2026!
+
+        if (username.trim().toLowerCase() === 'admin' && passHash === EXPECTED_HASH) {
           currentTempToken = 'demo-2fa-token';
           if (step1) step1.style.display = 'none';
 
@@ -598,7 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           return;
         } else {
-          showError('Invalid admin credentials. (Username: admin)');
+          showError('Invalid admin username or password.');
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerText = 'Next: Verify Identity →';
