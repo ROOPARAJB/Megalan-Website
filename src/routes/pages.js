@@ -10,42 +10,42 @@ const viewsDir = path.resolve(__dirname, '../../views');
 const router = express.Router();
 
 // Home Page
-router.get('/', (req, res) => {
+router.get(['/', '/index.html'], (req, res) => {
   res.sendFile(path.join(viewsDir, 'index.html'));
 });
 
 // About Us Page
-router.get('/about', (req, res) => {
+router.get(['/about', '/about.html'], (req, res) => {
   res.sendFile(path.join(viewsDir, 'about.html'));
 });
 
 // Banana Products Catalog
-router.get('/products', (req, res) => {
+router.get(['/products', '/products.html'], (req, res) => {
   res.sendFile(path.join(viewsDir, 'products.html'));
 });
 
 // Dynamic Photo Gallery
-router.get('/gallery', (req, res) => {
+router.get(['/gallery', '/gallery.html'], (req, res) => {
   res.sendFile(path.join(viewsDir, 'gallery.html'));
 });
 
 // Contact Us & RFQ Page
-router.get('/contact', (req, res) => {
+router.get(['/contact', '/contact.html'], (req, res) => {
   res.sendFile(path.join(viewsDir, 'contact.html'));
 });
 
 // Privacy Policy & Data Notice Page
-router.get('/privacy', (req, res) => {
+router.get(['/privacy', '/privacy.html'], (req, res) => {
   res.sendFile(path.join(viewsDir, 'privacy.html'));
 });
 
 // Admin Login Page
-router.get('/admin/login', (req, res) => {
+router.get(['/admin/login', '/admin/login.html', '/admin-login.html'], (req, res) => {
   res.sendFile(path.join(viewsDir, 'admin-login.html'));
 });
 
 // Admin Protected Dashboard
-router.get('/admin/dashboard', requireAuthPage, (req, res) => {
+router.get(['/admin/dashboard', '/admin/dashboard.html', '/admin-dashboard.html'], requireAuthPage, (req, res) => {
   res.sendFile(path.join(viewsDir, 'admin-dashboard.html'));
 });
 
