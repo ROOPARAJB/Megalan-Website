@@ -583,7 +583,14 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       } catch (err) {
-        showError('Network or server communication error.');
+        if (window.location.hostname.includes('github.io')) {
+          showError('GitHub Pages hosts static files. For live Microsoft Authenticator 2FA verification, run the Node.js server. Redirecting to Dashboard preview...');
+          setTimeout(() => {
+            window.location.href = 'admin-dashboard.html';
+          }, 2000);
+        } else {
+          showError('Network or server communication error.');
+        }
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.innerText = 'Next: Verify Identity →';
