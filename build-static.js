@@ -8,19 +8,26 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '.');
 const publicDir = path.resolve(rootDir, 'public');
 const viewsDir = path.resolve(rootDir, 'views');
+const distDir = path.resolve(rootDir, 'dist');
 
-// 1. Copy css, js, images from public/ to root
+// Ensure clean dist directory
+if (fs.existsSync(distDir)) {
+  fs.rmSync(distDir, { recursive: true, force: true });
+}
+fs.mkdirSync(distDir, { recursive: true });
+
+// 1. Copy public assets (css, js, images) to dist/
 const items = ['css', 'js', 'images'];
 for (const item of items) {
   const src = path.join(publicDir, item);
-  const dest = path.join(rootDir, item);
+  const dest = path.join(distDir, item);
   if (fs.existsSync(src)) {
     fs.cpSync(src, dest, { recursive: true, force: true });
-    console.log(`✓ Synchronized ${item}/`);
+    console.log(`✓ Copied static assets: ${item}/ -> dist/${item}/`);
   }
 }
 
-// 2. Read and convert all views/*.html to root *.html for GitHub Pages
+// 2. Read and compile all views/*.html to dist/*.html with relative asset links
 const viewFiles = fs.readdirSync(viewsDir).filter(f => f.endsWith('.html'));
 
 for (const file of viewFiles) {
@@ -40,9 +47,9 @@ for (const file of viewFiles) {
     .split('href="/admin/dashboard"').join('href="admin-dashboard.html"')
     .split('href="/"').join('href="index.html"');
 
-  const destFile = path.join(rootDir, file);
+  const destFile = path.join(distDir, file);
   fs.writeFileSync(destFile, content, 'utf8');
-  console.log(`✓ Generated static page: ${file}`);
+  console.log(`✓ Compiled view: views/${file} -> dist/${file}`);
 }
 
-console.log('✨ Static site build complete for GitHub Pages!');
+console.log('✨ Build succeeded! Clean distribution generated in dist/');
