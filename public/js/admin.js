@@ -512,6 +512,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (errorMsg) errorMsg.style.display = 'none';
     }
 
+    // Helper for SHA-256 cryptographic hashing
+    async function sha256Hex(str) {
+      try {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      } catch (e) {
+        return null;
+      }
+    }
+
+    const EXPECTED_HASH = '47174ca5bd0df2d05206f5d3e8d0191d04d844785668102916e06202e2737976'; // VPSA#Secure2026!
+
     // Step 1: Credential Verification
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -525,6 +537,41 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (errorMsg) errorMsg.style.display = 'none';
 
+      const isStaticHost = window.location.hostname.includes('github.io') ||
+                           window.location.protocol === 'file:' ||
+                           window.location.pathname.endsWith('.html') ||
+                           (window.location.port === '' && !window.location.hostname.includes('localhost'));
+
+      if (isStaticHost) {
+        const passHash = await sha256Hex(password);
+        if (username.toLowerCase() === 'admin' && (passHash === EXPECTED_HASH || password === 'VPSA#Secure2026!')) {
+          currentTempToken = 'demo-2fa-token';
+          if (step1) step1.style.display = 'none';
+
+          const qrImg = document.getElementById('qrCodeImg');
+          if (qrImg) qrImg.src = DEMO_QR_URL;
+
+          const manualSecret = document.getElementById('manualSecretBox');
+          if (manualSecret) manualSecret.innerText = DEMO_SECRET_KEY;
+
+          if (step2Setup) step2Setup.style.display = 'block';
+          const codeInput = document.getElementById('setupTotpCode');
+          if (codeInput) {
+            codeInput.value = '';
+            codeInput.focus();
+          }
+          return;
+        } else {
+          showError('Invalid admin username or password.');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Next: Verify Identity →';
+          }
+          return;
+        }
+      }
+
+      // Dynamic Node.js backend environment
       try {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
@@ -532,10 +579,8 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({ username, password })
         });
 
-        if (!res.ok) throw new Error('API request failed');
-
         const data = await res.json();
-        if (data.success) {
+        if (res.ok && data.success) {
           if (data.require_2fa) {
             currentTempToken = data.temp_token;
             if (step1) step1.style.display = 'none';
@@ -565,13 +610,11 @@ document.addEventListener('DOMContentLoaded', () => {
           } else if (data.token) {
             sessionStorage.setItem('vpsa_token', data.token);
             localStorage.setItem('vpsa_token', data.token);
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get('redirect') || 'admin-dashboard.html';
-            window.location.href = redirect;
+            window.location.href = '/admin/dashboard';
             return;
           }
         } else {
-          showError(data.error || 'Invalid username or password.');
+          showError(data.error || 'Invalid admin username or password.');
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerText = 'Next: Verify Identity →';
@@ -579,39 +622,24 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
       } catch (err) {
-        // Cryptographic password validation for static GitHub Pages hosting
-        async function sha256Hex(str) {
-          const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-          return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
+        // Fallback validation if server is unreachable
         const passHash = await sha256Hex(password);
-        const EXPECTED_HASH = '47174ca5bd0df2d05206f5d3e8d0191d04d844785668102916e06202e2737976'; // VPSA#Secure2026!
-
-        if (username.trim().toLowerCase() === 'admin' && passHash === EXPECTED_HASH) {
+        if (username.toLowerCase() === 'admin' && (passHash === EXPECTED_HASH || password === 'VPSA#Secure2026!')) {
           currentTempToken = 'demo-2fa-token';
           if (step1) step1.style.display = 'none';
-
           const qrImg = document.getElementById('qrCodeImg');
           if (qrImg) qrImg.src = DEMO_QR_URL;
-
           const manualSecret = document.getElementById('manualSecretBox');
           if (manualSecret) manualSecret.innerText = DEMO_SECRET_KEY;
-
           if (step2Setup) step2Setup.style.display = 'block';
           const codeInput = document.getElementById('setupTotpCode');
-          if (codeInput) {
-            codeInput.value = '';
-            codeInput.focus();
-          }
-          return;
+          if (codeInput) { codeInput.value = ''; codeInput.focus(); }
         } else {
           showError('Invalid admin username or password.');
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerText = 'Next: Verify Identity →';
           }
-          return;
         }
       }
     });
@@ -646,6 +674,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (errorMsg) errorMsg.style.display = 'none';
 
+        const isStaticHost = window.location.hostname.includes('github.io') ||
+                             window.location.protocol === 'file:' ||
+                             window.location.pathname.endsWith('.html') ||
+                             (window.location.port === '' && !window.location.hostname.includes('localhost'));
+
+        if (isStaticHost) {
+          currentBackupCodes = ['VPSA-7482-9104', 'VPSA-8821-3401', 'VPSA-1934-8829', 'VPSA-6291-0482'];
+          sessionStorage.setItem('vpsa_token', 'demo-session-token');
+          localStorage.setItem('vpsa_token', 'demo-session-token');
+
+          if (step2Setup) step2Setup.style.display = 'none';
+          const codesList = document.getElementById('backupCodesList');
+          if (codesList) {
+            codesList.innerHTML = currentBackupCodes.map(c => `
+              <div style="background: #ffffff; border: 1px solid #cbd5e1; padding: 0.45rem 0.6rem; border-radius: 6px; letter-spacing: 1px; user-select: all;">${escapeHtml(c)}</div>
+            `).join('');
+          }
+
+          if (backupDisplay) backupDisplay.style.display = 'block';
+          showSuccess('Microsoft Authenticator connected successfully!');
+          return;
+        }
+
+        // Live backend
         try {
           const res = await fetch('/api/auth/2fa/confirm-setup', {
             method: 'POST',
@@ -653,10 +705,8 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({ temp_token: currentTempToken, code })
           });
 
-          if (!res.ok) throw new Error('API confirmation failed');
-
           const data = await res.json();
-          if (data.success) {
+          if (res.ok && data.success) {
             if (data.token) {
               sessionStorage.setItem('vpsa_token', data.token);
               localStorage.setItem('vpsa_token', data.token);
@@ -674,30 +724,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (backupDisplay) backupDisplay.style.display = 'block';
             showSuccess('Microsoft Authenticator connected successfully!');
-            return;
           } else {
             showError(data.error || 'Invalid 6-digit code. Please try again.');
             if (submitBtn) {
               submitBtn.disabled = false;
               submitBtn.innerText = 'Verify & Activate Authenticator';
             }
-            return;
           }
         } catch (err) {
-          // Fallback for GitHub Pages static hosting
-          currentBackupCodes = ['VPSA-7482-9104', 'VPSA-8821-3401', 'VPSA-1934-8829', 'VPSA-6291-0482'];
-          sessionStorage.setItem('vpsa_token', 'demo-session-token');
-
-          if (step2Setup) step2Setup.style.display = 'none';
-          const codesList = document.getElementById('backupCodesList');
-          if (codesList) {
-            codesList.innerHTML = currentBackupCodes.map(c => `
-              <div style="background: #ffffff; border: 1px solid #cbd5e1; padding: 0.45rem 0.6rem; border-radius: 6px; letter-spacing: 1px; user-select: all;">${escapeHtml(c)}</div>
-            `).join('');
+          showError('Connection error confirming authenticator code.');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Verify & Activate Authenticator';
           }
-
-          if (backupDisplay) backupDisplay.style.display = 'block';
-          showSuccess('Microsoft Authenticator connected successfully!');
         }
       });
     }
@@ -726,8 +765,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const proceedBtn = document.getElementById('proceedToDashboardBtn');
     if (proceedBtn) {
       proceedBtn.addEventListener('click', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const redirect = urlParams.get('redirect') || 'admin-dashboard.html';
+        const isStaticHost = window.location.hostname.includes('github.io') ||
+                             window.location.protocol === 'file:' ||
+                             window.location.pathname.endsWith('.html') ||
+                             (window.location.port === '' && !window.location.hostname.includes('localhost'));
+        const redirect = isStaticHost ? 'admin-dashboard.html' : '/admin/dashboard';
         window.location.href = redirect;
       });
     }
@@ -751,6 +793,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (errorMsg) errorMsg.style.display = 'none';
 
+        const isStaticHost = window.location.hostname.includes('github.io') ||
+                             window.location.protocol === 'file:' ||
+                             window.location.pathname.endsWith('.html') ||
+                             (window.location.port === '' && !window.location.hostname.includes('localhost'));
+
+        if (isStaticHost) {
+          sessionStorage.setItem('vpsa_token', 'demo-session-token');
+          localStorage.setItem('vpsa_token', 'demo-session-token');
+          window.location.href = 'admin-dashboard.html';
+          return;
+        }
+
         try {
           const res = await fetch('/api/auth/2fa/verify', {
             method: 'POST',
@@ -758,31 +812,26 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({ temp_token: currentTempToken, code })
           });
 
-          if (!res.ok) throw new Error('API verification failed');
-
           const data = await res.json();
-          if (data.success) {
+          if (res.ok && data.success) {
             if (data.token) {
               sessionStorage.setItem('vpsa_token', data.token);
               localStorage.setItem('vpsa_token', data.token);
             }
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get('redirect') || 'admin-dashboard.html';
-            window.location.href = redirect;
-            return;
+            window.location.href = '/admin/dashboard';
           } else {
             showError(data.error || 'Invalid code entered.');
             if (submitBtn) {
               submitBtn.disabled = false;
               submitBtn.innerText = 'Confirm & Enter Dashboard';
             }
-            return;
           }
         } catch (err) {
-          sessionStorage.setItem('vpsa_token', 'demo-session-token');
-          const urlParams = new URLSearchParams(window.location.search);
-          const redirect = urlParams.get('redirect') || 'admin-dashboard.html';
-          window.location.href = redirect;
+          showError('Connection error verifying security code.');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Confirm & Enter Dashboard';
+          }
         }
       });
     }
@@ -792,6 +841,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Dashboard Page logic
   if (document.getElementById('adminDashboard')) {
+    const isStaticHost = window.location.hostname.includes('github.io') ||
+                         window.location.protocol === 'file:' ||
+                         window.location.pathname.endsWith('.html') ||
+                         (window.location.port === '' && !window.location.hostname.includes('localhost'));
+
+    // If on static hosting and not logged in, redirect to login
+    const token = sessionStorage.getItem('vpsa_token') || localStorage.getItem('vpsa_token');
+    if (!token && isStaticHost) {
+      window.location.href = 'admin-login.html';
+      return;
+    }
+
     // Navigation Tabs
     const navLinks = document.querySelectorAll('.admin-nav-link[data-tab]');
     navLinks.forEach(link => {
@@ -815,7 +876,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {}
         sessionStorage.removeItem('vpsa_token');
         localStorage.removeItem('vpsa_token');
-        window.location.href = '/admin/login';
+        window.location.href = isStaticHost ? 'admin-login.html' : '/admin/login';
       });
     }
 
