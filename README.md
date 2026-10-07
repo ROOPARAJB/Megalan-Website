@@ -1,102 +1,23 @@
-# VPSA YOGA FRISH PVT LTD — Web Platform
+# VPSA YOGA FRISH PVT LTD
 
-> **Official Website & Cold-Chain Logistics Management Portal** for **VPSA YOGA FRISH PVT LTD** (also known as *VPSA YOGA Banana Traders / VPSA YOGA Trades*).
-> Sourcing from **Theni, Oddanchatram, and Kerala** with end-to-end temperature-controlled logistics (**13–14°C**).
+> **Official Wholesale Banana Trading & Cold-Chain Logistics Web Platform**
 
----
-
-## 🌟 Features Overview
-
-### 1. Multi-Language Engine (Instant Switching)
-- **6 Supported Languages:**
-  - 🇬🇧 **English (en)**
-  - 🇮🇳 **தமிழ் (Tamil - ta)**
-  - 🇮🇳 **हिंदी (Hindi - hi)**
-  - 🇮🇳 **മലയാളം (Malayalam - ml)**
-  - 🇮🇳 **తెలుగు (Telugu - te)**
-  - 🇦🇪 **العربية (Arabic - ar)** *(with automatic RTL layout support)*
-- Instant client-side DOM translation switcher without page reload.
-
-### 2. Multi-Page Architecture
-- **Home Page (`/`):**
-  - Hero banner with banana farming background.
-  - Slogan: *"FRESH BANANA, DELIVERED RELIABLE AND ON TIME"*.
-  - Quick *"Connect With Us"* quotation form.
-  - Core Pillars of Excellence (*20+ Years Family Expertise, Farm-Fresh Guarantee, 13-14°C Cold Chain, Wholesale Transparency, Export-Ready Quality & Grading*).
-- **Banana Varieties Catalog (`/products`):**
-  - 8 banana varieties with descriptions, health benefits, taste profiles, shelf life, and packaging specs:
-    1. **Red Banana (செவ்வாழை)**
-    2. **Poovan Banana (பூவன்)**
-    3. **Nendran Banana (நேந்திரன்)**
-    4. **Yelakki Banana (ஏலக்கி)**
-    5. **Karpuravalli Banana (கற்பூரவள்ளி)**
-    6. **Rasthali Banana (ரஸ்தாளி)**
-    7. **Robusta Cavendish (ரோபஸ்டா)**
-    8. **Monthan Banana (மொந்தன்)**
-  - Category filter (*All, Dessert, Superfruit, Culinary*).
-  - One-click *"Request Wholesale Quote"* modal with pre-selected variety.
-- **Live Gallery (`/gallery`):**
-  - Live photo gallery of plantations, harvest grading, cold chain fleet, and export packaging.
-  - Fullscreen Lightbox viewer with zoom & captions.
-- **About Us (`/about`):**
-  - Company heritage, 20+ years family trading experience, and cold chain telemetry.
-- **Contact & RFQ (`/contact`):**
-  - Request For Quotation (RFQ) form.
-  - Official Social Media Links.
-- **Admin Management Portal (`/admin/login` & `/admin/dashboard`):**
-  - Two-Factor Authentication (2FA) via Microsoft Authenticator.
-  - **Gallery Manager:** Upload, edit metadata, and delete photos.
-  - **Inquiries Inbox:** Review quote requests, update lead status (*New, Contacted, In Review, Completed*), and export leads to CSV.
-  - **Activity Log:** Real-time log of administrative logins and updates.
+VPSA YOGA FRISH PVT LTD (also known as *VPSA YOGA Banana Traders / VPSA YOGA Trades*) is a premier wholesale agricultural enterprise and temperature-controlled logistics hub based in Tamil Nadu, India. Sourcing directly from farming clusters in Oddanchatram, Theni, and Kerala, the company provides farm-fresh, scientifically graded bananas with dedicated 13–14°C reefer transport across South India and international export markets.
 
 ---
 
-## 🚀 Quick Start Guide
+## 🍌 Key Highlights
 
-### Prerequisites
-- Node.js v18+ (tested on Node v24)
-- npm v9+
-
-### 1. Installation
-```bash
-npm install
-```
-
-### 2. Environment Configuration
-```bash
-cp .env.example .env
-# Edit .env with your environment configuration
-```
-
-### 3. Database Initialization & Seeding
-```bash
-npm run seed
-```
-
-### 4. Running Automated Tests
-```bash
-npm test
-```
-
-### 5. Start Application Server
-```bash
-npm start
-```
-Open **`http://localhost:3000`** in your browser.
+- **Farm-Direct Sourcing:** Premium varieties sourced straight from trusted farmer clusters with transparent wholesale pricing.
+- **Dedicated Cold-Chain Logistics:** 13–14°C temperature-controlled transit ensuring harvest freshness and zero transit damage.
+- **8 Premium Banana Varieties:** Red Banana (*Sevvazhai*), Poovan, Nendran, Yelakki, Karpuravalli, Rasthali, Robusta, and Monthan.
+- **Multilingual Support:** Available in 6 languages — English, தமிழ் (Tamil), हिंदी (Hindi), മലയാളം (Malayalam), తెలుగు (Telugu), and العربية (Arabic).
+- **Export-Grade Standards:** International grading, hygienic packaging, and digital quotation processing.
 
 ---
 
-## 📡 Key API Endpoints
+## 🌐 Official Platform
 
-- `GET /api/products` — Retrieve all banana varieties
-- `GET /api/products/:slug` — Retrieve details for a specific variety
-- `GET /api/gallery` — Retrieve live gallery items
-- `POST /api/gallery` — Upload new photo *(Admin authentication required)*
-- `PUT /api/gallery/:id` — Edit photo metadata *(Admin authentication required)*
-- `DELETE /api/gallery/:id` — Delete photo *(Admin authentication required)*
-- `POST /api/enquiries` — Submit wholesale quotation inquiry
-- `GET /api/enquiries` — View inquiry inbox *(Admin authentication required)*
-- `PATCH /api/enquiries/:id/status` — Update inquiry status *(Admin authentication required)*
-- `GET /api/audit-logs` — Activity logs *(Admin authentication required)*
-- `GET /api/health` — Application health check
-
+- **Website:** [https://rooparajb.github.io/Megalan-Website/](https://rooparajb.github.io/Megalan-Website/)
+- **Headquarters:** Oddanchatram & Theni Hubs, Tamil Nadu, India
+- **Inquiries:** info@vpsayogafresh.com
