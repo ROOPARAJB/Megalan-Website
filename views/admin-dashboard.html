@@ -6,6 +6,20 @@
   <title>Admin Management Dashboard | VPSA YOGA FRISH</title>
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="icon" type="image/svg+xml" href="/images/logo/vpsa-logo.svg">
+  <script>
+    // Instant pre-render auth guard to prevent Flash of Unauthorized Content (FOUC)
+    (function() {
+      var token = sessionStorage.getItem('vpsa_token') || localStorage.getItem('vpsa_token');
+      var isStatic = window.location.hostname.includes('github.io') || 
+                     window.location.protocol === 'file:' || 
+                     window.location.pathname.endsWith('.html') ||
+                     (window.location.port === '' && !window.location.hostname.includes('localhost'));
+      if (!token && isStatic) {
+        document.documentElement.style.display = 'none';
+        window.location.replace('admin-login.html');
+      }
+    })();
+  </script>
 </head>
 <body id="adminDashboard" style="background-color: #f1f5f9;">
 

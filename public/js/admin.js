@@ -667,17 +667,19 @@ document.addEventListener('DOMContentLoaded', () => {
           currentTempToken = 'demo-2fa-token';
           if (step1) step1.style.display = 'none';
 
+          // Preload QR and secret key in case user clicks re-scan
           const qrImg = document.getElementById('qrCodeImg');
           if (qrImg) qrImg.src = DEMO_QR_URL;
 
           const manualSecret = document.getElementById('manualSecretBox');
-          if (manualSecret) manualSecret.innerText = DEMO_SECRET_KEY;
+          if (manualSecret) manualSecret.innerText = DEMO_SECRET_DISPLAY;
 
-          if (step2Setup) step2Setup.style.display = 'block';
-          const codeInput = document.getElementById('setupTotpCode');
-          if (codeInput) {
-            codeInput.value = '';
-            codeInput.focus();
+          // By default, open Step 2B (Standard 6-digit Authenticator Verification)
+          if (step2Verify) step2Verify.style.display = 'block';
+          const verifyInput = document.getElementById('verifyTotpCode');
+          if (verifyInput) {
+            verifyInput.value = '';
+            verifyInput.focus();
           }
           return;
         } else {
@@ -837,6 +839,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const isHidden = manualSecretBox.style.display === 'none' || !manualSecretBox.style.display;
         manualSecretBox.style.display = isHidden ? 'block' : 'none';
         toggleSecretBtn.innerText = isHidden ? 'Hide text key' : "Can't scan QR code? Click to view text key";
+      });
+    }
+
+    // Switch from standard verification to QR code re-scan
+    const showQrBtn = document.getElementById('showQrSetupBtn');
+    if (showQrBtn) {
+      showQrBtn.addEventListener('click', () => {
+        if (step2Verify) step2Verify.style.display = 'none';
+        if (step2Setup) step2Setup.style.display = 'block';
+        const codeInput = document.getElementById('setupTotpCode');
+        if (codeInput) {
+          codeInput.value = '';
+          codeInput.focus();
+        }
       });
     }
 
