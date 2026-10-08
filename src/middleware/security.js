@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import sanitizeHtml from 'sanitize-html';
 import validator from 'validator';
 import db from '../database/db.js';
+import dbService from '../database/db-service.js';
 
 /**
  * Helmet Security Headers Configuration
@@ -154,12 +155,17 @@ export const logSecurityEvent = (eventType, description, userId = null, req = nu
     const ipAddress = req ? (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1') : null;
     const userAgent = req ? (req.headers['user-agent'] || 'UNKNOWN') : null;
 
-    db.prepare(`
-      INSERT INTO audit_logs (event_type, description, user_id, ip_address, user_agent, severity)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(eventType, description, userId, String(ipAddress), String(userAgent), severity);
+    dbService.createAuditLog({
+      event_type: eventType,
+      description,
+      user_id: userId,
+      ip_address: String(ipAddress),
+      user_agent: String(userAgent),
+      severity
+    }).catch(err => {
+      console.warn('[AUDIT LOG ERROR]', eventType, err.message);
+    });
   } catch (err) {
-    // If running solely on Supabase or SQLite migration in progress
     console.warn('[AUDIT LOG]', eventType, description);
   }
 };

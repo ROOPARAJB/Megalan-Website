@@ -4,6 +4,7 @@ import request from 'supertest';
 import { generateSync } from 'otplib';
 import app from '../src/server.js';
 import db from '../src/database/db.js';
+import dbService from '../src/database/db-service.js';
 import { seedDatabase } from '../src/database/seed.js';
 
 describe('VPSA YOGA FRISH Business Logic & API Tests', async () => {
@@ -15,7 +16,12 @@ describe('VPSA YOGA FRISH Business Logic & API Tests', async () => {
     await seedDatabase();
 
     // Reset admin 2FA columns for clean test run
-    db.prepare('UPDATE users SET two_factor_enabled = 0, two_factor_secret = NULL, two_factor_temp_secret = NULL, two_factor_backup_codes = NULL WHERE username = ?').run('admin');
+    await dbService.updateUser2FA('admin', {
+      two_factor_enabled: 0,
+      two_factor_secret: null,
+      two_factor_temp_secret: null,
+      two_factor_backup_codes: null
+    });
 
     // Step 1: Submit credentials
     const loginRes = await request(app)

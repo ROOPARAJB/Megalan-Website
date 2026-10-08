@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { generateSecret, generateURI, verifySync } from 'otplib';
 import QRCode from 'qrcode';
 import crypto from 'crypto';
-import db from '../../database/db.js';
+import dbService from '../../database/db-service.js';
 import { authRateLimiter, logSecurityEvent } from '../../middleware/security.js';
 import { requireAuthApi } from '../../middleware/auth.js';
 
@@ -35,7 +35,7 @@ router.post('/login', authRateLimiter, async (req, res) => {
   }
 
   try {
-    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username.trim());
+    const user = await dbService.getUserByUsername(username.trim());
 
     if (!user) {
       logSecurityEvent('FAILED_LOGIN_ATTEMPT', `Failed login attempt for nonexistent user: ${username}`, null, req, 'WARN');
@@ -74,7 +74,7 @@ router.post('/login', authRateLimiter, async (req, res) => {
 
     // If 2FA not enabled yet, initiate First-Time Configuration Flow
     const tempSecret = generateSecret();
-    db.prepare('UPDATE users SET two_factor_temp_secret = ? WHERE id = ?').run(tempSecret, user.id);
+    await dbService.updateUser2FA(user.id, { two_factor_temp_secret: tempSecret });
 
     const otpauthUrl = generateURI({
       issuer: 'VPSA YOGA',
@@ -142,7 +142,7 @@ router.post('/2fa/confirm-setup', authRateLimiter, async (req, res) => {
       });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
+    const user = await dbService.getUserById(decoded.id);
     if (!user || !user.two_factor_temp_secret) {
       return res.status(400).json({
         success: false,
@@ -170,15 +170,13 @@ router.post('/2fa/confirm-setup', authRateLimiter, async (req, res) => {
     const backupCodes = generateBackupCodes();
 
     // Activate 2FA on account
-    db.prepare(`
-      UPDATE users
-      SET two_factor_secret = two_factor_temp_secret,
-          two_factor_enabled = 1,
-          two_factor_temp_secret = NULL,
-          two_factor_backup_codes = ?,
-          last_login_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(JSON.stringify(backupCodes), user.id);
+    await dbService.updateUser2FA(user.id, {
+      two_factor_secret: user.two_factor_temp_secret,
+      two_factor_enabled: 1,
+      two_factor_temp_secret: null,
+      two_factor_backup_codes: JSON.stringify(backupCodes),
+      last_login_at: new Date().toISOString()
+    });
 
     // Sign full 8-hour admin session token
     const fullSessionToken = jwt.sign(
@@ -248,7 +246,7 @@ router.post('/2fa/verify', authRateLimiter, async (req, res) => {
       });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
+    const user = await dbService.getUserById(decoded.id);
     if (!user || !user.two_factor_secret) {
       return res.status(400).json({
         success: false,
@@ -280,7 +278,9 @@ router.post('/2fa/verify', authRateLimiter, async (req, res) => {
           usedBackupCode = true;
           // Consume the one-time recovery code
           storedCodes.splice(matchIdx, 1);
-          db.prepare('UPDATE users SET two_factor_backup_codes = ? WHERE id = ?').run(JSON.stringify(storedCodes), user.id);
+          await dbService.updateUser2FA(user.id, {
+            two_factor_backup_codes: JSON.stringify(storedCodes)
+          });
           logSecurityEvent('BACKUP_CODE_USED', `Admin '${user.username}' used one-time emergency backup code to log in.`, user.id, req, 'WARN');
         }
       } catch (e) {}
@@ -295,7 +295,7 @@ router.post('/2fa/verify', authRateLimiter, async (req, res) => {
     }
 
     // Update last login
-    db.prepare('UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?').run(user.id);
+    await dbService.updateUserLogin(user.id);
 
     // Sign full 8-hour admin session token
     const fullSessionToken = jwt.sign(
@@ -337,8 +337,8 @@ router.post('/2fa/verify', authRateLimiter, async (req, res) => {
 });
 
 // GET /api/auth/2fa/status (Admin only: Check 2FA setup status)
-router.get('/2fa/status', requireAuthApi, (req, res) => {
-  const user = db.prepare('SELECT two_factor_enabled FROM users WHERE id = ?').get(req.user.id);
+router.get('/2fa/status', requireAuthApi, async (req, res) => {
+  const user = await dbService.getUserById(req.user.id);
   return res.json({
     success: true,
     two_factor_enabled: user ? Boolean(user.two_factor_enabled) : false
@@ -349,7 +349,7 @@ router.get('/2fa/status', requireAuthApi, (req, res) => {
 router.post('/2fa/reconfigure', requireAuthApi, async (req, res) => {
   try {
     const tempSecret = generateSecret();
-    db.prepare('UPDATE users SET two_factor_temp_secret = ? WHERE id = ?').run(tempSecret, req.user.id);
+    await dbService.updateUser2FA(req.user.id, { two_factor_temp_secret: tempSecret });
 
     const otpauthUrl = generateURI({
       issuer: 'VPSA YOGA',
@@ -426,7 +426,7 @@ router.post('/change-password', requireAuthApi, async (req, res) => {
     });
   }
 
-  const user = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.user.id);
+  const user = await dbService.getUserById(req.user.id);
   const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
   if (!isMatch) {
     return res.status(400).json({
@@ -437,7 +437,7 @@ router.post('/change-password', requireAuthApi, async (req, res) => {
 
   const salt = await bcrypt.genSalt(12);
   const hash = await bcrypt.hash(newPassword, salt);
-  db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, req.user.id);
+  await dbService.updateUserPassword(req.user.id, hash);
 
   logSecurityEvent('PASSWORD_CHANGED', `User ID ${req.user.id} updated their password.`, req.user.id, req, 'INFO');
 

@@ -1,4 +1,5 @@
 import db from './db.js';
+import { supabase, isSupabaseConfigured } from './supabase.js';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -13,6 +14,34 @@ export async function seedDatabase() {
 
   const salt = await bcrypt.genSalt(12);
   const hash = await bcrypt.hash(adminPass, salt);
+
+  if (isSupabaseConfigured()) {
+    try {
+      const { data: existingSupabaseAdmin } = await supabase
+        .from('users')
+        .select('id')
+        .eq('username', adminUser)
+        .maybeSingle();
+
+      if (!existingSupabaseAdmin) {
+        await supabase.from('users').insert({
+          username: adminUser,
+          password_hash: hash,
+          email: adminEmail,
+          role: 'admin'
+        });
+        console.log(`[SEED] Created default admin user in Supabase: ${adminUser}`);
+      } else {
+        await supabase.from('users').update({
+          password_hash: hash,
+          email: adminEmail
+        }).eq('username', adminUser);
+        console.log(`[SEED] Updated admin user password hash in Supabase to match .env`);
+      }
+    } catch (e) {
+      console.warn('[SEED SUPABASE USER WARNING]', e.message);
+    }
+  }
 
   const existingAdmin = db.prepare('SELECT id FROM users WHERE username = ?').get(adminUser);
   if (!existingAdmin) {

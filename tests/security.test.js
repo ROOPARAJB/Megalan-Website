@@ -4,6 +4,7 @@ import request from 'supertest';
 import { generateSync } from 'otplib';
 import app from '../src/server.js';
 import db from '../src/database/db.js';
+import dbService from '../src/database/db-service.js';
 import { seedDatabase } from '../src/database/seed.js';
 
 describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
@@ -55,7 +56,8 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
     assert.strictEqual(res.status, 201);
     
     // Query DB to verify sanitization
-    const saved = db.prepare('SELECT full_name, message FROM inquiries WHERE email = ?').get('security.test@vpsayogafresh.com');
+    const allInq = await dbService.getInquiries();
+    const saved = allInq.find(i => i.email === 'security.test@vpsayogafresh.com');
     assert.ok(saved);
     assert.ok(!saved.full_name.includes('<script>'), 'Script tags must be stripped');
     assert.ok(!saved.message.includes('<img'), 'Img payload must be stripped');
@@ -63,7 +65,8 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
 
   // 4. OWASP A04: Bot Honeypot Protection
   test('[OWASP A04] Honeypot trigger should safely drop spam without inserting to DB', async () => {
-    const initialCount = db.prepare('SELECT COUNT(*) as count FROM inquiries').get().count;
+    const initialInq = await dbService.getInquiries();
+    const initialCount = initialInq.length;
 
     const res = await request(app)
       .post('/api/enquiries')
@@ -76,7 +79,8 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
       });
 
     assert.strictEqual(res.status, 200);
-    const finalCount = db.prepare('SELECT COUNT(*) as count FROM inquiries').get().count;
+    const finalInq = await dbService.getInquiries();
+    const finalCount = finalInq.length;
     assert.strictEqual(finalCount, initialCount, 'Honeypot entry must not be persisted in database');
   });
 
@@ -92,15 +96,22 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
     assert.strictEqual(res.status, 401);
     assert.strictEqual(res.body.success, false);
 
-    // Verify security log
-    const log = db.prepare("SELECT * FROM audit_logs WHERE event_type = 'FAILED_LOGIN_ATTEMPT' ORDER BY id DESC LIMIT 1").get();
+    // Verify security log after async insert settles
+    await new Promise(r => setTimeout(r, 250));
+    const logs = await dbService.getAuditLogs(10);
+    const log = logs.find(l => l.event_type === 'FAILED_LOGIN_ATTEMPT');
     assert.ok(log, 'Failed login must be recorded in audit log');
   });
 
   // 6. Complete 2FA / TOTP Authentication Flow & Recovery Codes
   test('Valid 2FA onboarding, TOTP verification, and emergency recovery code flow', async () => {
     // Reset admin 2FA for test
-    db.prepare('UPDATE users SET two_factor_enabled = 0, two_factor_secret = NULL, two_factor_temp_secret = NULL, two_factor_backup_codes = NULL WHERE username = ?').run('admin');
+    await dbService.updateUser2FA('admin', {
+      two_factor_enabled: 0,
+      two_factor_secret: null,
+      two_factor_temp_secret: null,
+      two_factor_backup_codes: null
+    });
 
     // Step 1: Initial Login triggers 2FA setup
     const step1Res = await request(app)

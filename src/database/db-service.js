@@ -336,18 +336,34 @@ export const dbService = {
     db.prepare(`UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?`).run(id);
   },
 
-  async updateUser2FA(id, data) {
+  async updateUser2FA(identifier, data) {
     if (isSupabaseConfigured()) {
-      await supabase
-        .from('users')
-        .update(data)
-        .eq('id', id);
+      const isUsername = typeof identifier === 'string' && isNaN(Number(identifier));
+      if (isUsername) {
+        await supabase.from('users').update(data).eq('username', identifier);
+      } else {
+        await supabase.from('users').update(data).eq('id', identifier);
+      }
       return;
     }
 
     const fields = Object.keys(data).map(k => `${k} = @${k}`).join(', ');
-    const stmt = db.prepare(`UPDATE users SET ${fields} WHERE id = @id`);
-    stmt.run({ id, ...data });
+    const isUsername = typeof identifier === 'string' && isNaN(Number(identifier));
+    if (isUsername) {
+      const stmt = db.prepare(`UPDATE users SET ${fields} WHERE username = @identifier`);
+      stmt.run({ identifier, ...data });
+    } else {
+      const stmt = db.prepare(`UPDATE users SET ${fields} WHERE id = @identifier`);
+      stmt.run({ identifier, ...data });
+    }
+  },
+
+  async updateUserPassword(id, passwordHash) {
+    if (isSupabaseConfigured()) {
+      await supabase.from('users').update({ password_hash: passwordHash }).eq('id', id);
+      return;
+    }
+    db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).run(passwordHash, id);
   }
 };
 
