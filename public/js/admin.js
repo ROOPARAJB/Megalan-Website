@@ -262,10 +262,6 @@ const STATIC_SAMPLE_LOGS = [
   { created_at: new Date(Date.now() - 7200000).toISOString(), event_type: 'INQUIRY_STATUS_UPDATE', description: "Inquiry #102 marked as 'contacted'.", username: 'admin', ip_address: '127.0.0.1', severity: 'INFO' }
 ];
 
-const DEMO_SECRET_KEY = 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP';
-const DEMO_SECRET_DISPLAY = 'JBSW Y3DP EHPK 3PXP JBSW Y3DP EHPK 3PXP';
-const DEMO_QR_URL = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=otpauth%3A%2F%2Ftotp%2FVPSA%2520YOGA%3Aadmin%3Fsecret%3DJBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP%26issuer%3DVPSA%2520YOGA';
-
 // 3. Gallery Loader
 async function loadAdminGallery() {
   const container = document.getElementById('adminGalleryGrid');
@@ -610,18 +606,6 @@ window.resetToStep1 = resetToStep1;
 
 // 6. DOM Initialization
 document.addEventListener('DOMContentLoaded', () => {
-  // Helper for SHA-256 cryptographic hashing
-  async function sha256Hex(str) {
-    try {
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-    } catch (e) {
-      return null;
-    }
-  }
-
-  const EXPECTED_HASH = '47174ca5bd0df2d05206f5d3e8d0191d04d844785668102916e06202e2737976'; // VPSA#Secure2026!
-
   // Check if we are on the Admin Login page
   const loginForm = document.getElementById('adminLoginForm');
   if (loginForm) {
@@ -660,37 +644,6 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.innerText = 'Verifying credentials...';
       }
       if (errorMsg) errorMsg.style.display = 'none';
-
-      if (isStaticMode()) {
-        const passHash = await sha256Hex(password);
-        if (username.toLowerCase() === 'admin' && (passHash === EXPECTED_HASH || password === 'VPSA#Secure2026!')) {
-          currentTempToken = 'demo-2fa-token';
-          if (step1) step1.style.display = 'none';
-
-          // Preload QR and secret key in case user clicks re-scan
-          const qrImg = document.getElementById('qrCodeImg');
-          if (qrImg) qrImg.src = DEMO_QR_URL;
-
-          const manualSecret = document.getElementById('manualSecretBox');
-          if (manualSecret) manualSecret.innerText = DEMO_SECRET_DISPLAY;
-
-          // By default, open Step 2B (Standard 6-digit Authenticator Verification)
-          if (step2Verify) step2Verify.style.display = 'block';
-          const verifyInput = document.getElementById('verifyTotpCode');
-          if (verifyInput) {
-            verifyInput.value = '';
-            verifyInput.focus();
-          }
-          return;
-        } else {
-          showError('Invalid admin username or password.');
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerText = 'Next: Verify Identity →';
-          }
-          return;
-        }
-      }
 
       // Dynamic Node.js backend environment
       try {
@@ -743,93 +696,13 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
       } catch (err) {
-        // Fallback validation if server is unreachable
-        const passHash = await sha256Hex(password);
-        if (username.toLowerCase() === 'admin' && (passHash === EXPECTED_HASH || password === 'VPSA#Secure2026!')) {
-          currentTempToken = 'demo-2fa-token';
-          if (step1) step1.style.display = 'none';
-          const qrImg = document.getElementById('qrCodeImg');
-          if (qrImg) qrImg.src = DEMO_QR_URL;
-          const manualSecret = document.getElementById('manualSecretBox');
-          if (manualSecret) manualSecret.innerText = DEMO_SECRET_KEY;
-          if (step2Setup) step2Setup.style.display = 'block';
-          const codeInput = document.getElementById('setupTotpCode');
-          if (codeInput) { codeInput.value = ''; codeInput.focus(); }
-        } else {
-          showError('Invalid admin username or password.');
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerText = 'Next: Verify Identity →';
-          }
+        showError('Unable to connect to authentication service. Please check server connection.');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Next: Verify Identity →';
         }
       }
     });
-
-    // Helper to verify 6-digit RFC 6238 TOTP from Microsoft / Google Authenticator
-    async function verifyClientTOTP(userInput, secretBase32 = DEMO_SECRET_KEY) {
-      const cleanInput = (userInput || '').replace(/\s+/g, '').trim().toUpperCase();
-      const backupCodes = ['VPSA-7482-9104', 'VPSA-8821-3401', 'VPSA-1934-8829', 'VPSA-6291-0482'];
-      
-      if (backupCodes.includes(cleanInput)) {
-        return { valid: true, type: 'backup' };
-      }
-
-      function base32ToBytes(b32) {
-        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-        let bits = '';
-        const clean = b32.replace(/=+$/, '').toUpperCase();
-        for (let i = 0; i < clean.length; i++) {
-          const val = alphabet.indexOf(clean[i]);
-          if (val === -1) return null;
-          bits += val.toString(2).padStart(5, '0');
-        }
-        const bytes = [];
-        for (let i = 0; i + 8 <= bits.length; i += 8) {
-          bytes.push(parseInt(bits.substr(i, 8), 2));
-        }
-        return new Uint8Array(bytes);
-      }
-
-      async function generateTOTP(timeStepOffset = 0) {
-        const keyBytes = base32ToBytes(secretBase32);
-        if (!keyBytes) return null;
-        const epoch = Math.floor(Date.now() / 1000);
-        const timeStep = Math.floor(epoch / 30) + timeStepOffset;
-
-        const buffer = new ArrayBuffer(8);
-        const view = new DataView(buffer);
-        view.setBigUint64(0, BigInt(timeStep), false);
-
-        const cryptoKey = await crypto.subtle.importKey(
-          'raw',
-          keyBytes,
-          { name: 'HMAC', hash: 'SHA-1' },
-          false,
-          ['sign']
-        );
-
-        const signature = await crypto.subtle.sign('HMAC', cryptoKey, buffer);
-        const hmac = new Uint8Array(signature);
-        const offset = hmac[hmac.length - 1] & 0x0f;
-        const binary = ((hmac[offset] & 0x7f) << 24) |
-                       ((hmac[offset + 1] & 0xff) << 16) |
-                       ((hmac[offset + 2] & 0xff) << 8) |
-                       (hmac[offset + 3] & 0xff);
-        return (binary % 1000000).toString().padStart(6, '0');
-      }
-
-      // Check current window and +/- 1 window (30s clock drift tolerance)
-      for (const offset of [0, -1, 1]) {
-        try {
-          const expected = await generateTOTP(offset);
-          if (expected && expected === cleanInput) {
-            return { valid: true, type: 'totp' };
-          }
-        } catch (e) {}
-      }
-
-      return { valid: false };
-    }
 
     // Toggle Manual Secret Key Box
     const toggleSecretBtn = document.getElementById('toggleSecretKeyBtn');
@@ -875,35 +748,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (errorMsg) errorMsg.style.display = 'none';
 
-        if (isStaticMode()) {
-          const totpResult = await verifyClientTOTP(code);
-          if (!totpResult.valid) {
-            showError('Invalid 6-digit code. Please enter the current rolling code from your Microsoft Authenticator app.');
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.innerText = 'Verify & Activate Authenticator';
-            }
-            return;
-          }
-
-          currentBackupCodes = ['VPSA-7482-9104', 'VPSA-8821-3401', 'VPSA-1934-8829', 'VPSA-6291-0482'];
-          sessionStorage.setItem('vpsa_token', 'demo-session-token');
-          localStorage.setItem('vpsa_token', 'demo-session-token');
-
-          if (step2Setup) step2Setup.style.display = 'none';
-          const codesList = document.getElementById('backupCodesList');
-          if (codesList) {
-            codesList.innerHTML = currentBackupCodes.map(c => `
-              <div style="background: #ffffff; border: 1px solid #cbd5e1; padding: 0.45rem 0.6rem; border-radius: 6px; letter-spacing: 1px; user-select: all;">${escapeHtml(c)}</div>
-            `).join('');
-          }
-
-          if (backupDisplay) backupDisplay.style.display = 'block';
-          showSuccess('Microsoft Authenticator verified & connected successfully!');
-          return;
-        }
-
-        // Live backend
+        // Secure server-side 2FA activation
         try {
           const res = await fetch('/api/auth/2fa/confirm-setup', {
             method: 'POST',
@@ -938,7 +783,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         } catch (err) {
-          showError('Connection error confirming authenticator code.');
+          showError('Connection error confirming authenticator code. Ensure backend server is running.');
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerText = 'Verify & Activate Authenticator';
@@ -971,8 +816,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const proceedBtn = document.getElementById('proceedToDashboardBtn');
     if (proceedBtn) {
       proceedBtn.addEventListener('click', () => {
-        const redirect = isStaticMode() ? 'admin-dashboard.html' : '/admin/dashboard';
-        window.location.href = redirect;
+        window.location.href = '/admin/dashboard';
       });
     }
 
@@ -995,23 +839,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (errorMsg) errorMsg.style.display = 'none';
 
-        if (isStaticMode()) {
-          const totpResult = await verifyClientTOTP(code);
-          if (!totpResult.valid) {
-            showError('Invalid security code. Please check your Microsoft Authenticator app or enter a valid backup code.');
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.innerText = 'Confirm & Enter Dashboard';
-            }
-            return;
-          }
-
-          sessionStorage.setItem('vpsa_token', 'demo-session-token');
-          localStorage.setItem('vpsa_token', 'demo-session-token');
-          window.location.href = 'admin-dashboard.html';
-          return;
-        }
-
+        // Secure server-side 2FA verification
         try {
           const res = await fetch('/api/auth/2fa/verify', {
             method: 'POST',
@@ -1034,7 +862,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         } catch (err) {
-          showError('Connection error verifying security code.');
+          showError('Connection error verifying security code. Ensure backend server is running.');
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerText = 'Confirm & Enter Dashboard';
