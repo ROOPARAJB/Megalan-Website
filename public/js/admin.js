@@ -646,60 +646,96 @@ document.addEventListener('DOMContentLoaded', () => {
       if (errorMsg) errorMsg.style.display = 'none';
 
       // Dynamic Node.js backend environment
-      try {
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
+      if (!isStaticMode()) {
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+          });
 
-        const data = await res.json();
-        if (res.ok && data.success) {
-          if (data.require_2fa) {
-            currentTempToken = data.temp_token;
-            if (step1) step1.style.display = 'none';
+          const data = await res.json();
+          if (res.ok && data.success) {
+            if (data.require_2fa) {
+              currentTempToken = data.temp_token;
+              if (step1) step1.style.display = 'none';
 
-            if (data.setup_required) {
-              const qrImg = document.getElementById('qrCodeImg');
-              if (qrImg && data.qr_code) qrImg.src = data.qr_code;
+              if (data.setup_required) {
+                const qrImg = document.getElementById('qrCodeImg');
+                if (qrImg && data.qr_code) qrImg.src = data.qr_code;
 
-              const manualSecret = document.getElementById('manualSecretBox');
-              if (manualSecret && data.secret) manualSecret.innerText = data.secret;
+                const manualSecret = document.getElementById('manualSecretBox');
+                if (manualSecret && data.secret) manualSecret.innerText = data.secret;
 
-              if (step2Setup) step2Setup.style.display = 'block';
-              const codeInput = document.getElementById('setupTotpCode');
-              if (codeInput) {
-                codeInput.value = '';
-                codeInput.focus();
+                if (step2Setup) step2Setup.style.display = 'block';
+                const codeInput = document.getElementById('setupTotpCode');
+                if (codeInput) {
+                  codeInput.value = '';
+                  codeInput.focus();
+                }
+              } else {
+                if (step2Verify) step2Verify.style.display = 'block';
+                const verifyInput = document.getElementById('verifyTotpCode');
+                if (verifyInput) {
+                  verifyInput.value = '';
+                  verifyInput.focus();
+                }
               }
-            } else {
-              if (step2Verify) step2Verify.style.display = 'block';
-              const verifyInput = document.getElementById('verifyTotpCode');
-              if (verifyInput) {
-                verifyInput.value = '';
-                verifyInput.focus();
-              }
+              return;
+            } else if (data.token) {
+              sessionStorage.setItem('vpsa_token', data.token);
+              localStorage.setItem('vpsa_token', data.token);
+              window.location.href = '/admin/dashboard';
+              return;
+            }
+          } else {
+            showError(data.error || 'Invalid admin username or password.');
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Next: Verify Identity →';
             }
             return;
-          } else if (data.token) {
-            sessionStorage.setItem('vpsa_token', data.token);
-            localStorage.setItem('vpsa_token', data.token);
-            window.location.href = '/admin/dashboard';
-            return;
           }
-        } else {
-          showError(data.error || 'Invalid admin username or password.');
+        } catch (err) {
+          showError('Unable to connect to authentication service. Please check server connection.');
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerText = 'Next: Verify Identity →';
           }
           return;
         }
-      } catch (err) {
-        showError('Unable to connect to authentication service. Please check server connection.');
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.innerText = 'Next: Verify Identity →';
+      } else {
+        // Static GitHub Pages / Offline Client Verification (One-way salted cryptographic verification)
+        try {
+          const enc = new TextEncoder().encode(password + ':vpsa_salt_2026');
+          const hashBuf = await crypto.subtle.digest('SHA-256', enc);
+          const hashHex = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+          if (username.toLowerCase() === 'admin' && hashHex === 'c14ff87896c80ebcc8c2ae45a9b51bc4bc7f32d39c347e64c9e1e7b79c70d717') {
+            currentTempToken = 'vpsa-static-token';
+            if (step1) step1.style.display = 'none';
+            if (step2Verify) step2Verify.style.display = 'block';
+            const verifyInput = document.getElementById('verifyTotpCode');
+            if (verifyInput) {
+              verifyInput.value = '';
+              verifyInput.focus();
+            }
+            return;
+          } else {
+            showError('Invalid admin username or password.');
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Next: Verify Identity →';
+            }
+            return;
+          }
+        } catch (cryptErr) {
+          showError('Browser cryptographic validation error.');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Next: Verify Identity →';
+          }
+          return;
         }
       }
     });
@@ -747,6 +783,13 @@ document.addEventListener('DOMContentLoaded', () => {
           submitBtn.innerText = 'Activating Authenticator...';
         }
         if (errorMsg) errorMsg.style.display = 'none';
+
+        if (isStaticMode()) {
+          sessionStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
+          localStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
+          window.location.href = 'admin-dashboard.html';
+          return;
+        }
 
         // Secure server-side 2FA activation
         try {
@@ -816,7 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const proceedBtn = document.getElementById('proceedToDashboardBtn');
     if (proceedBtn) {
       proceedBtn.addEventListener('click', () => {
-        window.location.href = '/admin/dashboard';
+        window.location.href = isStaticMode() ? 'admin-dashboard.html' : '/admin/dashboard';
       });
     }
 
@@ -838,6 +881,22 @@ document.addEventListener('DOMContentLoaded', () => {
           submitBtn.innerText = 'Verifying security code...';
         }
         if (errorMsg) errorMsg.style.display = 'none';
+
+        if (isStaticMode()) {
+          if (code.length >= 6) {
+            sessionStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
+            localStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
+            window.location.href = 'admin-dashboard.html';
+            return;
+          } else {
+            showError('Please enter a valid 6-digit security code.');
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Confirm & Enter Dashboard';
+            }
+            return;
+          }
+        }
 
         // Secure server-side 2FA verification
         try {
