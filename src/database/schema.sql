@@ -1,4 +1,4 @@
--- VPSA YOGA FRISH Database Schema
+-- VPSA YOGA Database Schema
 -- Designed for High Security, Relational Integrity & Performance
 
 CREATE TABLE IF NOT EXISTS users (

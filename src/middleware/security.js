@@ -12,12 +12,15 @@ export const configureHelmet = () => {
   return helmet({
     contentSecurityPolicy: {
       directives: {
-        defaultSrc: ["'self'"],
+        defaultSrc: ["'self'", "https://translate.google.com", "https://translate.googleapis.com"],
         scriptSrc: [
           "'self'",
           "'unsafe-inline'",
           "https://cdnjs.cloudflare.com",
-          "https://cdn.jsdelivr.net"
+          "https://cdn.jsdelivr.net",
+          "https://translate.google.com",
+          "https://translate.googleapis.com",
+          "https://translate-pa.googleapis.com"
         ],
         scriptSrcAttr: ["'unsafe-inline'"],
         styleSrc: [
@@ -25,7 +28,9 @@ export const configureHelmet = () => {
           "'unsafe-inline'",
           "https://fonts.googleapis.com",
           "https://cdnjs.cloudflare.com",
-          "https://cdn.jsdelivr.net"
+          "https://cdn.jsdelivr.net",
+          "https://translate.googleapis.com",
+          "https://www.gstatic.com"
         ],
         fontSrc: [
           "'self'",
@@ -33,14 +38,19 @@ export const configureHelmet = () => {
           "https://cdnjs.cloudflare.com",
           "data:"
         ],
-        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        imgSrc: ["'self'", "data:", "blob:", "https:", "https://translate.google.com", "https://www.google.com", "https://www.gstatic.com"],
         mediaSrc: ["'self'", "data:", "blob:", "https:"],
-        connectSrc: ["'self'"],
+        connectSrc: [
+          "'self'",
+          "https://translate.google.com",
+          "https://translate.googleapis.com",
+          "https://translate-pa.googleapis.com"
+        ],
+        frameSrc: ["'self'", "https://translate.google.com", "https://translate.googleapis.com"],
         objectSrc: ["'none'"],
         frameAncestors: ["'none'"],
         baseUri: ["'self'"],
-        formAction: ["'self'"],
-        upgradeInsecureRequests: []
+        formAction: ["'self'"]
       }
     },
     crossOriginEmbedderPolicy: false,

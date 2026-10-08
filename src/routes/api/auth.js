@@ -77,7 +77,7 @@ router.post('/login', authRateLimiter, async (req, res) => {
     db.prepare('UPDATE users SET two_factor_temp_secret = ? WHERE id = ?').run(tempSecret, user.id);
 
     const otpauthUrl = generateURI({
-      issuer: 'VPSA YOGA FRISH',
+      issuer: 'VPSA YOGA',
       label: user.username,
       secret: tempSecret
     });
@@ -352,7 +352,7 @@ router.post('/2fa/reconfigure', requireAuthApi, async (req, res) => {
     db.prepare('UPDATE users SET two_factor_temp_secret = ? WHERE id = ?').run(tempSecret, req.user.id);
 
     const otpauthUrl = generateURI({
-      issuer: 'VPSA YOGA FRISH',
+      issuer: 'VPSA YOGA',
       label: req.user.username,
       secret: tempSecret
     });

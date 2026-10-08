@@ -58,7 +58,7 @@ app.use('/api/audit-logs', auditRouter);
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
-    application: 'VPSA YOGA FRISH PVT LTD Logistics Portal',
+    application: 'VPSA YOGA Wholesale & Cold-Chain Portal',
     timestamp: new Date().toISOString()
   });
 });
@@ -96,7 +96,7 @@ const isMainModule = process.argv[1] && (process.argv[1].endsWith('server.js') |
 if (isMainModule && process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`====================================================`);
-    console.log(`🍌 VPSA YOGA FRISH PVT LTD Web Server Running!`);
+    console.log(`🍌 VPSA YOGA Web Server Running!`);
     console.log(`🌐 Application URL: http://localhost:${PORT}`);
     console.log(`🛡️  Admin Management Portal: http://localhost:${PORT}/admin/login`);
     console.log(`====================================================`);

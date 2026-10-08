@@ -1,10 +1,10 @@
 /**
- * VPSA YOGA FRISH PVT LTD - Dynamic Public Gallery Script
+ * VPSA YOGA - Dynamic Public Gallery Script
  */
 
 const defaultStaticPhotos = [
-  { title: 'Theni High-Yield Farm Sourcing', description: 'Lush green banana plantation in Theni, direct harvest from certified partner growers.', category: 'farms', image_url: 'images/products/rasthali-banana.jpg' },
-  { title: 'Oddanchatram Grading Hub', description: 'Hand-inspected bunches meeting international grading parameters for export.', category: 'harvest', image_url: 'images/products/poovan-banana.jpg' },
+  { title: 'South India High-Yield Farm Sourcing', description: 'Lush green banana plantation, direct harvest from certified partner growers all over South India.', category: 'farms', image_url: 'images/products/rasthali-banana.jpg' },
+  { title: 'Quality Inspection & Grading Hub', description: 'Hand-inspected bunches meeting international grading parameters for export.', category: 'harvest', image_url: 'images/products/poovan-banana.jpg' },
   { title: 'Cold-Chain Fleet Loading (13-14°C)', description: 'Reefer containerized fleet coordination ensuring zero damage & optimal shelf-life.', category: 'logistics', image_url: 'images/products/robusta-banana.jpg' },
   { title: 'Super-Sweet Yelakki Bunches', description: 'Golden, freshly harvested Yelakki bananas ready for South India retail chains.', category: 'products', image_url: 'images/products/yelakki-banana.jpg' },
   { title: 'Nutrient-Dense Red Banana Batches', description: 'Premium organic Sevvazhai bunches undergoing hygienic sorting.', category: 'products', image_url: 'images/products/red-banana.jpg' },
@@ -51,7 +51,7 @@ function renderGallery(items) {
 
   container.innerHTML = items.map((item, index) => `
     <div class="gallery-card" data-gallery-index="${index}" style="cursor: pointer;">
-      <img src="${item.image_url}" alt="${escapeHtml(item.title)}" loading="lazy" onerror="this.src='/images/logo/vpsa-logo.svg'" />
+      <img src="${item.image_url}" alt="${escapeHtml(item.title)}" loading="lazy" onerror="this.src='/images/logo/vpsa-yoga-logo.png'" />
       <div class="gallery-overlay">
         <span class="product-badge" style="align-self: flex-start; margin-bottom: 0.5rem; text-transform: uppercase;">${escapeHtml(item.category)}</span>
         <h4 class="gallery-title">${escapeHtml(item.title)}</h4>

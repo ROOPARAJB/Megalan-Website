@@ -1,5 +1,5 @@
 /**
- * VPSA YOGA FRISH PVT LTD - Admin Dashboard & Gallery Management Script
+ * VPSA YOGA - Admin Dashboard & Gallery Management Script
  * High Performance, Secure Session Control & Clean Responsive UI
  */
 
@@ -264,7 +264,7 @@ const STATIC_SAMPLE_LOGS = [
 
 const DEMO_SECRET_KEY = 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP';
 const DEMO_SECRET_DISPLAY = 'JBSW Y3DP EHPK 3PXP JBSW Y3DP EHPK 3PXP';
-const DEMO_QR_URL = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=otpauth%3A%2F%2Ftotp%2FVPSA%2520YOGA%2520FRISH%3Aadmin%3Fsecret%3DJBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP%26issuer%3DVPSA%2520YOGA%2520FRISH';
+const DEMO_QR_URL = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=otpauth%3A%2F%2Ftotp%2FVPSA%2520YOGA%3Aadmin%3Fsecret%3DJBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP%26issuer%3DVPSA%2520YOGA';
 
 // 3. Gallery Loader
 async function loadAdminGallery() {
@@ -312,7 +312,7 @@ async function loadAdminGallery() {
   container.innerHTML = cachedGalleryItems.map(item => `
     <div class="admin-card" style="padding: 1.25rem; margin-bottom: 0; display: flex; flex-direction: column;">
       <div style="height: 175px; overflow: hidden; border-radius: 10px; margin-bottom: 1rem; background: #e2e8f0; position: relative;">
-        <img src="${item.image_url}" alt="${escapeHtml(item.title)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='images/logo/vpsa-logo.svg'" />
+        <img src="${item.image_url}" alt="${escapeHtml(item.title)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/images/logo/vpsa-yoga-logo.png'" />
         <span class="status-pill status-contacted" style="position: absolute; top: 0.65rem; right: 0.65rem; background: rgba(255, 255, 255, 0.92); font-size: 0.7rem; box-shadow: 0 2px 6px rgba(0,0,0,0.15); text-transform: uppercase;">${escapeHtml(item.category)}</span>
       </div>
       <h4 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 0.35rem; line-height: 1.3;">${escapeHtml(item.title)}</h4>
@@ -952,7 +952,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (copyCodesBtn) {
       copyCodesBtn.addEventListener('click', async () => {
         if (currentBackupCodes.length === 0) return;
-        const text = 'VPSA YOGA FRISH - Admin Emergency Recovery Codes:\n' + currentBackupCodes.join('\n');
+        const text = 'VPSA YOGA - Admin Emergency Recovery Codes:\n' + currentBackupCodes.join('\n');
         try {
           await navigator.clipboard.writeText(text);
           copyCodesBtn.innerText = '✓ Copied to Clipboard!';

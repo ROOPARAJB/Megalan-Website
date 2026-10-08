@@ -1,7 +1,7 @@
 {
-  "name": "vpsa-yoga-frish-website",
+  "name": "vpsa-yoga-website",
   "version": "1.0.0",
-  "description": "Enterprise Website & Cold-Chain Logistics Portal for VPSA YOGA FRISH PVT LTD",
+  "description": "Enterprise Website & Cold-Chain Logistics Portal for VPSA YOGA",
   "type": "module",
   "main": "src/server.js",
   "scripts": {
@@ -16,7 +16,7 @@
   "keywords": [
     "banana-wholesale",
     "cold-chain-logistics",
-    "vpsa-yoga-frish",
+    "vpsa-yoga",
     "tamil-nadu-agriculture",
     "export-quality-bananas"
   ],

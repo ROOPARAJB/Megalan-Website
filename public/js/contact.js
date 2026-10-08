@@ -1,5 +1,5 @@
 /**
- * VPSA YOGA FRISH PVT LTD - Contact & RFQ Form Handler
+ * VPSA YOGA - Contact & RFQ Form Handler
  */
 
 document.addEventListener('DOMContentLoaded', () => {

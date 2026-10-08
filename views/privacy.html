@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy &amp; Data Notice | VPSA YOGA FRISH PVT LTD</title>
-  <meta name="description" content="Privacy Policy & Data Protection Notice for VPSA YOGA FRISH PVT LTD wholesale inquiries, quotation services, and cold-chain supply operations.">
+  <title>Privacy Policy &amp; Data Notice | VPSA YOGA</title>
+  <meta name="description" content="Privacy Policy & Data Protection Notice for VPSA YOGA wholesale inquiries, quotation services, and cold-chain supply operations.">
   <link rel="stylesheet" href="/css/styles.css">
-  <link rel="icon" type="image/svg+xml" href="/images/logo/vpsa-logo.svg">
+  <link rel="icon" type="image/png" href="/images/logo/vpsa-yoga-logo.png">
 </head>
 <body>
 
@@ -15,8 +15,11 @@
     <div class="container top-bar-content">
       <div>Wholesale &amp; Cold-Chain Banana Supply Across South India &amp; Global Export</div>
       <div class="top-bar-links">
-        <a href="https://whatsapp.com/channel/0029Vb7kw5cLNSZzMtTqSy0N" target="_blank" rel="noopener noreferrer" class="top-bar-link">💬 WhatsApp Channel</a>
-        <a href="mailto:info@vpsayogafresh.com" class="top-bar-link">✉️ info@vpsayogafresh.com</a>
+        <a href="https://whatsapp.com/channel/0029Vb7kw5cLNSZzMtTqSy0N" target="_blank" rel="noopener noreferrer" class="top-bar-link">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: -3px; display: inline-block;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          <span>WhatsApp Channel</span>
+        </a>
+        <a href="mailto:info@vpsayoga.com" class="top-bar-link">✉️ info@vpsayoga.com</a>
         <span class="top-bar-link" style="color: var(--accent-light);">❄️ 13-14°C Cold Chain</span>
       </div>
     </div>
@@ -26,7 +29,11 @@
   <header class="site-header">
     <div class="container navbar">
       <a href="/" class="brand-logo">
-        <img src="/images/logo/vpsa-logo.svg" alt="VPSA YOGA FRISH PVT LTD" class="brand-logo-img">
+        <img src="/images/logo/vpsa-yoga-logo.png" alt="VPSA YOGA Logo" class="brand-logo-img">
+        <div class="brand-logo-text">
+          <span class="brand-name">VPSA YOGA</span>
+          <span class="brand-tagline">Wholesale &amp; Cold-Chain</span>
+        </div>
       </a>
       <nav>
         <ul class="nav-menu" id="navMenu">
@@ -34,21 +41,50 @@
           <li><a href="/about" class="nav-link">About Us</a></li>
           <li><a href="/products" class="nav-link">Banana Varieties</a></li>
           <li><a href="/gallery" class="nav-link">Live Gallery</a></li>
-          <li><a href="/contact" class="nav-link">Contact &amp; RFQ</a></li>
+          <li><a href="/contact" class="nav-link">Contact Us</a></li>
         </ul>
       </nav>
       <div class="nav-actions">
-        <div class="lang-selector-wrapper">
-          <select id="langSelect" class="lang-select" aria-label="Select Language">
-            <option value="en">🇬🇧 English</option>
-            <option value="ta">🇮🇳 தமிழ் (Tamil)</option>
-            <option value="hi">🇮🇳 हिंदी (Hindi)</option>
-            <option value="ml">🇮🇳 മലയാളം (Malayalam)</option>
-            <option value="te">🇮🇳 తెలుగు (Telugu)</option>
-            <option value="ar">🇦🇪 العربية (Arabic)</option>
-          </select>
+        <!-- Custom Language Picker (Zero Browser Select Box) -->
+        <div class="custom-lang-picker" id="customLangPicker">
+          <button class="lang-picker-btn" id="langPickerTrigger" type="button" aria-label="Language Selector">
+            <span class="lang-globe-icon">🌐</span>
+            <span class="lang-current-name" id="currentLangLabel">English</span>
+            <span class="lang-arrow">▾</span>
+          </button>
+          <div class="lang-picker-dropdown" id="langPickerDropdown">
+            <div class="lang-category-label">Indian Languages</div>
+            <button type="button" class="lang-btn-item active" data-lang="en" data-name="English">🇬🇧 English</button>
+            <button type="button" class="lang-btn-item" data-lang="ta" data-name="தமிழ்">🇮🇳 தமிழ் (Tamil)</button>
+            <button type="button" class="lang-btn-item" data-lang="hi" data-name="हिंदी">🇮🇳 हिंदी (Hindi)</button>
+            <button type="button" class="lang-btn-item" data-lang="ml" data-name="മലയാളം">🇮🇳 Malayalam (മലയാളം)</button>
+            <button type="button" class="lang-btn-item" data-lang="te" data-name="తెలుగు">🇮🇳 Telugu (తెలుగు)</button>
+            <button type="button" class="lang-btn-item" data-lang="kn" data-name="ಕನ್ನಡ">🇮🇳 Kannada (ಕನ್ನಡ)</button>
+            <button type="button" class="lang-btn-item" data-lang="mr" data-name="मराठी">🇮🇳 Marathi (मराठी)</button>
+            <button type="button" class="lang-btn-item" data-lang="bn" data-name="বাংলা">🇮🇳 Bengali (বাংলা)</button>
+            <button type="button" class="lang-btn-item" data-lang="gu" data-name="ગુજરાતી">🇮🇳 Gujarati (ગુજરાતી)</button>
+            <button type="button" class="lang-btn-item" data-lang="pa" data-name="ਪੰਜਾਬੀ">🇮🇳 Punjabi (ਪੰਜਾਬੀ)</button>
+            <button type="button" class="lang-btn-item" data-lang="ur" data-name="اردو">🇮🇳 Urdu (اردو)</button>
+            
+            <div class="lang-category-label" style="margin-top: 0.5rem;">International</div>
+            <button type="button" class="lang-btn-item" data-lang="ar" data-name="العربية">🇦🇪 Arabic (العربية)</button>
+            <button type="button" class="lang-btn-item" data-lang="es" data-name="Español">🇪🇸 Spanish (Español)</button>
+            <button type="button" class="lang-btn-item" data-lang="fr" data-name="Français">🇫🇷 French (Français)</button>
+            <button type="button" class="lang-btn-item" data-lang="de" data-name="Deutsch">🇩🇪 German (Deutsch)</button>
+            <button type="button" class="lang-btn-item" data-lang="zh-CN" data-name="简体中文">🇨🇳 Chinese (简体中文)</button>
+            <button type="button" class="lang-btn-item" data-lang="ja" data-name="日本語">🇯🇵 Japanese (日本語)</button>
+            <button type="button" class="lang-btn-item" data-lang="ru" data-name="Русский">🇷🇺 Russian (Русский)</button>
+            <button type="button" class="lang-btn-item" data-lang="pt" data-name="Português">🇵🇹 Portuguese (Português)</button>
+            <button type="button" class="lang-btn-item" data-lang="it" data-name="Italiano">🇮🇹 Italian (Italiano)</button>
+            <button type="button" class="lang-btn-item" data-lang="ms" data-name="Bahasa Melayu">🇲🇾 Bahasa Melayu</button>
+            <button type="button" class="lang-btn-item" data-lang="id" data-name="Bahasa Indonesia">🇮🇩 Bahasa Indonesia</button>
+            <button type="button" class="lang-btn-item" data-lang="vi" data-name="Tiếng Việt">🇻🇳 Vietnamese (Tiếng Việt)</button>
+            <button type="button" class="lang-btn-item" data-lang="th" data-name="ไทย">🇹🇭 Thai (ไทย)</button>
+          </div>
         </div>
-        <a href="/contact" class="btn btn-primary btn-sm" data-i18n="nav_cta">Request Quote</a>
+
+        <div id="google_translate_element"></div>
+        <a href="/contact" class="btn btn-primary btn-sm">Get in Touch</a>
         <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle menu">☰</button>
       </div>
     </div>
@@ -62,7 +98,7 @@
         Privacy Policy &amp; Data Notice
       </h1>
       <p class="page-banner-sub">
-        How VPSA YOGA FRISH collects, processes, and protects your business and personal information in accordance with applicable data protection laws.
+        How VPSA YOGA collects, processes, and protects your business and personal information in accordance with applicable data protection laws.
       </p>
     </div>
   </section>
@@ -78,7 +114,7 @@
         </div>
 
         <p style="margin-bottom: 1.5rem;">
-          <strong>VPSA YOGA FRISH PVT LTD</strong> ("we", "our", or "the Company") acts as the Data Fiduciary regarding the personal data collected through this website (<a href="/" style="color: var(--primary); font-weight: 600;">vpsayogafresh.com</a>), quotation forms, WhatsApp channels, and direct wholesale inquiries. We are committed to processing your personal data lawfully, transparently, and solely for specified business purposes.
+          <strong>VPSA YOGA</strong> ("we", "our", or "the Company") acts as the Data Fiduciary regarding the personal data collected through this website (<a href="/" style="color: var(--primary); font-weight: 600;">vpsayoga.com</a>), quotation forms, WhatsApp channels, and direct wholesale inquiries. We are committed to processing your personal data lawfully, transparently, and solely for specified business purposes.
         </p>
 
         <h3 style="color: var(--primary); font-size: 1.25rem; font-weight: 700; margin-top: 2rem; margin-bottom: 0.75rem;">2. Personal Data We Collect</h3>
@@ -87,7 +123,7 @@
           <li style="margin-bottom: 0.5rem;"><strong>Full Name:</strong> To identify and address our business customer.</li>
           <li style="margin-bottom: 0.5rem;"><strong>Business Email Address &amp; Mobile Number:</strong> For quotation dispatch, logistics updates, and order confirmations.</li>
           <li style="margin-bottom: 0.5rem;"><strong>Company / Trade Name &amp; Delivery Destination:</strong> To calculate reefer transport route logistics and wholesale pricing.</li>
-          <li style="margin-bottom: 0.5rem;"><strong>Order Requirements &amp; Quantities:</strong> To match inventory from our Oddanchatram &amp; Theni farmer clusters.</li>
+          <li style="margin-bottom: 0.5rem;"><strong>Order Requirements &amp; Quantities:</strong> To match inventory from our direct farmer clusters all over South India.</li>
         </ul>
 
         <h3 style="color: var(--primary); font-size: 1.25rem; font-weight: 700; margin-top: 2rem; margin-bottom: 0.75rem;">3. Purpose Specification &amp; Lawful Grounds for Processing</h3>
@@ -95,7 +131,7 @@
         <ul style="padding-left: 1.5rem; margin-bottom: 1.5rem;">
           <li style="margin-bottom: 0.5rem;">Generating custom commercial wholesale quotations and volume discount rates.</li>
           <li style="margin-bottom: 0.5rem;">Scheduling temperature-controlled (13-14°C) cold-chain transit and dispatch notifications.</li>
-          <li style="margin-bottom: 0.5rem;">Maintaining commercial accounting records and mandatory GST compliance.</li>
+          <li style="margin-bottom: 0.5rem;">Maintaining commercial accounting records and mandatory compliance.</li>
           <li style="margin-bottom: 0.5rem;"><strong>No Data Sale:</strong> We strictly do not sell, rent, or trade your personal data with third-party advertisers or data brokers.</li>
         </ul>
 
@@ -119,10 +155,10 @@
         </p>
         <div style="background-color: #f1f5f9; padding: 1.25rem 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary); font-size: 0.925rem;">
           <strong>Data Protection &amp; Grievance Redressal Desk</strong><br>
-          VPSA YOGA FRISH PVT LTD<br>
-          📍 Oddanchatram &amp; Theni Hubs, Tamil Nadu, India<br>
-          ✉️ Email: <a href="mailto:privacy@vpsayogafresh.com" style="color: var(--primary); font-weight: 600;">privacy@vpsayogafresh.com</a><br>
-          📞 Phone: +91 94432 02626
+          VPSA YOGA<br>
+          📍 Direct Sourcing All Over South India, Tamil Nadu, India<br>
+          ✉️ Email: <a href="mailto:info@vpsayoga.com" style="color: var(--primary); font-weight: 600;">info@vpsayoga.com</a><br>
+          📞 Phone: +91 9003755701, +91 7530045701
         </div>
 
       </div>
@@ -134,49 +170,68 @@
     <div class="container">
       <div class="footer-grid">
         <div>
-          <h3 class="footer-brand-title">VPSA YOGA FRISH PVT LTD</h3>
+          <div class="footer-brand" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+            <img src="/images/logo/vpsa-yoga-logo.png" alt="VPSA YOGA Logo" class="brand-logo-img" style="width: 44px; height: 44px; border-color: rgba(255,255,255,0.2);">
+            <div>
+              <div style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.35rem; color: #ffffff; letter-spacing: 0.04em;">VPSA YOGA</div>
+              <div style="font-size: 0.7rem; font-weight: 700; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase;">Wholesale &amp; Cold-Chain</div>
+            </div>
+          </div>
           <p class="footer-brand-text">
-            Leading wholesale banana supplier and temperature-controlled logistics operator based in Tamil Nadu, India.
+            Leading wholesale banana supplier and temperature-controlled logistics operator based in Tamil Nadu, India. Direct sourcing from trusted farmers all over South India.
           </p>
+          <div style="color: #94a3b8; font-size: 0.85rem; line-height: 1.8;">
+            📍 Direct Farm Sourcing All Over South India<br>
+            🚚 Reefer Cold Chain Fleet (13-14°C)<br>
+            📞 Enquiries: +91 9003755701, +91 7530045701 | info@vpsayoga.com
+          </div>
         </div>
+
         <div>
-          <h4 class="footer-heading">Quick Links</h4>
+          <h4 class="footer-heading">Quick Navigation</h4>
           <ul class="footer-nav">
             <li class="footer-nav-item"><a href="/" class="footer-nav-link">Home</a></li>
             <li class="footer-nav-item"><a href="/about" class="footer-nav-link">About Us</a></li>
             <li class="footer-nav-item"><a href="/products" class="footer-nav-link">Banana Varieties</a></li>
             <li class="footer-nav-item"><a href="/gallery" class="footer-nav-link">Live Gallery</a></li>
-            <li class="footer-nav-item"><a href="/contact" class="footer-nav-link">Contact &amp; RFQ</a></li>
+            <li class="footer-nav-item"><a href="/contact" class="footer-nav-link">Contact Us</a></li>
             <li class="footer-nav-item"><a href="/privacy" class="footer-nav-link" style="color: var(--accent);">Privacy Policy</a></li>
           </ul>
         </div>
+
         <div>
-          <h4 class="footer-heading">Social Channels</h4>
-          <ul class="footer-nav">
-            <li class="footer-nav-item"><a href="https://whatsapp.com/channel/0029Vb7kw5cLNSZzMtTqSy0N" target="_blank" class="footer-nav-link">WhatsApp Channel</a></li>
-            <li class="footer-nav-item"><a href="https://www.instagram.com/vpsa_yoga_groups?igsi=MWlyMzVxcWo2bmRzcA==" target="_blank" class="footer-nav-link">Instagram</a></li>
-            <li class="footer-nav-item"><a href="https://www.facebook.com/profile.php?id=61591422493682" target="_blank" class="footer-nav-link">Facebook</a></li>
-            <li class="footer-nav-item"><a href="https://youtube.com/@vpsayoga?si=_Go4X0xKPNHsEO-G" target="_blank" class="footer-nav-link">YouTube</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4 class="footer-heading">Sourcing Hubs</h4>
-          <p style="font-size: 0.85rem; color: #94a3b8; line-height: 1.7; margin-bottom: 0.75rem;">
-            📍 Oddanchatram &amp; Theni Hubs<br>
-            🚚 Dedicated 13-14°C Reefer Fleet<br>
-            📦 Scientific Grading &amp; Packaging
+          <h4 class="footer-heading">Logistics &amp; Supply</h4>
+          <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 1.25rem; line-height: 1.7;">
+            Daily harvest dispatches across Tamil Nadu, Kerala, Karnataka, Andhra Pradesh, and global export destinations.
           </p>
-          <a href="/contact" class="btn btn-outline-white btn-sm" style="width: 100%; justify-content: center;">⚡ Request Direct Quote</a>
+          <a href="/contact" class="btn btn-outline-white btn-sm" style="width: 100%; justify-content: center;">
+            Contact Trade Desk →
+          </a>
         </div>
       </div>
+
       <div class="footer-bottom">
-        <div>© 2026 VPSA YOGA FRISH PVT LTD. All rights reserved. | <a href="/privacy" style="color: #cbd5e1; text-decoration: underline;">Privacy Policy</a></div>
-        <span class="security-badge">❄️ 13-14°C Cold Chain Assured</span>
+        <div>© 2026 VPSA YOGA. All rights reserved. | <a href="/privacy" style="color: #cbd5e1; text-decoration: underline;">Privacy Policy</a></div>
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+          <span class="security-badge">🌱 100% Direct Farm Sourced</span>
+        </div>
       </div>
     </div>
   </footer>
 
-  <script src="/js/i18n.js?v=5.0"></script>
-  <script src="/js/main.js?v=2.1"></script>
+  <!-- Google Translate Integration Script -->
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'ar,bn,de,en,es,fr,gu,hi,id,it,ja,kn,ml,mr,ms,nl,or,pa,pt,ru,ta,te,th,ur,vi,zh-CN',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+        autoDisplay: false
+      }, 'google_translate_element');
+    }
+  </script>
+  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+  <script src="/js/main.js?v=3.0"></script>
 </body>
 </html>

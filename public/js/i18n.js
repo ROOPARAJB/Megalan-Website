@@ -1,5 +1,5 @@
 /**
- * VPSA YOGA FRISH PVT LTD - Multilingual Translation Engine
+ * VPSA YOGA - Multilingual Translation Engine
  * Supports Instant Runtime Switching for:
  * English (en), Tamil (ta), Hindi (hi), Malayalam (ml), Telugu (te), Arabic (ar)
  */
@@ -40,9 +40,9 @@ const translations = {
     form_destination: "Delivery Destination City",
     form_submit: "Submit Wholesale Inquiry",
     form_submitting: "Submitting...",
-    dpdp_consent_label: "I consent to VPSA YOGA FRISH collecting and using my contact details solely for processing wholesale quotations and managing order logistics in accordance with the Privacy Policy.",
+    dpdp_consent_label: "I consent to VPSA YOGA collecting and using my contact details solely for processing wholesale quotations and managing order logistics in accordance with the Privacy Policy.",
 
-    why_tag: "Why Choose Us",
+    why_tag: "Direct Farm Advantage",
     why_title: "6 Pillars of Unmatched Banana Wholesale Excellence",
     why_sub: "Combining two decades of traditional agricultural mastery with cutting-edge cold-chain logistics.",
     
@@ -50,7 +50,7 @@ const translations = {
     why_1_desc: "We are not new. Decades of hands-on experience in wholesale fruit trading, competitive market pricing, and dependable supply across South India.",
     
     why_2_title: "Farm-Fresh Guarantee",
-    why_2_desc: "Direct sourcing from trusted farmers in Theni, Oddanchatram, and Kerala. No middlemen - so you get the best wholesale price and the freshest harvest.",
+    why_2_desc: "Direct sourcing from trusted farmers all over south india. No middlemen - so you get the best wholesale price and the freshest harvest.",
     
     why_3_title: "End-to-End Cold Chain & Logistics",
     why_3_desc: "This is our biggest strength. Our own fleet coordination and temperature-controlled transport (13-14°C) ensures bananas reach fresh with zero transit damage.",
@@ -64,7 +64,7 @@ const translations = {
     why_6_title: "Export-Ready Quality & Grading",
     why_6_desc: "Proper international grading, hygienic packing, phytosanitary compliance, and export documentation. We know how to handle perishable cargo for long-distance transit.",
 
-    products_title: "Our Premium Banana Catalog",
+    products_title: "Our Premium Banana Varieties",
     products_sub: "Hand-picked, scientifically graded, and cold-chain transported banana varieties.",
     products_btn_quote: "Get Variety Quote",
     products_shelf_life: "Shelf Life",
@@ -97,8 +97,8 @@ const translations = {
     social_fb: "Like on Facebook",
     social_yt: "Subscribe on YouTube",
 
-    footer_text: "VPSA YOGA FRISH PVT LTD — Leading wholesale banana supplier and temperature-controlled logistics operator based in Tamil Nadu, India.",
-    footer_rights: "© 2026 VPSA YOGA FRISH PVT LTD. All rights reserved."
+    footer_text: "VPSA YOGA — Leading wholesale banana supplier and temperature-controlled logistics operator based in Tamil Nadu, India. Direct sourcing from trusted farmers all over South India.",
+    footer_rights: "© 2026 VPSA YOGA. All rights reserved."
   },
 
   ta: {
@@ -195,7 +195,7 @@ const translations = {
     social_yt: "யூடியூபில் சப்ஸ்கிரைப் செய்யவும்",
 
     footer_text: "VPSA யோகா பிரீஷ் பிரைவேட் லிமிடெட் — தமிழ்நாட்டை தலைமையிடமாகக் கொண்ட முன்னணி மொத்த வாழை வர்த்தகர்.",
-    footer_rights: "© 2026 VPSA YOGA FRISH PVT LTD. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை."
+    footer_rights: "© 2026 VPSA YOGA. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை."
   },
 
   hi: {
@@ -291,8 +291,8 @@ const translations = {
     social_fb: "फेसबुक पर लाइक करें",
     social_yt: "यूट्यूब पर सब्सक्राइब करें",
 
-    footer_text: "VPSA YOGA FRISH PVT LTD — तमिलनाडु, भारत स्थित प्रमुख थोक केला आपूर्तिकर्ता।",
-    footer_rights: "© 2026 VPSA YOGA FRISH PVT LTD. सर्वाधिकार सुरक्षित।"
+    footer_text: "VPSA YOGA — तमिलनाडु, भारत स्थित प्रमुख थोक केला आपूर्तिकर्ता।",
+    footer_rights: "© 2026 VPSA YOGA. सर्वाधिकार सुरक्षित।"
   },
 
   ml: {
@@ -351,7 +351,7 @@ const translations = {
     social_fb: "ഫേസ്ബുക്ക്",
     social_yt: "യൂട്യൂബ്",
     footer_text: "വിപിഎസ്എ യോഗ ഫ്രിഷ് പ്രൈവറ്റ് ലിമിറ്റഡ് — തമിഴ്നാട്, ഇന്ത്യ.",
-    footer_rights: "© 2026 VPSA YOGA FRISH PVT LTD. എല്ലാ അവകാശങ്ങളും നിക്ഷിപ്തം."
+    footer_rights: "© 2026 VPSA YOGA. എല്ലാ അവകാശങ്ങളും നിക്ഷിപ്തം."
   },
 
   te: {
@@ -401,7 +401,7 @@ const translations = {
     social_fb: "ఫేస్‌బుక్",
     social_yt: "యూట్యూబ్",
     footer_text: "VPSA యోగా ఫ్రిష్ ప్రైవేట్ లిమిటెడ్ — తమిళనాడు, భారతదేశం.",
-    footer_rights: "© 2026 VPSA YOGA FRISH PVT LTD. సర్వహక్కులు ప్రత్యేకించబడ్డాయి."
+    footer_rights: "© 2026 VPSA YOGA. సర్వహక్కులు ప్రత్యేకించబడ్డాయి."
   },
 
   ar: {
@@ -451,7 +451,7 @@ const translations = {
     social_fb: "فيسبوك",
     social_yt: "يوتيوب",
     footer_text: "شركة VPSA YOGA FRISH المحدودة — المصدر الرائد للموز في تاميل نادو، الهند.",
-    footer_rights: "© 2026 VPSA YOGA FRISH PVT LTD. جميع الحقوق محفوظة."
+    footer_rights: "© 2026 VPSA YOGA. جميع الحقوق محفوظة."
   }
 };
 
