@@ -7,6 +7,20 @@
 let cachedGalleryItems = [];
 let cachedInquiries = [];
 
+const SUPABASE_CONFIG = {
+  url: 'https://sammfailpehmtxlbqmmh.supabase.co',
+  key: 'sb_publishable_fW8EO__Y0fyRVkflrZ4Vlw_LFH-nVN0'
+};
+
+// Helper to normalize image paths for both Local Node server and GitHub Pages subpath
+function resolveImageUrl(url) {
+  if (!url) return 'images/logo/vpsa-yoga-logo.png';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+    return url;
+  }
+  return url.replace(/^\/+/, '');
+}
+
 // Helper to determine if we are running in static hosting (GitHub Pages, file protocol, or static HTML)
 function isStaticMode() {
   return window.location.hostname.includes('github.io') ||
@@ -152,6 +166,19 @@ async function savePhotoEdit() {
       try {
         localStorage.setItem('vpsa_static_gallery', JSON.stringify(cachedGalleryItems));
       } catch (err) {}
+
+      // Sync edit with Supabase Cloud
+      try {
+        await fetch(`${SUPABASE_CONFIG.url}/rest/v1/gallery?id=eq.${id}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_CONFIG.key,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.key}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ title, description, category })
+        });
+      } catch (sbErr) {}
     }
     showToast('Gallery item updated successfully!', 'success');
     closeEditModal();
@@ -203,6 +230,18 @@ async function deleteGalleryItem(event, id) {
     try {
       localStorage.setItem('vpsa_static_gallery', JSON.stringify(cachedGalleryItems));
     } catch (err) {}
+
+    // Sync delete with Supabase Cloud
+    try {
+      await fetch(`${SUPABASE_CONFIG.url}/rest/v1/gallery?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': SUPABASE_CONFIG.key,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`
+        }
+      });
+    } catch (sbErr) {}
+
     showToast('Photo removed successfully.', 'success');
     await loadAdminGallery();
     return;
@@ -269,15 +308,45 @@ async function loadAdminGallery() {
 
   if (isStaticMode()) {
     try {
-      const stored = localStorage.getItem('vpsa_static_gallery');
-      if (stored) {
-        cachedGalleryItems = JSON.parse(stored);
+      // 1. Fetch live gallery records from Supabase Cloud
+      const sbRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/gallery?select=*&order=created_at.desc`, {
+        cache: 'no-cache',
+        headers: {
+          'apikey': SUPABASE_CONFIG.key,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`
+        }
+      });
+
+      if (sbRes.ok) {
+        const sbData = await sbRes.json();
+        if (Array.isArray(sbData) && sbData.length > 0) {
+          let localItems = [];
+          try {
+            localItems = JSON.parse(localStorage.getItem('vpsa_static_gallery') || '[]');
+          } catch (e) {}
+
+          const combined = [...localItems, ...sbData];
+          const seen = new Set();
+          const unique = [];
+          for (const item of combined) {
+            const key = item.id || item.title;
+            if (!seen.has(key)) {
+              seen.add(key);
+              unique.push(item);
+            }
+          }
+          cachedGalleryItems = unique;
+        } else {
+          const stored = localStorage.getItem('vpsa_static_gallery');
+          cachedGalleryItems = stored ? JSON.parse(stored) : [...STATIC_SAMPLE_GALLERY];
+        }
       } else {
-        cachedGalleryItems = [...STATIC_SAMPLE_GALLERY];
-        localStorage.setItem('vpsa_static_gallery', JSON.stringify(cachedGalleryItems));
+        const stored = localStorage.getItem('vpsa_static_gallery');
+        cachedGalleryItems = stored ? JSON.parse(stored) : [...STATIC_SAMPLE_GALLERY];
       }
     } catch (e) {
-      cachedGalleryItems = [...STATIC_SAMPLE_GALLERY];
+      const stored = localStorage.getItem('vpsa_static_gallery');
+      cachedGalleryItems = stored ? JSON.parse(stored) : [...STATIC_SAMPLE_GALLERY];
     }
   } else {
     try {
@@ -308,7 +377,7 @@ async function loadAdminGallery() {
   container.innerHTML = cachedGalleryItems.map(item => `
     <div class="admin-card" style="padding: 1.25rem; margin-bottom: 0; display: flex; flex-direction: column;">
       <div style="height: 175px; overflow: hidden; border-radius: 10px; margin-bottom: 1rem; background: #e2e8f0; position: relative;">
-        <img src="${item.image_url}" alt="${escapeHtml(item.title)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/images/logo/vpsa-yoga-logo.png'" />
+        <img src="${resolveImageUrl(item.image_url)}" alt="${escapeHtml(item.title)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='images/logo/vpsa-yoga-logo.png'" />
         <span class="status-pill status-contacted" style="position: absolute; top: 0.65rem; right: 0.65rem; background: rgba(255, 255, 255, 0.92); font-size: 0.7rem; box-shadow: 0 2px 6px rgba(0,0,0,0.15); text-transform: uppercase;">${escapeHtml(item.category)}</span>
       </div>
       <h4 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 0.35rem; line-height: 1.3;">${escapeHtml(item.title)}</h4>
@@ -1044,6 +1113,54 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Image Compression Helper
+    function compressImageFile(file, maxWidth = 1200, maxHeight = 1200, quality = 0.82) {
+      return new Promise((resolve, reject) => {
+        if (file.type === 'image/svg+xml' || file.type === 'image/gif') {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+          return;
+        }
+
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxHeight) {
+            if (width / height > maxWidth / maxHeight) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        };
+        img.src = objectUrl;
+      });
+    }
+
     // Image Upload Form Submission
     const uploadForm = document.getElementById('uploadGalleryForm');
     if (uploadForm) {
@@ -1060,37 +1177,81 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitBtn = document.getElementById('uploadSubmitBtn') || uploadForm.querySelector('button[type="submit"]');
         if (submitBtn) {
           submitBtn.disabled = true;
-          submitBtn.innerText = 'Uploading photo...';
+          submitBtn.innerText = 'Optimizing & uploading photo...';
         }
 
         if (isStaticMode()) {
-          const title = document.getElementById('uploadPhotoTitle').value.trim();
-          const category = document.getElementById('uploadPhotoCategory').value;
+          const title = document.getElementById('uploadPhotoTitle').value.trim() || 'New Farm Photo';
+          const category = document.getElementById('uploadPhotoCategory').value || 'farms';
           const description = document.getElementById('uploadPhotoDesc').value.trim();
 
-          const reader = new FileReader();
-          reader.onload = function(evt) {
-            const newItem = {
-              id: Date.now(),
-              title: title || 'New Farm Photo',
-              category: category || 'farms',
+          try {
+            const compressedDataUrl = await compressImageFile(fileInput.files[0]);
+
+            const payload = {
+              title: title,
+              category: category,
               description: description || '',
-              image_url: evt.target.result
+              image_url: compressedDataUrl,
+              file_size: fileInput.files[0].size
             };
+
+            // Sync with Supabase Cloud REST API
+            let newId = null;
+            try {
+              const sbRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/gallery`, {
+                method: 'POST',
+                headers: {
+                  'apikey': SUPABASE_CONFIG.key,
+                  'Authorization': `Bearer ${SUPABASE_CONFIG.key}`,
+                  'Content-Type': 'application/json',
+                  'Prefer': 'return=representation'
+                },
+                body: JSON.stringify(payload)
+              });
+
+              if (sbRes.ok) {
+                const inserted = await sbRes.json();
+                if (Array.isArray(inserted) && inserted.length > 0) {
+                  newId = inserted[0].id;
+                }
+              }
+            } catch (sbErr) {
+              console.warn('Supabase cloud direct post error:', sbErr);
+            }
+
+            const newItem = {
+              id: newId || Date.now(),
+              title: payload.title,
+              category: payload.category,
+              description: payload.description,
+              image_url: payload.image_url,
+              file_size: payload.file_size
+            };
+
             cachedGalleryItems.unshift(newItem);
             try {
               localStorage.setItem('vpsa_static_gallery', JSON.stringify(cachedGalleryItems));
             } catch (err) {}
-            showToast('Image uploaded and published successfully!', 'success');
+
+            showToast('Photo uploaded & synced to cloud gallery successfully!', 'success');
             uploadForm.reset();
+            const chosenNameEl = document.getElementById('fileChosenName');
+            if (chosenNameEl) {
+              chosenNameEl.style.display = 'none';
+              chosenNameEl.innerHTML = '';
+            }
             closeUploadModal();
+            await loadAdminGallery();
+          } catch (uploadErr) {
+            console.error('Upload processing error:', uploadErr);
+            showToast('Failed to process image file.', 'error');
+          } finally {
             if (submitBtn) {
               submitBtn.disabled = false;
               submitBtn.innerText = 'Upload & Publish Photo';
             }
-            loadAdminGallery();
-          };
-          reader.readAsDataURL(fileInput.files[0]);
+          }
           return;
         }
 
