@@ -50,7 +50,8 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
         email: 'security.test@vpsayogafresh.com',
         mobile_number: '9876543210',
         message: 'Testing sanitization <img src=x onerror=alert(1)>',
-        country_code: '+91'
+        country_code: '+91',
+        dpdp_consent: true
       });
 
     assert.strictEqual(res.status, 201);
@@ -232,10 +233,69 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
         full_name: 'Test Buyer',
         email: 'invalid-email-format',
         mobile_number: '9876543210',
-        message: 'Hello'
+        country_code: '+91',
+        message: 'Hello wholesale query',
+        dpdp_consent: true
       });
 
     assert.strictEqual(res.status, 400);
     assert.ok(res.body.error.includes('valid email'));
+  });
+
+  test('[Validation] Missing DPDP consent must be rejected with 400', async () => {
+    const res = await request(app)
+      .post('/api/enquiries')
+      .send({
+        full_name: 'Test Buyer',
+        email: 'buyer@validemail.com',
+        mobile_number: '9876543210',
+        country_code: '+91',
+        message: 'Valid message without consent',
+        dpdp_consent: false
+      });
+
+    assert.strictEqual(res.status, 400);
+    assert.ok(res.body.error.includes('consent'));
+  });
+
+  // 8. RBAC (Role-Based Access Control) Enforcement
+  test('[RBAC] Low-privileged editor role cannot access or delete enquiry admin records (403 Forbidden)', async () => {
+    // Seed or update an editor user
+    const dbUsers = db.prepare('SELECT * FROM users WHERE role = ?').all('editor');
+    let editorUser = dbUsers[0];
+    if (!editorUser) {
+      db.prepare('INSERT INTO users (username, password_hash, email, role, two_factor_enabled) VALUES (?, ?, ?, ?, ?)').run(
+        'test_editor',
+        '$2a$12$e/9V.3F7z9s1U3h8O6d7EuX1h4k4w8z8Y6A8b8C8d8e8f8g8h8i8j',
+        'editor@test.com',
+        'editor',
+        1
+      );
+      editorUser = db.prepare('SELECT * FROM users WHERE username = ?').get('test_editor');
+    }
+
+    const { getJwtSecret } = await import('../src/middleware/auth.js');
+    const jwt = (await import('jsonwebtoken')).default;
+    const editorToken = jwt.sign(
+      { id: editorUser.id, username: editorUser.username, role: 'editor' },
+      getJwtSecret(),
+      { expiresIn: '1h' }
+    );
+
+    // Attempt to access inquiries as editor
+    const getRes = await request(app)
+      .get('/api/enquiries')
+      .set('Authorization', `Bearer ${editorToken}`);
+
+    assert.strictEqual(getRes.status, 403, 'Editor must be denied with 403 Forbidden on inquiries API');
+    assert.strictEqual(getRes.body.success, false);
+
+    // Attempt to delete inquiry as editor
+    const delRes = await request(app)
+      .delete('/api/enquiries/1')
+      .set('Authorization', `Bearer ${editorToken}`);
+
+    assert.strictEqual(delRes.status, 403, 'Editor must be denied with 403 Forbidden on inquiry delete API');
+    assert.strictEqual(delRes.body.success, false);
   });
 });

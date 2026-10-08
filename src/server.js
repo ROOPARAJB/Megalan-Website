@@ -21,13 +21,33 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Enable reverse proxy trust for proper client IP resolution in loggers and rate limiters
+app.set('trust proxy', 1);
+
 // 1. Security Headers via Helmet (OWASP A05)
 app.use(configureHelmet());
 
-// 2. CORS Configuration
+// 2. Strict CORS Configuration with Whitelist
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim())
+  : [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'https://rooparajb.github.io'
+    ];
+
 app.use(cors({
-  origin: true,
-  credentials: true
+  origin: (origin, callback) => {
+    // Allow non-browser requests (e.g. curl, test suites, internal microservices)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS policy violation: Origin not allowed'), false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // 3. Request Parsers with bounded payload limits (DoS prevention)

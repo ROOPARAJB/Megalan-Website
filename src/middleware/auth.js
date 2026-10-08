@@ -1,14 +1,26 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import dbService from '../database/db-service.js';
 import db from '../database/db.js';
 import { logSecurityEvent } from './security.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'c8f89e248f21950d7e7c8ab3f92d4f590bc62a348e8913b821a81dcfe55bc29938b81';
+// Secure JWT Secret handling: Fail-closed in production, dynamic runtime entropy in development/testing
+let runtimeJwtSecret = process.env.JWT_SECRET;
+if (!runtimeJwtSecret) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('FATAL SECURITY CONFIGURATION: JWT_SECRET environment variable must be set in production.');
+  }
+  // Generate a non-deterministic 512-bit random secret for this server lifecycle
+  runtimeJwtSecret = crypto.randomBytes(64).toString('hex');
+}
+
+export const getJwtSecret = () => runtimeJwtSecret;
 const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'vpsa_session_token';
 
 /**
  * Authentication Middleware for API endpoints (returns JSON 401/403)
  */
-export const requireAuthApi = (req, res, next) => {
+export const requireAuthApi = async (req, res, next) => {
   const candidates = [];
 
   if (req.headers.authorization) {
@@ -34,8 +46,19 @@ export const requireAuthApi = (req, res, next) => {
 
   for (const token of candidates) {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      const user = db.prepare('SELECT id, username, email, role FROM users WHERE id = ?').get(decoded.id);
+      const decoded = jwt.verify(token, getJwtSecret());
+      let user = null;
+      try {
+        user = await dbService.getUserById(decoded.id);
+      } catch (dbErr) {
+        user = null;
+      }
+
+      if (!user) {
+        try {
+          user = db.prepare('SELECT id, username, email, role FROM users WHERE id = ?').get(decoded.id);
+        } catch (e) {}
+      }
 
       if (user) {
         req.user = user;
@@ -55,9 +78,44 @@ export const requireAuthApi = (req, res, next) => {
 };
 
 /**
+ * Role-Based Access Control Middleware (RBAC) - returns 403 Forbidden on role mismatch
+ */
+export const requireRole = (allowedRoles = ['admin']) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required.'
+      });
+    }
+
+    const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+    const userRole = req.user.role || 'editor';
+
+    if (!roles.includes(userRole)) {
+      logSecurityEvent(
+        'UNAUTHORIZED_ROLE_ACCESS',
+        `User '${req.user.username}' with role '${userRole}' attempted to access restricted endpoint: ${req.originalUrl}`,
+        req.user.id,
+        req,
+        'WARN'
+      );
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: You do not have sufficient administrative privileges to perform this action.'
+      });
+    }
+
+    next();
+  };
+};
+
+export const requireAdmin = requireRole(['admin']);
+
+/**
  * Authentication Middleware for Page Routes (redirects to /admin/login)
  */
-export const requireAuthPage = (req, res, next) => {
+export const requireAuthPage = async (req, res, next) => {
   const token = req.cookies?.[COOKIE_NAME];
 
   if (!token) {
@@ -65,8 +123,13 @@ export const requireAuthPage = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = db.prepare('SELECT id, username, email, role FROM users WHERE id = ?').get(decoded.id);
+    const decoded = jwt.verify(token, getJwtSecret());
+    let user = null;
+    try {
+      user = await dbService.getUserById(decoded.id);
+    } catch (dbErr) {
+      user = db.prepare('SELECT id, username, email, role FROM users WHERE id = ?').get(decoded.id);
+    }
 
     if (!user) {
       res.clearCookie(COOKIE_NAME);

@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://translate.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://translate.google.com https://translate.googleapis.com; connect-src 'self' https://sammfailpehmtxlbqmmh.supabase.co https://translate.googleapis.com; frame-src https://translate.google.com;">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Contact &amp; Wholesale RFQ | VPSA YOGA</title>
   <meta name="description" content="Request a wholesale banana quotation or connect with VPSA YOGA. Direct sourcing from trusted farmers all over south india. Cold-chain logistics 13-14°C.">
   <link rel="stylesheet" href="/css/styles.css">
@@ -121,11 +124,11 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label"><span>Full Name</span> <span class="required">*</span></label>
-                <input type="text" name="full_name" class="form-control" placeholder="e.g. Ramesh Chandra" required>
+                <input type="text" name="full_name" class="form-control" placeholder="e.g. Ramesh Chandra" maxlength="100" required>
               </div>
               <div class="form-group">
                 <label class="form-label"><span>Business Email</span> <span class="required">*</span></label>
-                <input type="email" name="email" class="form-control" placeholder="name@business.com" required>
+                <input type="email" name="email" class="form-control" placeholder="name@business.com" maxlength="100" required>
               </div>
             </div>
 
@@ -142,12 +145,12 @@
                     <option value="+44">🇬🇧 +44</option>
                     <option value="+1">🇺🇸 +1</option>
                   </select>
-                  <input type="tel" name="mobile_number" class="form-control" placeholder="98765 43210" required>
+                  <input type="tel" name="mobile_number" class="form-control" placeholder="98765 43210" pattern="[0-9\s\-]{7,15}" maxlength="15" required>
                 </div>
               </div>
               <div class="form-group">
                 <label class="form-label">Company / Trade Name</label>
-                <input type="text" name="company_name" class="form-control" placeholder="e.g. Lotus Hypermarket">
+                <input type="text" name="company_name" class="form-control" placeholder="e.g. Lotus Hypermarket" maxlength="100">
               </div>
             </div>
 
@@ -168,18 +171,18 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Estimated Volume</label>
-                <input type="text" name="quantity" class="form-control" placeholder="e.g. 5 Tons / 500 Crates">
+                <input type="text" name="quantity" class="form-control" placeholder="e.g. 5 Tons / 500 Crates" maxlength="50">
               </div>
             </div>
 
             <div class="form-group">
               <label class="form-label">Delivery Destination City &amp; State</label>
-              <input type="text" name="destination" class="form-control" placeholder="e.g. Chennai / Bengaluru / Cochin / Dubai Port">
+              <input type="text" name="destination" class="form-control" placeholder="e.g. Chennai / Bengaluru / Cochin / Dubai Port" maxlength="100">
             </div>
 
             <div class="form-group">
               <label class="form-label"><span>Message &amp; Special Requirements</span> <span class="required">*</span></label>
-              <textarea name="message" class="form-control" rows="4" placeholder="Specify supply frequency, packaging boxes preference, cold-chain handover details..." required></textarea>
+              <textarea name="message" class="form-control" rows="4" placeholder="Specify supply frequency, packaging boxes preference, cold-chain handover details..." maxlength="2000" required></textarea>
             </div>
 
             <div class="form-group" style="margin-bottom: 1.5rem;">
@@ -352,7 +355,7 @@
       }, 'google_translate_element');
     }
   </script>
-  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
   <script src="/js/main.js?v=3.0"></script>
   <script src="/js/contact.js?v=3.0"></script>

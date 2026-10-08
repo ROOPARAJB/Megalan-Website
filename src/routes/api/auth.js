@@ -6,10 +6,9 @@ import QRCode from 'qrcode';
 import crypto from 'crypto';
 import dbService from '../../database/db-service.js';
 import { authRateLimiter, logSecurityEvent } from '../../middleware/security.js';
-import { requireAuthApi } from '../../middleware/auth.js';
+import { requireAuthApi, getJwtSecret } from '../../middleware/auth.js';
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'c8f89e248f21950d7e7c8ab3f92d4f590bc62a348e8913b821a81dcfe55bc29938b81';
 const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'vpsa_session_token';
 
 // Helper to generate 4 emergency backup codes
@@ -59,7 +58,7 @@ router.post('/login', authRateLimiter, async (req, res) => {
       // Issue short-lived 2FA challenge token (5 min limit, strictly scoped)
       const tempToken = jwt.sign(
         { id: user.id, username: user.username, role: user.role, step: '2FA_VERIFICATION' },
-        JWT_SECRET,
+        getJwtSecret(),
         { expiresIn: '5m' }
       );
 
@@ -90,7 +89,7 @@ router.post('/login', authRateLimiter, async (req, res) => {
 
     const tempSetupToken = jwt.sign(
       { id: user.id, username: user.username, role: user.role, step: '2FA_SETUP' },
-      JWT_SECRET,
+      getJwtSecret(),
       { expiresIn: '10m' }
     );
 
@@ -127,7 +126,7 @@ router.post('/2fa/confirm-setup', authRateLimiter, async (req, res) => {
   try {
     let decoded;
     try {
-      decoded = jwt.verify(temp_token, JWT_SECRET);
+      decoded = jwt.verify(temp_token, getJwtSecret());
     } catch (e) {
       return res.status(401).json({
         success: false,
@@ -181,7 +180,7 @@ router.post('/2fa/confirm-setup', authRateLimiter, async (req, res) => {
     // Sign full 8-hour admin session token
     const fullSessionToken = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
-      JWT_SECRET,
+      getJwtSecret(),
       { expiresIn: '8h' }
     );
 
@@ -231,7 +230,7 @@ router.post('/2fa/verify', authRateLimiter, async (req, res) => {
   try {
     let decoded;
     try {
-      decoded = jwt.verify(temp_token, JWT_SECRET);
+      decoded = jwt.verify(temp_token, getJwtSecret());
     } catch (e) {
       return res.status(401).json({
         success: false,
@@ -300,7 +299,7 @@ router.post('/2fa/verify', authRateLimiter, async (req, res) => {
     // Sign full 8-hour admin session token
     const fullSessionToken = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
-      JWT_SECRET,
+      getJwtSecret(),
       { expiresIn: '8h' }
     );
 
@@ -365,7 +364,7 @@ router.post('/2fa/reconfigure', requireAuthApi, async (req, res) => {
 
     const tempToken = jwt.sign(
       { id: req.user.id, username: req.user.username, role: req.user.role, step: '2FA_SETUP' },
-      JWT_SECRET,
+      getJwtSecret(),
       { expiresIn: '10m' }
     );
 
@@ -389,7 +388,7 @@ router.post('/logout', (req, res) => {
   const token = req.cookies?.[COOKIE_NAME];
   if (token) {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET);
+      const decoded = jwt.verify(token, getJwtSecret());
       logSecurityEvent('USER_LOGOUT', `User ID ${decoded.id} logged out.`, decoded.id, req, 'INFO');
     } catch (e) {}
   }

@@ -1,11 +1,11 @@
 import express from 'express';
 import dbService from '../../database/db-service.js';
-import { requireAuthApi } from '../../middleware/auth.js';
+import { requireAuthApi, requireAdmin } from '../../middleware/auth.js';
 
 const router = express.Router();
 
-// GET /api/audit-logs (Admin Only)
-router.get('/', requireAuthApi, async (req, res) => {
+// GET /api/audit-logs (Admin Only with RBAC)
+router.get('/', requireAuthApi, requireAdmin, async (req, res) => {
   try {
     const logs = await dbService.getAuditLogs(100);
     return res.json({

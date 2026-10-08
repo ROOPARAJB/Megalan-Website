@@ -140,18 +140,20 @@ describe('VPSA YOGA FRISH Business Logic & API Tests', async () => {
 
   // Inquiry Submission & Admin Processing
   test('Submit and manage wholesale inquiry end-to-end', async () => {
-    // 1. Submit Inquiry
+    // 1. Submit Inquiry with DPDP consent
     const submitRes = await request(app)
       .post('/api/enquiries')
       .send({
         full_name: 'Murugan Traders',
         email: 'murugan@traders.com',
         mobile_number: '9842100000',
+        country_code: '+91',
         company_name: 'Murugan Fruits Co',
         product_variety: 'Red Banana',
         quantity: '10 Tons',
         destination: 'Madurai',
-        message: 'Need daily supply in cold chain reefer 13-14C.'
+        message: 'Need daily supply in cold chain reefer 13-14C.',
+        dpdp_consent: true
       });
 
     assert.strictEqual(submitRes.status, 201);
