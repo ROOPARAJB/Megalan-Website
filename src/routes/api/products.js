@@ -1,14 +1,12 @@
 import express from 'express';
-import db from '../../database/db.js';
+import dbService from '../../database/db-service.js';
 
 const router = express.Router();
 
 // GET /api/products
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const products = db.prepare(`
-      SELECT * FROM products ORDER BY sort_order ASC, id ASC
-    `).all();
+    const products = await dbService.getProducts();
     return res.json({
       success: true,
       data: products
@@ -23,11 +21,9 @@ router.get('/', (req, res) => {
 });
 
 // GET /api/products/:slug
-router.get('/:slug', (req, res) => {
+router.get('/:slug', async (req, res) => {
   try {
-    const product = db.prepare(`
-      SELECT * FROM products WHERE slug = ?
-    `).get(req.params.slug);
+    const product = await dbService.getProductBySlug(req.params.slug);
 
     if (!product) {
       return res.status(404).json({

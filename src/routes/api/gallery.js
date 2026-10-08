@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import db from '../../database/db.js';
+import dbService from '../../database/db-service.js';
 import { requireAuthApi } from '../../middleware/auth.js';
 import { uploadGalleryImage, verifyImageSignature } from '../../middleware/upload.js';
 import { logSecurityEvent } from '../../middleware/security.js';
@@ -12,20 +12,10 @@ const __dirname = path.dirname(__filename);
 const router = express.Router();
 
 // GET /api/gallery
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const { category } = req.query;
   try {
-    let items;
-    if (category && category !== 'all') {
-      items = db.prepare(`
-        SELECT * FROM gallery WHERE category = ? ORDER BY created_at DESC
-      `).all(category);
-    } else {
-      items = db.prepare(`
-        SELECT * FROM gallery ORDER BY created_at DESC
-      `).all();
-    }
-
+    const items = await dbService.getGallery(category);
     return res.json({
       success: true,
       data: items
@@ -61,7 +51,7 @@ router.post(
     });
   },
   verifyImageSignature,
-  (req, res) => {
+  async (req, res) => {
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -76,14 +66,17 @@ router.post(
     const fileSize = req.file.size || 0;
 
     try {
-      const info = db.prepare(`
-        INSERT INTO gallery (title, description, category, image_url, file_size)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(title, description, category, imageUrl, fileSize);
+      const created = await dbService.createGalleryItem({
+        title,
+        description,
+        category,
+        image_url: imageUrl,
+        file_size: fileSize
+      });
 
       logSecurityEvent(
         'GALLERY_IMAGE_UPLOADED',
-        `Admin '${req.user.username}' uploaded new image: ${req.file.filename} (ID: ${info.lastInsertRowid})`,
+        `Admin '${req.user.username}' uploaded new image: ${req.file.filename} (ID: ${created.id})`,
         req.user.id,
         req,
         'INFO'
@@ -92,14 +85,7 @@ router.post(
       return res.status(201).json({
         success: true,
         message: 'Image uploaded and published successfully.',
-        data: {
-          id: Number(info.lastInsertRowid),
-          title,
-          description,
-          category,
-          image_url: imageUrl,
-          file_size: fileSize
-        }
+        data: created
       });
     } catch (err) {
       console.error('Gallery insert error:', err);
@@ -116,7 +102,7 @@ router.post(
 );
 
 // PUT /api/gallery/:id (Update photo metadata - Admin Only)
-router.put('/:id', requireAuthApi, (req, res) => {
+router.put('/:id', requireAuthApi, async (req, res) => {
   const { id } = req.params;
   const { title, description, category } = req.body;
 
@@ -128,7 +114,7 @@ router.put('/:id', requireAuthApi, (req, res) => {
   }
 
   try {
-    const existing = db.prepare('SELECT * FROM gallery WHERE id = ?').get(id);
+    const existing = await dbService.getGalleryItemById(id);
     if (!existing) {
       return res.status(404).json({
         success: false,
@@ -140,11 +126,11 @@ router.put('/:id', requireAuthApi, (req, res) => {
       ? category
       : existing.category;
 
-    db.prepare(`
-      UPDATE gallery
-      SET title = ?, description = ?, category = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(title.trim(), description ? description.trim() : '', safeCategory, id);
+    const updated = await dbService.updateGalleryItem(id, {
+      title: title.trim(),
+      description: description ? description.trim() : '',
+      category: safeCategory
+    });
 
     logSecurityEvent(
       'GALLERY_IMAGE_UPDATED',
@@ -156,7 +142,8 @@ router.put('/:id', requireAuthApi, (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Gallery item updated successfully.'
+      message: 'Gallery item updated successfully.',
+      data: updated
     });
   } catch (err) {
     console.error('Gallery update error:', err);
@@ -168,11 +155,11 @@ router.put('/:id', requireAuthApi, (req, res) => {
 });
 
 // DELETE /api/gallery/:id (Delete photo & file - Admin Only)
-router.delete('/:id', requireAuthApi, (req, res) => {
+router.delete('/:id', requireAuthApi, async (req, res) => {
   const { id } = req.params;
 
   try {
-    const item = db.prepare('SELECT * FROM gallery WHERE id = ?').get(id);
+    const item = await dbService.getGalleryItemById(id);
     if (!item) {
       return res.status(404).json({
         success: false,
@@ -181,12 +168,12 @@ router.delete('/:id', requireAuthApi, (req, res) => {
     }
 
     // Delete DB record
-    db.prepare('DELETE FROM gallery WHERE id = ?').run(id);
+    await dbService.deleteGalleryItem(id);
 
     // Safely delete file from disk if it was uploaded to gallery
     if (item.image_url && item.image_url.startsWith('/images/gallery/')) {
       const filename = path.basename(item.image_url);
-      const safeFilePath = path.resolve(__dirname, '../../public/images/gallery', filename);
+      const safeFilePath = path.resolve(__dirname, '../../../public/images/gallery', filename);
       if (fs.existsSync(safeFilePath)) {
         try { fs.unlinkSync(safeFilePath); } catch (e) {
           console.error('Error removing file:', e);

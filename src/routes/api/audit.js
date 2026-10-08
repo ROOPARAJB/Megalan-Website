@@ -1,20 +1,13 @@
 import express from 'express';
-import db from '../../database/db.js';
+import dbService from '../../database/db-service.js';
 import { requireAuthApi } from '../../middleware/auth.js';
 
 const router = express.Router();
 
 // GET /api/audit-logs (Admin Only)
-router.get('/', requireAuthApi, (req, res) => {
+router.get('/', requireAuthApi, async (req, res) => {
   try {
-    const logs = db.prepare(`
-      SELECT a.*, u.username
-      FROM audit_logs a
-      LEFT JOIN users u ON a.user_id = u.id
-      ORDER BY a.created_at DESC
-      LIMIT 100
-    `).all();
-
+    const logs = await dbService.getAuditLogs(100);
     return res.json({
       success: true,
       data: logs

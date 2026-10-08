@@ -159,6 +159,7 @@ export const logSecurityEvent = (eventType, description, userId = null, req = nu
       VALUES (?, ?, ?, ?, ?, ?)
     `).run(eventType, description, userId, String(ipAddress), String(userAgent), severity);
   } catch (err) {
-    console.error('[AUDIT LOG ERROR]', err);
+    // If running solely on Supabase or SQLite migration in progress
+    console.warn('[AUDIT LOG]', eventType, description);
   }
 };

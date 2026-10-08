@@ -1,13 +1,13 @@
 import express from 'express';
 import validator from 'validator';
-import db from '../../database/db.js';
+import dbService from '../../database/db-service.js';
 import { inquiryRateLimiter, logSecurityEvent } from '../../middleware/security.js';
 import { requireAuthApi } from '../../middleware/auth.js';
 
 const router = express.Router();
 
 // POST /api/enquiries (Public form submission with rate limiting and bot honeypot)
-router.post('/', inquiryRateLimiter, (req, res) => {
+router.post('/', inquiryRateLimiter, async (req, res) => {
   const {
     full_name,
     email,
@@ -62,28 +62,22 @@ router.post('/', inquiryRateLimiter, (req, res) => {
   try {
     const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
 
-    const info = db.prepare(`
-      INSERT INTO inquiries (
-        full_name, email, country_code, mobile_number,
-        company_name, product_variety, quantity, destination,
-        message, ip_address
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      full_name.trim(),
-      email.trim(),
-      country_code.trim(),
-      mobile_number.trim(),
-      company_name ? company_name.trim() : null,
-      product_variety ? product_variety.trim() : null,
-      quantity ? quantity.trim() : null,
-      destination ? destination.trim() : null,
-      message.trim(),
-      String(ipAddress)
-    );
+    const created = await dbService.createInquiry({
+      full_name: full_name.trim(),
+      email: email.trim(),
+      country_code: country_code.trim(),
+      mobile_number: mobile_number.trim(),
+      company_name: company_name ? company_name.trim() : null,
+      product_variety: product_variety ? product_variety.trim() : null,
+      quantity: quantity ? quantity.trim() : null,
+      destination: destination ? destination.trim() : null,
+      message: message.trim(),
+      ip_address: String(ipAddress)
+    });
 
     logSecurityEvent(
       'NEW_ENQUIRY_RECEIVED',
-      `New wholesale enquiry #${info.lastInsertRowid} from ${full_name.trim()} (${company_name || 'Individual'})`,
+      `New wholesale enquiry #${created.id} from ${full_name.trim()} (${company_name || 'Individual'})`,
       null,
       req,
       'INFO'
@@ -91,7 +85,8 @@ router.post('/', inquiryRateLimiter, (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Your inquiry has been sent successfully. Our logistics and wholesale team will contact you within 24 hours.'
+      message: 'Your inquiry has been sent successfully. Our logistics and wholesale team will contact you within 24 hours.',
+      data: created
     });
   } catch (err) {
     console.error('Enquiry submission error:', err);
@@ -103,16 +98,10 @@ router.post('/', inquiryRateLimiter, (req, res) => {
 });
 
 // GET /api/enquiries (Admin Only - List Inquiries)
-router.get('/', requireAuthApi, (req, res) => {
+router.get('/', requireAuthApi, async (req, res) => {
   const { status } = req.query;
   try {
-    let list;
-    if (status && status !== 'all') {
-      list = db.prepare('SELECT * FROM inquiries WHERE status = ? ORDER BY created_at DESC').all(status);
-    } else {
-      list = db.prepare('SELECT * FROM inquiries ORDER BY created_at DESC').all();
-    }
-
+    const list = await dbService.getInquiries(status);
     return res.json({
       success: true,
       data: list
@@ -127,7 +116,7 @@ router.get('/', requireAuthApi, (req, res) => {
 });
 
 // PATCH /api/enquiries/:id/status (Admin Only - Update Status)
-router.patch('/:id/status', requireAuthApi, (req, res) => {
+router.patch('/:id/status', requireAuthApi, async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
@@ -140,7 +129,7 @@ router.patch('/:id/status', requireAuthApi, (req, res) => {
   }
 
   try {
-    db.prepare('UPDATE inquiries SET status = ? WHERE id = ?').run(status, id);
+    await dbService.updateInquiryStatus(id, status);
     logSecurityEvent(
       'ENQUIRY_STATUS_UPDATED',
       `Admin '${req.user.username}' updated enquiry #${id} status to '${status}'`,
@@ -163,10 +152,10 @@ router.patch('/:id/status', requireAuthApi, (req, res) => {
 });
 
 // DELETE /api/enquiries/:id (Admin Only)
-router.delete('/:id', requireAuthApi, (req, res) => {
+router.delete('/:id', requireAuthApi, async (req, res) => {
   const { id } = req.params;
   try {
-    db.prepare('DELETE FROM inquiries WHERE id = ?').run(id);
+    await dbService.deleteInquiry(id);
     logSecurityEvent(
       'ENQUIRY_DELETED',
       `Admin '${req.user.username}' deleted enquiry #${id}`,
