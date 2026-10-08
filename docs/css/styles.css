@@ -1727,6 +1727,61 @@ body.rtl-layout .lightbox-close {
 }
 
 /* ==========================================================================
+   Dynamic Real-Time Collision Adapter Rules
+   (Applied automatically by JS when translated text width exceeds screen space)
+   ========================================================================== */
+.site-header.navbar-dynamic-collapse .nav-menu:not(.active) {
+  display: none !important;
+}
+
+.site-header.navbar-dynamic-collapse .nav-desktop-cta {
+  display: none !important;
+}
+
+.site-header.navbar-dynamic-collapse .mobile-nav-toggle {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1.5px solid var(--border-light);
+  font-size: 1.3rem;
+  color: #1e293b;
+  cursor: pointer;
+  padding: 0;
+}
+
+.site-header.navbar-dynamic-collapse .mobile-nav-cta-item {
+  display: block !important;
+}
+
+.site-header.navbar-dynamic-collapse .nav-menu.active {
+  display: flex !important;
+  flex-direction: column;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: #ffffff;
+  padding: 1.25rem 1.5rem 1.75rem;
+  box-shadow: var(--shadow-xl);
+  border-bottom: 1px solid var(--border-light);
+  gap: 0.65rem;
+  align-items: stretch;
+  z-index: 200;
+  max-height: calc(100vh - 75px);
+  overflow-y: auto;
+}
+
+.site-header.navbar-dynamic-collapse .nav-menu.active .nav-link {
+  padding: 0.75rem 0.5rem;
+  font-size: 1.05rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* ==========================================================================
    Responsive Breakpoints & Multilingual Screen Fit
    ========================================================================== */
 @media (max-width: 1380px) {

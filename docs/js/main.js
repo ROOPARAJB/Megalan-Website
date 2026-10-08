@@ -76,7 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const navMenu = document.getElementById('navMenu');
 
   if (toggleBtn && navMenu) {
-    toggleBtn.addEventListener('click', () => {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       navMenu.classList.toggle('active');
     });
 
@@ -85,6 +86,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!navMenu.contains(e.target) && !toggleBtn.contains(e.target)) {
         navMenu.classList.remove('active');
       }
+    });
+
+    // Close menu when clicking any nav link
+    navMenu.querySelectorAll('.nav-link, .btn').forEach(link => {
+      link.addEventListener('click', () => {
+        navMenu.classList.remove('active');
+      });
     });
   }
 
@@ -96,6 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
       link.classList.add('active');
     }
   });
+
+  // Dynamic Intelligent Header Layout System
+  initDynamicHeaderLayout();
 
   // Sticky Header elevation on scroll
   const siteHeader = document.querySelector('.site-header');
@@ -326,4 +337,97 @@ function initGoogleTranslateCleaners() {
 document.addEventListener('DOMContentLoaded', () => {
   initGoogleTranslateCleaners();
 });
+
+/**
+ * Dynamic Intelligent Navigation Layout Adapter
+ * Dynamically computes real-time element widths, font metrics, and translation text length.
+ * Automatically switches between desktop row menu and clean slide-out drawer
+ * whenever text expansion threatens to collide or push elements off the screen.
+ */
+function initDynamicHeaderLayout() {
+  const header = document.querySelector('.site-header');
+  const navbar = document.querySelector('.navbar');
+  const brandLogo = document.querySelector('.brand-logo');
+  const navMenu = document.getElementById('navMenu');
+  const navActions = document.querySelector('.nav-actions');
+
+  if (!header || !navbar || !navMenu || !navActions) return;
+
+  function evaluateHeaderLayout() {
+    const windowWidth = window.innerWidth;
+
+    // Below 1024px, always collapse to touch drawer
+    if (windowWidth <= 1024) {
+      header.classList.add('navbar-dynamic-collapse');
+      return;
+    }
+
+    // Preserve active drawer state during measurement
+    const wasActive = navMenu.classList.contains('active');
+    
+    // Temporarily disable collapse to measure unconstrained width
+    header.classList.remove('navbar-dynamic-collapse');
+
+    const containerWidth = navbar.clientWidth;
+    const logoWidth = brandLogo ? brandLogo.getBoundingClientRect().width : 0;
+    const actionsWidth = navActions ? navActions.getBoundingClientRect().width : 0;
+
+    let navItemsWidth = 0;
+    const navItems = navMenu.querySelectorAll('li:not(.mobile-nav-cta-item)');
+    navItems.forEach(item => {
+      navItemsWidth += item.getBoundingClientRect().width;
+    });
+
+    // Gap buffer: accounts for flex gaps and padding
+    const gapBuffer = (navItems.length + 2) * 18 + 40;
+    const totalRequiredWidth = logoWidth + navItemsWidth + actionsWidth + gapBuffer;
+
+    if (totalRequiredWidth > containerWidth || windowWidth <= 1180) {
+      header.classList.add('navbar-dynamic-collapse');
+      if (wasActive) {
+        navMenu.classList.add('active');
+      }
+    } else {
+      header.classList.remove('navbar-dynamic-collapse');
+      navMenu.classList.remove('active');
+    }
+  }
+
+  evaluateHeaderLayout();
+
+  // Resize listener
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    cancelAnimationFrame(resizeTimer);
+    resizeTimer = requestAnimationFrame(evaluateHeaderLayout);
+  }, { passive: true });
+
+  // Web Fonts Ready listener
+  if (document.fonts) {
+    document.fonts.ready.then(evaluateHeaderLayout);
+  }
+
+  // ResizeObserver on navbar
+  if ('ResizeObserver' in window) {
+    const ro = new ResizeObserver(() => {
+      evaluateHeaderLayout();
+    });
+    ro.observe(navbar);
+  }
+
+  // MutationObserver for translation changes
+  if ('MutationObserver' in window) {
+    const mo = new MutationObserver(() => {
+      requestAnimationFrame(evaluateHeaderLayout);
+    });
+    mo.observe(header, { childList: true, subtree: true, characterData: true });
+  }
+
+  // Periodic safety checks for late-loading Google Translate elements
+  setTimeout(evaluateHeaderLayout, 300);
+  setTimeout(evaluateHeaderLayout, 800);
+  setTimeout(evaluateHeaderLayout, 1500);
+  setTimeout(evaluateHeaderLayout, 3000);
+}
+
 
