@@ -35,10 +35,14 @@ for (const targetDir of targetDirs) {
     fs.rmSync(staticAdminJs, { force: true });
   }
 
-  // 2. Copy _headers configuration file for static security headers (Cloudflare Pages / Netlify / etc.)
+  // 2. Copy _headers and CNAME configuration files
   const headersSrc = path.join(publicDir, '_headers');
   if (fs.existsSync(headersSrc)) {
     fs.copyFileSync(headersSrc, path.join(targetDir, '_headers'));
+  }
+  const cnameSrc = path.join(publicDir, 'CNAME');
+  if (fs.existsSync(cnameSrc)) {
+    fs.copyFileSync(cnameSrc, path.join(targetDir, 'CNAME'));
   }
 
   // 3. Add .nojekyll for GitHub Pages
