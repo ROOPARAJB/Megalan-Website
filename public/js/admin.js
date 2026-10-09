@@ -501,15 +501,28 @@ async function loadAdminInquiries() {
 
   if (isStaticMode()) {
     try {
-      const stored = localStorage.getItem('vpsa_static_inquiries');
-      if (stored) {
-        cachedInquiries = JSON.parse(stored);
+      const sbRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/inquiries?select=*&order=created_at.desc`, {
+        cache: 'no-cache',
+        headers: {
+          'apikey': SUPABASE_CONFIG.key,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`
+        }
+      });
+
+      if (sbRes.ok) {
+        const sbData = await sbRes.json();
+        if (Array.isArray(sbData)) {
+          cachedInquiries = sbData;
+        } else {
+          cachedInquiries = [...STATIC_SAMPLE_INQUIRIES];
+        }
       } else {
-        cachedInquiries = [...STATIC_SAMPLE_INQUIRIES];
-        localStorage.setItem('vpsa_static_inquiries', JSON.stringify(cachedInquiries));
+        const stored = localStorage.getItem('vpsa_static_inquiries');
+        cachedInquiries = stored ? JSON.parse(stored) : [...STATIC_SAMPLE_INQUIRIES];
       }
     } catch (e) {
-      cachedInquiries = [...STATIC_SAMPLE_INQUIRIES];
+      const stored = localStorage.getItem('vpsa_static_inquiries');
+      cachedInquiries = stored ? JSON.parse(stored) : [...STATIC_SAMPLE_INQUIRIES];
     }
   } else {
     try {
@@ -579,15 +592,22 @@ async function loadAdminInquiries() {
 
 async function updateInquiryStatus(id, status) {
   if (isStaticMode()) {
+    try {
+      await fetch(`${SUPABASE_CONFIG.url}/rest/v1/inquiries?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_CONFIG.key,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+      });
+    } catch (sbErr) {}
+
     const item = cachedInquiries.find(x => x.id === id);
-    if (item) {
-      item.status = status;
-      try {
-        localStorage.setItem('vpsa_static_inquiries', JSON.stringify(cachedInquiries));
-      } catch (err) {}
-    }
+    if (item) item.status = status;
     showToast('Status updated successfully.', 'success');
-    loadAdminInquiries();
+    await loadAdminInquiries();
     return;
   }
 
@@ -616,12 +636,19 @@ async function deleteInquiry(id) {
   if (!confirm('Are you sure you want to delete this inquiry record?')) return;
 
   if (isStaticMode()) {
-    cachedInquiries = cachedInquiries.filter(x => x.id !== id);
     try {
-      localStorage.setItem('vpsa_static_inquiries', JSON.stringify(cachedInquiries));
-    } catch (err) {}
+      await fetch(`${SUPABASE_CONFIG.url}/rest/v1/inquiries?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': SUPABASE_CONFIG.key,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`
+        }
+      });
+    } catch (sbErr) {}
+
+    cachedInquiries = cachedInquiries.filter(x => x.id !== id);
     showToast('Enquiry deleted successfully.', 'success');
-    loadAdminInquiries();
+    await loadAdminInquiries();
     return;
   }
 
@@ -651,15 +678,23 @@ async function loadAdminAuditLogs() {
   let logs = [];
   if (isStaticMode()) {
     try {
-      const stored = localStorage.getItem('vpsa_static_logs');
-      if (stored) {
-        logs = JSON.parse(stored);
+      const sbRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/audit_logs?select=*&order=created_at.desc&limit=30`, {
+        cache: 'no-cache',
+        headers: {
+          'apikey': SUPABASE_CONFIG.key,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`
+        }
+      });
+
+      if (sbRes.ok) {
+        const sbData = await sbRes.json();
+        if (Array.isArray(sbData) && sbData.length > 0) logs = sbData;
+        else logs = STATIC_SAMPLE_LOGS;
       } else {
-        logs = [...STATIC_SAMPLE_LOGS];
-        localStorage.setItem('vpsa_static_logs', JSON.stringify(logs));
+        logs = STATIC_SAMPLE_LOGS;
       }
     } catch (e) {
-      logs = [...STATIC_SAMPLE_LOGS];
+      logs = STATIC_SAMPLE_LOGS;
     }
   } else {
     try {

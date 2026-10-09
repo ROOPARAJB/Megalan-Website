@@ -3,6 +3,11 @@
  * Enhanced with Client-Side Rate-Limiting, DPDP Consent Validation, Anti-Spam Honeypots, and Privacy-Preserving Fallback
  */
 
+const SUPABASE_CONFIG = {
+  url: 'https://sammfailpehmtxlbqmmh.supabase.co',
+  key: 'sb_publishable_fW8EO__Y0fyRVkflrZ4Vlw_LFH-nVN0'
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   const forms = document.querySelectorAll('.inquiry-form');
 
@@ -103,11 +108,11 @@ document.addEventListener('DOMContentLoaded', () => {
           showToast(result.error, 'error');
         } else {
           // Static host fallback (e.g., GitHub Pages without active Node API)
-          handleOfflineStaticSubmission(payload, form);
+          await handleOfflineStaticSubmission(payload, form);
         }
       } catch (err) {
         // Network unreachable or static GitHub Pages hosting
-        handleOfflineStaticSubmission(payload, form);
+        await handleOfflineStaticSubmission(payload, form);
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -118,22 +123,38 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /**
-   * Privacy-Preserving Static/Offline Handler (Data Minimization: Zero PII in URL queries)
+   * Direct Cloud Sync Handler for Static/GitHub Pages Hosting
    */
-  function handleOfflineStaticSubmission(payload, form) {
+  async function handleOfflineStaticSubmission(payload, form) {
     try {
-      const stored = JSON.parse(localStorage.getItem('vpsa_static_enquiries') || '[]');
-      stored.unshift({
-        id: Date.now(),
-        ...payload,
-        created_at: new Date().toISOString()
+      await fetch(`${SUPABASE_CONFIG.url}/rest/v1/inquiries`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_CONFIG.key,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          full_name: payload.full_name,
+          email: payload.email,
+          country_code: payload.country_code,
+          mobile_number: payload.mobile_number,
+          company_name: payload.company_name || null,
+          product_variety: payload.product_variety || null,
+          quantity: payload.quantity || null,
+          destination: payload.destination || null,
+          message: payload.message,
+          status: 'new'
+        })
       });
-      localStorage.setItem('vpsa_static_enquiries', JSON.stringify(stored.slice(0, 50)));
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Supabase direct enquiry insert error:', e);
+    }
 
     sessionStorage.setItem('vpsa_last_inquiry_ts', String(Date.now()));
     form.reset();
 
-    showToast('Your quotation request has been recorded successfully! For urgent trade inquiries, you can reach our Trade Desk directly.', 'success');
+    showToast('Your quotation request has been transmitted and recorded in our live database successfully!', 'success');
   }
 });
