@@ -351,6 +351,82 @@ router.post('/2fa/verify', authRateLimiter, async (req, res) => {
   }
 });
 
+// POST /api/auth/2fa/reset-request (Allow authenticated user in 2FA verification step to re-pair authenticator)
+router.post('/2fa/reset-request', authRateLimiter, async (req, res) => {
+  const { temp_token } = req.body;
+
+  if (!temp_token) {
+    return res.status(400).json({
+      success: false,
+      error: 'Temporary token is required.'
+    });
+  }
+
+  try {
+    let decoded;
+    try {
+      decoded = jwt.verify(temp_token, getJwtSecret());
+    } catch (e) {
+      return res.status(401).json({
+        success: false,
+        error: 'Verification session expired. Please log in again.'
+      });
+    }
+
+    if (decoded.step !== '2FA_VERIFICATION' && decoded.step !== '2FA_SETUP') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid authentication step sequence.'
+      });
+    }
+
+    const user = await dbService.getUserById(decoded.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User account not found.'
+      });
+    }
+
+    const tempSecret = generateSecret();
+    await dbService.updateUser2FA(user.id, { two_factor_temp_secret: tempSecret });
+
+    const otpauthUrl = generateURI({
+      issuer: 'VPSA YOGA',
+      label: user.username,
+      secret: tempSecret
+    });
+    const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl, {
+      errorCorrectionLevel: 'M',
+      margin: 2,
+      width: 260,
+      color: { dark: '#022c22', light: '#ffffff' }
+    });
+
+    const tempSetupToken = jwt.sign(
+      { id: user.id, username: user.username, role: user.role, step: '2FA_SETUP' },
+      getJwtSecret(),
+      { expiresIn: '10m' }
+    );
+
+    logSecurityEvent('2FA_REPAIR_REQUESTED', `User '${user.username}' requested 2FA re-pairing from login screen.`, user.id, req, 'INFO');
+
+    return res.json({
+      success: true,
+      qr_code: qrCodeDataUrl,
+      secret: tempSecret,
+      temp_token: tempSetupToken,
+      message: 'Scan the QR code with Microsoft Authenticator and enter the 6-digit code.'
+    });
+  } catch (err) {
+    console.error('2FA reset-request error:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error while generating 2FA re-pairing QR code.'
+    });
+  }
+});
+
 // GET /api/auth/2fa/status (Admin only: Check 2FA setup status)
 router.get('/2fa/status', requireAuthApi, async (req, res) => {
   const user = await dbService.getUserById(req.user.id);

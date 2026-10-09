@@ -820,6 +820,58 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Re-scan QR code / Pair New Device button
+    const showQrSetupBtn = document.getElementById('showQrSetupBtn');
+    if (showQrSetupBtn) {
+      showQrSetupBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (!currentTempToken) {
+          showError('Session expired. Please enter username and password again.');
+          resetToStep1();
+          return;
+        }
+
+        showQrSetupBtn.disabled = true;
+        showQrSetupBtn.innerText = 'Generating new QR code...';
+        if (errorMsg) errorMsg.style.display = 'none';
+
+        try {
+          const res = await fetch('/api/auth/2fa/reset-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ temp_token: currentTempToken })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            currentTempToken = data.temp_token;
+
+            const qrImg = document.getElementById('qrCodeImg');
+            if (qrImg && data.qr_code) qrImg.src = data.qr_code;
+
+            const manualSecret = document.getElementById('manualSecretBox');
+            if (manualSecret && data.secret) manualSecret.innerText = data.secret;
+
+            if (step2Verify) step2Verify.style.display = 'none';
+            if (step2Setup) step2Setup.style.display = 'block';
+
+            const codeInput = document.getElementById('setupTotpCode');
+            if (codeInput) {
+              codeInput.value = '';
+              codeInput.focus();
+            }
+          } else {
+            showError(data.error || 'Failed to generate new pairing QR code. Please re-enter credentials.');
+          }
+        } catch (err) {
+          showError('Connection error requesting 2FA QR code. Ensure server is running.');
+        } finally {
+          showQrSetupBtn.disabled = false;
+          showQrSetupBtn.innerText = 'Need to re-scan QR code or pair a new device?';
+        }
+      });
+    }
+
     return;
   }
 
