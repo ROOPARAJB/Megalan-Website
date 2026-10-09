@@ -33,7 +33,9 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   : [
       'http://localhost:3000',
       'http://127.0.0.1:3000',
-      'https://rooparajb.github.io'
+      'https://rooparajb.github.io',
+      'https://vpsayoga.in',
+      'https://www.vpsayoga.in'
     ];
 
 app.use(cors({

@@ -107,12 +107,15 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
   // 6. Complete 2FA / TOTP Authentication Flow & Recovery Codes
   test('Valid 2FA onboarding, TOTP verification, and emergency recovery code flow', async () => {
     // Reset admin 2FA for test
-    await dbService.updateUser2FA('admin', {
-      two_factor_enabled: 0,
-      two_factor_secret: null,
-      two_factor_temp_secret: null,
-      two_factor_backup_codes: null
-    });
+    const adminUser = await dbService.getUserByUsername('admin');
+    if (adminUser) {
+      await dbService.updateUser2FA(adminUser.id, {
+        two_factor_enabled: 0,
+        two_factor_secret: null,
+        two_factor_temp_secret: null,
+        two_factor_backup_codes: null
+      });
+    }
 
     // Step 1: Initial Login triggers 2FA setup
     const step1Res = await request(app)

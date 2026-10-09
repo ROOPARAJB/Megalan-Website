@@ -70,15 +70,20 @@ export const configureHelmet = () => {
   });
 };
 
+const isLocalhost = (req) => {
+  const ip = req.ip || req.socket?.remoteAddress || '';
+  return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || ip.includes('127.0.0.1');
+};
+
 /**
  * Global Rate Limiter (DDoS / Scraping Protection)
  */
 export const globalRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: (req) => process.env.NODE_ENV === 'test' || isLocalhost(req),
   message: {
     success: false,
     error: 'Too many requests from this IP. Please try again in 15 minutes.'
@@ -90,10 +95,10 @@ export const globalRateLimiter = rateLimit({
  */
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  max: 50,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: (req) => process.env.NODE_ENV === 'test' || isLocalhost(req),
   message: {
     success: false,
     error: 'Too many login attempts. Account temporarily locked for 15 minutes.'
@@ -105,7 +110,7 @@ export const authRateLimiter = rateLimit({
  */
 export const inquiryRateLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 8,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   skip: () => process.env.NODE_ENV === 'test',

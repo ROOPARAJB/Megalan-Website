@@ -379,11 +379,15 @@ export const dbService = {
       try {
         const isUsername = typeof identifier === 'string' && isNaN(Number(identifier));
         if (isUsername) {
-          await supabase.from('users').update(data).eq('username', identifier);
+          const { error } = await supabase.from('users').update(data).eq('username', identifier);
+          if (error) console.error('[updateUser2FA Supabase Error]', error.message);
         } else {
-          await supabase.from('users').update(data).eq('id', identifier);
+          const { error } = await supabase.from('users').update(data).eq('id', identifier);
+          if (error) console.error('[updateUser2FA Supabase Error]', error.message);
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('[updateUser2FA Exception]', e.message);
+      }
     }
 
     try {
