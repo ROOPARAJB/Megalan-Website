@@ -29,6 +29,65 @@ function isStaticMode() {
          (window.location.port === '' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1'));
 }
 
+// RFC 6238 Standard Base32 Decoder for Authenticator TOTP verification
+function base32ToBuffer(str) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let cleaned = String(str).toUpperCase().replace(/=+$/, '').replace(/\s+/g, '');
+  let bits = '';
+  for (let i = 0; i < cleaned.length; i++) {
+    let val = alphabet.indexOf(cleaned[i]);
+    if (val === -1) continue;
+    bits += val.toString(2).padStart(5, '0');
+  }
+  const bytes = [];
+  for (let i = 0; i + 8 <= bits.length; i += 8) {
+    bytes.push(parseInt(bits.substring(i, i + 8), 2));
+  }
+  return new Uint8Array(bytes);
+}
+
+// Client-side RFC 6238 TOTP Generator (SHA-1 HMAC via Web Crypto API)
+async function generateTOTP(secretBase32, timeStepOffset = 0) {
+  const keyBytes = base32ToBuffer(secretBase32);
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyBytes,
+    { name: 'HMAC', hash: 'SHA-1' },
+    false,
+    ['sign']
+  );
+  const counter = Math.floor(Date.now() / 1000 / 30) + timeStepOffset;
+  const buffer = new ArrayBuffer(8);
+  const view = new DataView(buffer);
+  view.setBigUint64(0, BigInt(counter));
+
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, buffer);
+  const sigBytes = new Uint8Array(signature);
+  const offset = sigBytes[sigBytes.length - 1] & 0x0f;
+  const binary =
+    ((sigBytes[offset] & 0x7f) << 24) |
+    ((sigBytes[offset + 1] & 0xff) << 16) |
+    ((sigBytes[offset + 2] & 0xff) << 8) |
+    (sigBytes[offset + 3] & 0xff);
+  const otp = binary % 1000000;
+  return otp.toString().padStart(6, '0');
+}
+
+// Client-side RFC 6238 TOTP Verifier with ±1 window tolerance (30s past / present / future)
+async function verifyClientTOTP(token, secretBase32) {
+  try {
+    const cleanToken = String(token).trim().replace(/\s+/g, '');
+    for (let offset of [-1, 0, 1]) {
+      const calculated = await generateTOTP(secretBase32, offset);
+      if (calculated === cleanToken) return true;
+    }
+    return false;
+  } catch (e) {
+    console.error('Client TOTP calculation error:', e);
+    return false;
+  }
+}
+
 // Built-in Toast Notification Utility
 function showToast(message, type = 'success') {
   let container = document.getElementById('toast-container');
@@ -308,7 +367,7 @@ async function loadAdminGallery() {
 
   if (isStaticMode()) {
     try {
-      // 1. Fetch live gallery records from Supabase Cloud
+      // 1. Fetch live gallery records directly from Supabase Cloud
       const sbRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/gallery?select=*&order=created_at.desc`, {
         cache: 'no-cache',
         headers: {
@@ -320,25 +379,9 @@ async function loadAdminGallery() {
       if (sbRes.ok) {
         const sbData = await sbRes.json();
         if (Array.isArray(sbData) && sbData.length > 0) {
-          let localItems = [];
-          try {
-            localItems = JSON.parse(localStorage.getItem('vpsa_static_gallery') || '[]');
-          } catch (e) {}
-
-          const combined = [...localItems, ...sbData];
-          const seen = new Set();
-          const unique = [];
-          for (const item of combined) {
-            const key = item.id || item.title;
-            if (!seen.has(key)) {
-              seen.add(key);
-              unique.push(item);
-            }
-          }
-          cachedGalleryItems = unique;
+          cachedGalleryItems = sbData;
         } else {
-          const stored = localStorage.getItem('vpsa_static_gallery');
-          cachedGalleryItems = stored ? JSON.parse(stored) : [...STATIC_SAMPLE_GALLERY];
+          cachedGalleryItems = [...STATIC_SAMPLE_GALLERY];
         }
       } else {
         const stored = localStorage.getItem('vpsa_static_gallery');
@@ -854,10 +897,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (errorMsg) errorMsg.style.display = 'none';
 
         if (isStaticMode()) {
-          sessionStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
-          localStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
-          window.location.href = 'admin-dashboard.html';
-          return;
+          const secret = '3SG6BVQA2JE5NCT4PH3K2TUDD2TSMV4X';
+          const cleanCode = code.replace(/\s+/g, '');
+          const isTotpValid = await verifyClientTOTP(cleanCode, secret);
+
+          if (isTotpValid) {
+            sessionStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
+            localStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
+            window.location.href = 'admin-dashboard.html';
+            return;
+          } else {
+            showError('Invalid 6-digit code. Please enter the current code from Microsoft Authenticator.');
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Verify & Activate Authenticator';
+            }
+            return;
+          }
         }
 
         // Secure server-side 2FA activation
@@ -952,13 +1008,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (errorMsg) errorMsg.style.display = 'none';
 
         if (isStaticMode()) {
-          if (code.length >= 6) {
+          const secret = '3SG6BVQA2JE5NCT4PH3K2TUDD2TSMV4X';
+          const backupCodes = ['VPSA-3469-3161', 'VPSA-7377-6479', 'VPSA-4322-5862'];
+
+          const cleanCode = code.replace(/\s+/g, '');
+          const isTotpValid = await verifyClientTOTP(cleanCode, secret);
+          const isBackupValid = backupCodes.includes(cleanCode.toUpperCase());
+
+          if (isTotpValid || isBackupValid) {
             sessionStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
             localStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
             window.location.href = 'admin-dashboard.html';
             return;
           } else {
-            showError('Please enter a valid 6-digit security code.');
+            showError('Invalid code. Please check your Microsoft Authenticator app or enter a valid recovery code.');
             if (submitBtn) {
               submitBtn.disabled = false;
               submitBtn.innerText = 'Confirm & Enter Dashboard';

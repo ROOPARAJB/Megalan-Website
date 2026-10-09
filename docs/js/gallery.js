@@ -67,26 +67,8 @@ async function loadGalleryItems(category = 'all') {
     if (sbRes.ok) {
       const sbData = await sbRes.json();
       if (Array.isArray(sbData) && sbData.length > 0) {
-        // Merge with any local storage uploads
-        let localUploads = [];
-        try {
-          localUploads = JSON.parse(localStorage.getItem('vpsa_static_gallery') || '[]');
-        } catch (e) {}
-
-        const combined = [...localUploads, ...sbData];
-        // Unique by id or title
-        const seen = new Set();
-        const unique = [];
-        for (const item of combined) {
-          const key = item.id || item.title;
-          if (!seen.has(key)) {
-            seen.add(key);
-            unique.push(item);
-          }
-        }
-
-        allGalleryItems = unique;
-        const filtered = category && category !== 'all' ? unique.filter(p => p.category === category) : unique;
+        allGalleryItems = sbData;
+        const filtered = category && category !== 'all' ? sbData.filter(p => p.category === category) : sbData;
         renderGallery(filtered);
         return;
       }
