@@ -29,9 +29,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm install
-
       - name: Build static site
         run: node build-static.js
 
@@ -41,7 +38,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          path: './docs'
 
       - name: Deploy to GitHub Pages
         id: deployment
