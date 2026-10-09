@@ -106,10 +106,9 @@ CREATE POLICY "Public can view gallery" ON public.gallery FOR SELECT USING (true
 DROP POLICY IF EXISTS "Service role can modify gallery" ON public.gallery;
 CREATE POLICY "Service role can modify gallery" ON public.gallery FOR ALL USING (true);
 
--- Inquiries: Public Insert, Service/Admin Full Access
+-- Inquiries: Deny Anon/Public direct REST access (All submissions and management must route through Node backend)
 DROP POLICY IF EXISTS "Public can submit inquiries" ON public.inquiries;
-CREATE POLICY "Public can submit inquiries" ON public.inquiries FOR INSERT WITH CHECK (true);
-
+DROP POLICY IF EXISTS "Public can view inquiries" ON public.inquiries;
 DROP POLICY IF EXISTS "Service role can manage inquiries" ON public.inquiries;
 CREATE POLICY "Service role can manage inquiries" ON public.inquiries FOR ALL USING (true);
 

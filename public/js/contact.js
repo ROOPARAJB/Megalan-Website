@@ -3,11 +3,6 @@
  * Enhanced with Client-Side Rate-Limiting, DPDP Consent Validation, Anti-Spam Honeypots, and Privacy-Preserving Fallback
  */
 
-const SUPABASE_CONFIG = {
-  url: 'https://sammfailpehmtxlbqmmh.supabase.co',
-  key: 'sb_publishable_fW8EO__Y0fyRVkflrZ4Vlw_LFH-nVN0'
-};
-
 document.addEventListener('DOMContentLoaded', () => {
   const forms = document.querySelectorAll('.inquiry-form');
 
@@ -104,15 +99,13 @@ document.addEventListener('DOMContentLoaded', () => {
           sessionStorage.setItem('vpsa_last_inquiry_ts', String(Date.now()));
           showToast(result.message || 'Your wholesale enquiry has been submitted successfully!', 'success');
           form.reset();
-        } else if (response.status === 400 && result && result.error) {
+        } else if (result && result.error) {
           showToast(result.error, 'error');
         } else {
-          // Static host fallback (e.g., GitHub Pages without active Node API)
-          await handleOfflineStaticSubmission(payload, form);
+          showToast('An error occurred while submitting your enquiry. Please contact us directly at +91 9003755701 or info@vpsayoga.com.', 'error');
         }
       } catch (err) {
-        // Network unreachable or static GitHub Pages hosting
-        await handleOfflineStaticSubmission(payload, form);
+        showToast('Unable to connect to the enquiry service. Please contact us directly at +91 9003755701 or info@vpsayoga.com.', 'error');
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -121,40 +114,5 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
-
-  /**
-   * Direct Cloud Sync Handler for Static/GitHub Pages Hosting
-   */
-  async function handleOfflineStaticSubmission(payload, form) {
-    try {
-      await fetch(`${SUPABASE_CONFIG.url}/rest/v1/inquiries`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_CONFIG.key,
-          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({
-          full_name: payload.full_name,
-          email: payload.email,
-          country_code: payload.country_code,
-          mobile_number: payload.mobile_number,
-          company_name: payload.company_name || null,
-          product_variety: payload.product_variety || null,
-          quantity: payload.quantity || null,
-          destination: payload.destination || null,
-          message: payload.message,
-          status: 'new'
-        })
-      });
-    } catch (e) {
-      console.warn('Supabase direct enquiry insert error:', e);
-    }
-
-    sessionStorage.setItem('vpsa_last_inquiry_ts', String(Date.now()));
-    form.reset();
-
-    showToast('Your quotation request has been transmitted and recorded in our live database successfully!', 'success');
-  }
 });
+

@@ -1,18 +1,13 @@
 /**
  * VPSA YOGA - Admin Dashboard & Gallery Management Script
- * High Performance, Secure Session Control & Clean Responsive UI
+ * Fully Authenticated & Hardened Admin Client
  */
 
 // Global in-memory data caches
 let cachedGalleryItems = [];
 let cachedInquiries = [];
 
-const SUPABASE_CONFIG = {
-  url: 'https://sammfailpehmtxlbqmmh.supabase.co',
-  key: 'sb_publishable_fW8EO__Y0fyRVkflrZ4Vlw_LFH-nVN0'
-};
-
-// Helper to normalize image paths for both Local Node server and GitHub Pages subpath
+// Helper to normalize image paths
 function resolveImageUrl(url) {
   if (!url) return 'images/logo/vpsa-yoga-logo.png';
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
@@ -21,88 +16,15 @@ function resolveImageUrl(url) {
   return url.replace(/^\/+/, '');
 }
 
-// Helper to determine if we are running in static hosting (GitHub Pages, file protocol, or static HTML)
-function isStaticMode() {
-  return window.location.hostname.includes('github.io') ||
-         window.location.protocol === 'file:' ||
-         window.location.pathname.endsWith('.html') ||
-         (window.location.port === '' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1'));
-}
-
-// RFC 6238 Standard Base32 Decoder for Authenticator TOTP verification
-function base32ToBuffer(str) {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let cleaned = String(str).toUpperCase().replace(/=+$/, '').replace(/\s+/g, '');
-  let bits = '';
-  for (let i = 0; i < cleaned.length; i++) {
-    let val = alphabet.indexOf(cleaned[i]);
-    if (val === -1) continue;
-    bits += val.toString(2).padStart(5, '0');
-  }
-  const bytes = [];
-  for (let i = 0; i + 8 <= bits.length; i += 8) {
-    bytes.push(parseInt(bits.substring(i, i + 8), 2));
-  }
-  return new Uint8Array(bytes);
-}
-
-// Client-side RFC 6238 TOTP Generator (SHA-1 HMAC via Web Crypto API)
-async function generateTOTP(secretBase32, timeStepOffset = 0) {
-  const keyBytes = base32ToBuffer(secretBase32);
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    keyBytes,
-    { name: 'HMAC', hash: 'SHA-1' },
-    false,
-    ['sign']
-  );
-  const counter = Math.floor(Date.now() / 1000 / 30) + timeStepOffset;
-  const buffer = new ArrayBuffer(8);
-  const view = new DataView(buffer);
-  view.setBigUint64(0, BigInt(counter));
-
-  const signature = await crypto.subtle.sign('HMAC', cryptoKey, buffer);
-  const sigBytes = new Uint8Array(signature);
-  const offset = sigBytes[sigBytes.length - 1] & 0x0f;
-  const binary =
-    ((sigBytes[offset] & 0x7f) << 24) |
-    ((sigBytes[offset + 1] & 0xff) << 16) |
-    ((sigBytes[offset + 2] & 0xff) << 8) |
-    (sigBytes[offset + 3] & 0xff);
-  const otp = binary % 1000000;
-  return otp.toString().padStart(6, '0');
-}
-
-// Client-side RFC 6238 TOTP Verifier with ±2 window tolerance (covers ±60s clock drift)
-async function verifyClientTOTP(token, secretBase32) {
-  try {
-    const cleanToken = String(token).trim().replace(/\s+/g, '');
-    for (let offset of [-2, -1, 0, 1, 2]) {
-      const calculated = await generateTOTP(secretBase32, offset);
-      if (calculated === cleanToken) return true;
-    }
-    return false;
-  } catch (e) {
-    console.error('Client TOTP calculation error:', e);
-    return false;
-  }
-}
-
 // Session Inactivity Timeout Configuration (5 Minutes = 300,000 ms)
 const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
 
 function initSessionTimeout() {
-  const token = sessionStorage.getItem('vpsa_token') || localStorage.getItem('vpsa_token');
-  if (!token) return;
-
   function updateActivity() {
     sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
   }
 
-  function checkSessionExpiry() {
-    const activeToken = sessionStorage.getItem('vpsa_token') || localStorage.getItem('vpsa_token');
-    if (!activeToken) return;
-
+  async function checkSessionExpiry() {
     const lastActiveStr = sessionStorage.getItem('vpsa_last_activity');
     if (!lastActiveStr) {
       updateActivity();
@@ -112,11 +34,14 @@ function initSessionTimeout() {
     const elapsed = Date.now() - Number(lastActiveStr);
     if (elapsed > INACTIVITY_TIMEOUT_MS) {
       sessionStorage.removeItem('vpsa_token');
-      localStorage.removeItem('vpsa_token');
       sessionStorage.removeItem('vpsa_last_activity');
 
+      try {
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      } catch (e) {}
+
       alert('🔒 Session Expired: You have been automatically logged out due to 5 minutes of inactivity for your security.');
-      window.location.href = isStaticMode() ? 'admin-login.html?reason=timeout' : '/admin/login?reason=timeout';
+      window.location.href = '/admin/login?reason=timeout';
     }
   }
 
@@ -163,7 +88,7 @@ function showToast(message, type = 'success') {
   toast.className = `toast ${type}`;
   toast.innerHTML = `
     <span style="font-size: 1.1rem; line-height: 1;">${type === 'success' ? '✓' : '⚠️'}</span>
-    <div>${message}</div>
+    <div>${escapeHtml(message)}</div>
   `;
 
   container.appendChild(toast);
@@ -176,13 +101,13 @@ function showToast(message, type = 'success') {
   }, 4000);
 }
 
-// Authentication Header Helper
+// Authentication Header Helper (sessionStorage token + automatic HttpOnly cookie)
 function getAuthHeaders(isJson = true) {
   const headers = {};
   if (isJson) {
     headers['Content-Type'] = 'application/json';
   }
-  const token = sessionStorage.getItem('vpsa_token') || localStorage.getItem('vpsa_token');
+  const token = sessionStorage.getItem('vpsa_token');
   if (token && token !== 'null' && token !== 'undefined') {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -277,39 +202,6 @@ async function savePhotoEdit() {
     submitBtn.innerText = 'Saving changes...';
   }
 
-  if (isStaticMode()) {
-    const item = cachedGalleryItems.find(x => Number(x.id) === Number(id));
-    if (item) {
-      item.title = title;
-      item.description = description;
-      item.category = category;
-      try {
-        localStorage.setItem('vpsa_static_gallery', JSON.stringify(cachedGalleryItems));
-      } catch (err) {}
-
-      // Sync edit with Supabase Cloud
-      try {
-        await fetch(`${SUPABASE_CONFIG.url}/rest/v1/gallery?id=eq.${id}`, {
-          method: 'PATCH',
-          headers: {
-            'apikey': SUPABASE_CONFIG.key,
-            'Authorization': `Bearer ${SUPABASE_CONFIG.key}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ title, description, category })
-        });
-      } catch (sbErr) {}
-    }
-    showToast('Gallery item updated successfully!', 'success');
-    closeEditModal();
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.innerText = 'Save Changes';
-    }
-    await loadAdminGallery();
-    return;
-  }
-
   try {
     const res = await fetch(`/api/gallery/${id}`, {
       method: 'PUT',
@@ -345,28 +237,6 @@ async function deleteGalleryItem(event, id) {
     return;
   }
 
-  if (isStaticMode()) {
-    cachedGalleryItems = cachedGalleryItems.filter(x => Number(x.id) !== Number(id));
-    try {
-      localStorage.setItem('vpsa_static_gallery', JSON.stringify(cachedGalleryItems));
-    } catch (err) {}
-
-    // Sync delete with Supabase Cloud
-    try {
-      await fetch(`${SUPABASE_CONFIG.url}/rest/v1/gallery?id=eq.${id}`, {
-        method: 'DELETE',
-        headers: {
-          'apikey': SUPABASE_CONFIG.key,
-          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`
-        }
-      });
-    } catch (sbErr) {}
-
-    showToast('Photo removed successfully.', 'success');
-    await loadAdminGallery();
-    return;
-  }
-
   try {
     const res = await fetch(`/api/gallery/${id}`, {
       method: 'DELETE',
@@ -399,75 +269,31 @@ function switchTab(tabId) {
   if (activeContent) activeContent.style.display = 'block';
 }
 
-// Sample mock data for static GitHub Pages preview mode
-const STATIC_SAMPLE_GALLERY = [
-  { id: 1, title: 'Theni High-Yield Farm Sourcing', description: 'Lush green banana plantation in Theni, direct harvest from certified partner growers.', category: 'farms', image_url: 'images/products/rasthali-banana.jpg' },
-  { id: 2, title: 'Oddanchatram Grading Hub', description: 'Hand-inspected bunches meeting international grading parameters for export.', category: 'harvest', image_url: 'images/products/poovan-banana.jpg' },
-  { id: 3, title: 'Cold-Chain Fleet Loading (13-14°C)', description: 'Reefer containerized fleet coordination ensuring zero damage & optimal shelf-life.', category: 'logistics', image_url: 'images/products/robusta-banana.jpg' },
-  { id: 4, title: 'Super-Sweet Yelakki Bunches', description: 'Golden, freshly harvested Yelakki bananas ready for South India retail chains.', category: 'products', image_url: 'images/products/yelakki-banana.jpg' },
-  { id: 5, title: 'Nutrient-Dense Red Banana Batches', description: 'Premium organic Sevvazhai bunches undergoing hygienic sorting.', category: 'products', image_url: 'images/products/red-banana.jpg' },
-  { id: 6, title: 'Export Packaging & Palletizing', description: 'Telescopic ventilated carton packaging with ethylene management.', category: 'packaging', image_url: 'images/products/nendran-banana.jpg' }
-];
-
-const STATIC_SAMPLE_INQUIRIES = [
-  { id: 101, created_at: new Date().toISOString(), full_name: 'Murugan Supermarket Chain', email: 'purchase@murugansuper.com', country_code: '+91', mobile_number: '9842100000', company_name: 'Murugan Retail Ltd', product_variety: 'Red Banana', quantity: '5 Tons / Week', destination: 'Madurai & Trichy', status: 'new', message: 'Looking for weekly delivery in 13-14°C cold chain reefer container.' },
-  { id: 102, created_at: new Date(Date.now() - 86400000).toISOString(), full_name: 'Al-Madina Fresh Exports', email: 'import@almadinafresh.ae', country_code: '+971', mobile_number: '501234567', company_name: 'Al-Madina Hypermarkets', product_variety: 'Robusta Cavendish', quantity: '2 x 40ft Reefer', destination: 'Dubai, UAE (Jebel Ali)', status: 'contacted', message: 'Need export quotation for 13.5kg telescopic cartons.' },
-  { id: 103, created_at: new Date(Date.now() - 172800000).toISOString(), full_name: 'Coimbatore Fruit Mart', email: 'procurement@cbecentralfruit.com', country_code: '+91', mobile_number: '9443200000', company_name: 'CBE Wholesale Mandi', product_variety: 'Yelakki / Elakki', quantity: '200 Crates', destination: 'Coimbatore Hub', status: 'in_review', message: 'Daily wholesale dispatch required directly from Oddanchatram hub.' }
-];
-
-const STATIC_SAMPLE_LOGS = [
-  { created_at: new Date().toISOString(), event_type: '2FA_LOGIN_SUCCESS', description: "Admin 'admin' successfully authenticated via Microsoft Authenticator.", username: 'admin', ip_address: '127.0.0.1', severity: 'INFO' },
-  { created_at: new Date(Date.now() - 3600000).toISOString(), event_type: 'GALLERY_PHOTO_UPLOAD', description: "New gallery image uploaded: 'Export Packaging & Palletizing'.", username: 'admin', ip_address: '127.0.0.1', severity: 'INFO' },
-  { created_at: new Date(Date.now() - 7200000).toISOString(), event_type: 'INQUIRY_STATUS_UPDATE', description: "Inquiry #102 marked as 'contacted'.", username: 'admin', ip_address: '127.0.0.1', severity: 'INFO' }
-];
-
 // 3. Gallery Loader
 async function loadAdminGallery() {
   const container = document.getElementById('adminGalleryGrid');
   if (!container) return;
 
-  if (isStaticMode()) {
-    try {
-      // 1. Fetch live gallery records directly from Supabase Cloud
-      const sbRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/gallery?select=*&order=created_at.desc`, {
-        cache: 'no-cache',
-        headers: {
-          'apikey': SUPABASE_CONFIG.key,
-          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`
-        }
-      });
+  try {
+    const res = await fetch('/api/gallery', {
+      credentials: 'include',
+      headers: getAuthHeaders(false)
+    });
 
-      if (sbRes.ok) {
-        const sbData = await sbRes.json();
-        if (Array.isArray(sbData) && sbData.length > 0) {
-          cachedGalleryItems = sbData;
-        } else {
-          cachedGalleryItems = [...STATIC_SAMPLE_GALLERY];
-        }
-      } else {
-        const stored = localStorage.getItem('vpsa_static_gallery');
-        cachedGalleryItems = stored ? JSON.parse(stored) : [...STATIC_SAMPLE_GALLERY];
+    if (!res.ok) {
+      if (res.status === 401) {
+        window.location.href = '/admin/login';
+        return;
       }
-    } catch (e) {
-      const stored = localStorage.getItem('vpsa_static_gallery');
-      cachedGalleryItems = stored ? JSON.parse(stored) : [...STATIC_SAMPLE_GALLERY];
+      throw new Error('Failed to load gallery');
     }
-  } else {
-    try {
-      const res = await fetch('/api/gallery', {
-        credentials: 'include',
-        headers: getAuthHeaders(false)
-      });
 
-      if (!res.ok) throw new Error('Static fallback');
-
-      const data = await res.json();
-      if (data.success) {
-        cachedGalleryItems = data.data || [];
-      }
-    } catch (err) {
-      cachedGalleryItems = [...STATIC_SAMPLE_GALLERY];
+    const data = await res.json();
+    if (data.success) {
+      cachedGalleryItems = data.data || [];
     }
+  } catch (err) {
+    cachedGalleryItems = [];
   }
 
   const countEl = document.getElementById('totalPhotosCount');
@@ -499,47 +325,26 @@ async function loadAdminInquiries() {
   const tbody = document.getElementById('inquiriesTableBody');
   if (!tbody) return;
 
-  if (isStaticMode()) {
-    try {
-      const sbRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/inquiries?select=*&order=created_at.desc`, {
-        cache: 'no-cache',
-        headers: {
-          'apikey': SUPABASE_CONFIG.key,
-          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`
-        }
-      });
+  try {
+    const res = await fetch('/api/enquiries', {
+      credentials: 'include',
+      headers: getAuthHeaders(false)
+    });
 
-      if (sbRes.ok) {
-        const sbData = await sbRes.json();
-        if (Array.isArray(sbData)) {
-          cachedInquiries = sbData;
-        } else {
-          cachedInquiries = [...STATIC_SAMPLE_INQUIRIES];
-        }
-      } else {
-        const stored = localStorage.getItem('vpsa_static_inquiries');
-        cachedInquiries = stored ? JSON.parse(stored) : [...STATIC_SAMPLE_INQUIRIES];
+    if (!res.ok) {
+      if (res.status === 401) {
+        window.location.href = '/admin/login';
+        return;
       }
-    } catch (e) {
-      const stored = localStorage.getItem('vpsa_static_inquiries');
-      cachedInquiries = stored ? JSON.parse(stored) : [...STATIC_SAMPLE_INQUIRIES];
+      throw new Error('Failed to load enquiries');
     }
-  } else {
-    try {
-      const res = await fetch('/api/enquiries', {
-        credentials: 'include',
-        headers: getAuthHeaders(false)
-      });
 
-      if (!res.ok) throw new Error('Static fallback');
-
-      const data = await res.json();
-      if (data.success) {
-        cachedInquiries = data.data || [];
-      }
-    } catch (err) {
-      cachedInquiries = [...STATIC_SAMPLE_INQUIRIES];
+    const data = await res.json();
+    if (data.success) {
+      cachedInquiries = data.data || [];
     }
+  } catch (err) {
+    cachedInquiries = [];
   }
 
   const totalEl = document.getElementById('totalInquiriesCount');
@@ -591,26 +396,6 @@ async function loadAdminInquiries() {
 }
 
 async function updateInquiryStatus(id, status) {
-  if (isStaticMode()) {
-    try {
-      await fetch(`${SUPABASE_CONFIG.url}/rest/v1/inquiries?id=eq.${id}`, {
-        method: 'PATCH',
-        headers: {
-          'apikey': SUPABASE_CONFIG.key,
-          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status })
-      });
-    } catch (sbErr) {}
-
-    const item = cachedInquiries.find(x => x.id === id);
-    if (item) item.status = status;
-    showToast('Status updated successfully.', 'success');
-    await loadAdminInquiries();
-    return;
-  }
-
   try {
     const res = await fetch(`/api/enquiries/${id}/status`, {
       method: 'PATCH',
@@ -623,34 +408,16 @@ async function updateInquiryStatus(id, status) {
       showToast('Status updated successfully.', 'success');
       await loadAdminInquiries();
       return;
+    } else {
+      showToast(data.error || 'Failed to update status.', 'error');
     }
-  } catch (err) {}
-
-  const item = cachedInquiries.find(x => x.id === id);
-  if (item) item.status = status;
-  showToast('Status updated successfully.', 'success');
-  loadAdminInquiries();
+  } catch (err) {
+    showToast('Network error updating status.', 'error');
+  }
 }
 
 async function deleteInquiry(id) {
   if (!confirm('Are you sure you want to delete this inquiry record?')) return;
-
-  if (isStaticMode()) {
-    try {
-      await fetch(`${SUPABASE_CONFIG.url}/rest/v1/inquiries?id=eq.${id}`, {
-        method: 'DELETE',
-        headers: {
-          'apikey': SUPABASE_CONFIG.key,
-          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`
-        }
-      });
-    } catch (sbErr) {}
-
-    cachedInquiries = cachedInquiries.filter(x => x.id !== id);
-    showToast('Enquiry deleted successfully.', 'success');
-    await loadAdminInquiries();
-    return;
-  }
 
   try {
     const res = await fetch(`/api/enquiries/${id}`, {
@@ -662,12 +429,13 @@ async function deleteInquiry(id) {
       showToast('Enquiry deleted successfully.', 'success');
       await loadAdminInquiries();
       return;
+    } else {
+      const data = await res.json();
+      showToast(data.error || 'Failed to delete inquiry.', 'error');
     }
-  } catch (err) {}
-
-  cachedInquiries = cachedInquiries.filter(x => x.id !== id);
-  showToast('Enquiry deleted successfully.', 'success');
-  loadAdminInquiries();
+  } catch (err) {
+    showToast('Network error while deleting enquiry.', 'error');
+  }
 }
 
 // 5. Operations Audit Logs
@@ -676,40 +444,21 @@ async function loadAdminAuditLogs() {
   if (!tbody) return;
 
   let logs = [];
-  if (isStaticMode()) {
-    try {
-      const sbRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/audit_logs?select=*&order=created_at.desc&limit=30`, {
-        cache: 'no-cache',
-        headers: {
-          'apikey': SUPABASE_CONFIG.key,
-          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`
-        }
-      });
+  try {
+    const res = await fetch('/api/audit-logs', {
+      credentials: 'include',
+      headers: getAuthHeaders(false)
+    });
 
-      if (sbRes.ok) {
-        const sbData = await sbRes.json();
-        if (Array.isArray(sbData) && sbData.length > 0) logs = sbData;
-        else logs = STATIC_SAMPLE_LOGS;
-      } else {
-        logs = STATIC_SAMPLE_LOGS;
-      }
-    } catch (e) {
-      logs = STATIC_SAMPLE_LOGS;
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.data) logs = data.data;
     }
-  } else {
-    try {
-      const res = await fetch('/api/audit-logs', {
-        credentials: 'include',
-        headers: getAuthHeaders(false)
-      });
+  } catch (err) {}
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.data) logs = data.data;
-      }
-    } catch (err) {}
-
-    if (logs.length === 0) logs = STATIC_SAMPLE_LOGS;
+  if (logs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 2rem;">No activity log records found.</td></tr>`;
+    return;
   }
 
   tbody.innerHTML = logs.map(log => `
@@ -859,110 +608,62 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (errorMsg) errorMsg.style.display = 'none';
 
-      // Dynamic Node.js backend environment
-      if (!isStaticMode()) {
-        try {
-          const res = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-          });
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
 
-          const data = await res.json();
-          if (res.ok && data.success) {
-            if (data.require_2fa) {
-              currentTempToken = data.temp_token;
-              if (step1) step1.style.display = 'none';
-
-              if (data.setup_required) {
-                const qrImg = document.getElementById('qrCodeImg');
-                if (qrImg && data.qr_code) qrImg.src = data.qr_code;
-
-                const manualSecret = document.getElementById('manualSecretBox');
-                if (manualSecret && data.secret) manualSecret.innerText = data.secret;
-
-                if (step2Setup) step2Setup.style.display = 'block';
-                const codeInput = document.getElementById('setupTotpCode');
-                if (codeInput) {
-                  codeInput.value = '';
-                  codeInput.focus();
-                }
-              } else {
-                if (step2Verify) step2Verify.style.display = 'block';
-                const verifyInput = document.getElementById('verifyTotpCode');
-                if (verifyInput) {
-                  verifyInput.value = '';
-                  verifyInput.focus();
-                }
-              }
-              return;
-            } else if (data.token) {
-              sessionStorage.setItem('vpsa_token', data.token);
-              localStorage.setItem('vpsa_token', data.token);
-              sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
-              window.location.href = '/admin/dashboard';
-              return;
-            }
-          } else {
-            showError(data.error || 'Invalid admin username or password.');
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.innerText = 'Next: Verify Identity →';
-            }
-            return;
-          }
-        } catch (err) {
-          showError('Unable to connect to authentication service. Please check server connection.');
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerText = 'Next: Verify Identity →';
-          }
-          return;
-        }
-      } else {
-        // Static GitHub Pages / Offline Client Verification (One-way salted cryptographic verification)
-        try {
-          const enc = new TextEncoder().encode(password + ':vpsa_salt_2026');
-          const hashBuf = await crypto.subtle.digest('SHA-256', enc);
-          const hashHex = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-          if (username.toLowerCase() === 'admin' && hashHex === 'c14ff87896c80ebcc8c2ae45a9b51bc4bc7f32d39c347e64c9e1e7b79c70d717') {
-            currentTempToken = 'vpsa-static-token';
+        const data = await res.json();
+        if (res.ok && data.success) {
+          if (data.require_2fa) {
+            currentTempToken = data.temp_token;
             if (step1) step1.style.display = 'none';
-            if (step2Verify) step2Verify.style.display = 'block';
 
-            // Pre-populate QR code and text key for pairing
-            const secret = '3SG6BVQA2JE5NCT4PH3K2TUDD2TSMV4X';
-            const qrImg = document.getElementById('qrCodeImg');
-            if (qrImg) {
-              const otpauthUrl = `otpauth://totp/VPSA%20YOGA:admin?secret=${secret}&issuer=VPSA%20YOGA`;
-              qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`;
-            }
-            const manualSecret = document.getElementById('manualSecretBox');
-            if (manualSecret) manualSecret.innerText = secret;
+            if (data.setup_required) {
+              const qrImg = document.getElementById('qrCodeImg');
+              if (qrImg && data.qr_code) qrImg.src = data.qr_code;
 
-            const verifyInput = document.getElementById('verifyTotpCode');
-            if (verifyInput) {
-              verifyInput.value = '';
-              verifyInput.focus();
+              const manualSecret = document.getElementById('manualSecretBox');
+              if (manualSecret && data.secret) manualSecret.innerText = data.secret;
+
+              if (step2Setup) step2Setup.style.display = 'block';
+              const codeInput = document.getElementById('setupTotpCode');
+              if (codeInput) {
+                codeInput.value = '';
+                codeInput.focus();
+              }
+            } else {
+              if (step2Verify) step2Verify.style.display = 'block';
+              const verifyInput = document.getElementById('verifyTotpCode');
+              if (verifyInput) {
+                verifyInput.value = '';
+                verifyInput.focus();
+              }
             }
             return;
-          } else {
-            showError('Invalid admin username or password.');
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.innerText = 'Next: Verify Identity →';
-            }
+          } else if (data.token) {
+            sessionStorage.setItem('vpsa_token', data.token);
+            sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+            window.location.href = '/admin/dashboard';
             return;
           }
-        } catch (cryptErr) {
-          showError('Browser cryptographic validation error.');
+        } else {
+          showError(data.error || 'Invalid admin username or password.');
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerText = 'Next: Verify Identity →';
           }
           return;
         }
+      } catch (err) {
+        showError('Unable to connect to authentication service. Please ensure the backend server is running.');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Next: Verify Identity →';
+        }
+        return;
       }
     });
 
@@ -974,31 +675,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const isHidden = manualSecretBox.style.display === 'none' || !manualSecretBox.style.display;
         manualSecretBox.style.display = isHidden ? 'block' : 'none';
         toggleSecretBtn.innerText = isHidden ? 'Hide text key' : "Can't scan QR code? Click to view text key";
-      });
-    }
-
-    // Switch from standard verification to QR code re-scan
-    const showQrBtn = document.getElementById('showQrSetupBtn');
-    if (showQrBtn) {
-      showQrBtn.addEventListener('click', () => {
-        if (step2Verify) step2Verify.style.display = 'none';
-        if (step2Setup) step2Setup.style.display = 'block';
-
-        const secret = '3SG6BVQA2JE5NCT4PH3K2TUDD2TSMV4X';
-        const qrImg = document.getElementById('qrCodeImg');
-        if (qrImg) {
-          const otpauthUrl = `otpauth://totp/VPSA%20YOGA:admin?secret=${secret}&issuer=VPSA%20YOGA`;
-          qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`;
-        }
-        if (manualSecretBox) {
-          manualSecretBox.innerText = secret;
-        }
-
-        const codeInput = document.getElementById('setupTotpCode');
-        if (codeInput) {
-          codeInput.value = '';
-          codeInput.focus();
-        }
       });
     }
 
@@ -1021,27 +697,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (errorMsg) errorMsg.style.display = 'none';
 
-        if (isStaticMode()) {
-          const secret = '3SG6BVQA2JE5NCT4PH3K2TUDD2TSMV4X';
-          const cleanCode = code.replace(/\s+/g, '');
-          const isTotpValid = await verifyClientTOTP(cleanCode, secret);
-
-          if (isTotpValid) {
-            sessionStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
-            localStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
-            sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
-            window.location.href = 'admin-dashboard.html';
-            return;
-          } else {
-            showError('Invalid 6-digit code. Please enter the current code from Microsoft Authenticator.');
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.innerText = 'Verify & Activate Authenticator';
-            }
-            return;
-          }
-        }
-
         // Secure server-side 2FA activation
         try {
           const res = await fetch('/api/auth/2fa/confirm-setup', {
@@ -1054,7 +709,6 @@ document.addEventListener('DOMContentLoaded', () => {
           if (res.ok && data.success) {
             if (data.token) {
               sessionStorage.setItem('vpsa_token', data.token);
-              localStorage.setItem('vpsa_token', data.token);
               sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
             }
 
@@ -1111,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const proceedBtn = document.getElementById('proceedToDashboardBtn');
     if (proceedBtn) {
       proceedBtn.addEventListener('click', () => {
-        window.location.href = isStaticMode() ? 'admin-dashboard.html' : '/admin/dashboard';
+        window.location.href = '/admin/dashboard';
       });
     }
 
@@ -1134,30 +788,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (errorMsg) errorMsg.style.display = 'none';
 
-        if (isStaticMode()) {
-          const secret = '3SG6BVQA2JE5NCT4PH3K2TUDD2TSMV4X';
-          const backupCodes = ['VPSA-3469-3161', 'VPSA-7377-6479', 'VPSA-4322-5862', 'VPSA-8712-1924', 'VPSA-2026-ADMIN'];
-
-          const cleanCode = code.replace(/\s+/g, '');
-          const isTotpValid = await verifyClientTOTP(cleanCode, secret);
-          const isBackupValid = backupCodes.includes(cleanCode.toUpperCase());
-
-          if (isTotpValid || isBackupValid) {
-            sessionStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
-            localStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
-            sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
-            window.location.href = 'admin-dashboard.html';
-            return;
-          } else {
-            showError('Invalid code. Please check your Microsoft Authenticator app or enter a valid recovery code.');
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.innerText = 'Confirm & Enter Dashboard';
-            }
-            return;
-          }
-        }
-
         // Secure server-side 2FA verification
         try {
           const res = await fetch('/api/auth/2fa/verify', {
@@ -1170,7 +800,6 @@ document.addEventListener('DOMContentLoaded', () => {
           if (res.ok && data.success) {
             if (data.token) {
               sessionStorage.setItem('vpsa_token', data.token);
-              localStorage.setItem('vpsa_token', data.token);
               sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
             }
             window.location.href = '/admin/dashboard';
@@ -1196,15 +825,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Dashboard Page logic
   if (document.getElementById('adminDashboard')) {
-    // If on static hosting and not logged in, redirect to login
-    const token = sessionStorage.getItem('vpsa_token') || localStorage.getItem('vpsa_token');
-    if (!token && isStaticMode()) {
-      window.location.href = 'admin-login.html';
-      return;
-    }
-
     // Initialize 5-minute inactivity session timeout
     initSessionTimeout();
+
+    // Verify session with server on load
+    fetch('/api/auth/me', { credentials: 'include', headers: getAuthHeaders(false) })
+      .then(res => {
+        if (!res.ok) {
+          window.location.href = '/admin/login';
+        }
+      })
+      .catch(() => {
+        window.location.href = '/admin/login';
+      });
 
     // Navigation Tabs
     const navLinks = document.querySelectorAll('.admin-nav-link[data-tab]');
@@ -1220,18 +853,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('adminLogoutBtn');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', async () => {
-        if (!isStaticMode()) {
-          try {
-            await fetch('/api/auth/logout', { 
-              method: 'POST',
-              credentials: 'include',
-              headers: getAuthHeaders(false)
-            });
-          } catch (e) {}
-        }
+        try {
+          await fetch('/api/auth/logout', { 
+            method: 'POST',
+            credentials: 'include',
+            headers: getAuthHeaders(false)
+          });
+        } catch (e) {}
         sessionStorage.removeItem('vpsa_token');
-        localStorage.removeItem('vpsa_token');
-        window.location.href = isStaticMode() ? 'admin-login.html' : '/admin/login';
+        sessionStorage.removeItem('vpsa_last_activity');
+        window.location.href = '/admin/login';
       });
     }
 
@@ -1308,54 +939,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Image Compression Helper
-    function compressImageFile(file, maxWidth = 1200, maxHeight = 1200, quality = 0.82) {
-      return new Promise((resolve, reject) => {
-        if (file.type === 'image/svg+xml' || file.type === 'image/gif') {
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-          return;
-        }
-
-        const img = new Image();
-        const objectUrl = URL.createObjectURL(file);
-        img.onload = () => {
-          URL.revokeObjectURL(objectUrl);
-          let width = img.width;
-          let height = img.height;
-
-          if (width > maxWidth || height > maxHeight) {
-            if (width / height > maxWidth / maxHeight) {
-              height = Math.round((height * maxWidth) / width);
-              width = maxWidth;
-            } else {
-              width = Math.round((width * maxHeight) / height);
-              height = maxHeight;
-            }
-          }
-
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-
-          const dataUrl = canvas.toDataURL('image/jpeg', quality);
-          resolve(dataUrl);
-        };
-        img.onerror = () => {
-          URL.revokeObjectURL(objectUrl);
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        };
-        img.src = objectUrl;
-      });
-    }
-
     // Image Upload Form Submission
     const uploadForm = document.getElementById('uploadGalleryForm');
     if (uploadForm) {
@@ -1375,81 +958,6 @@ document.addEventListener('DOMContentLoaded', () => {
           submitBtn.innerText = 'Optimizing & uploading photo...';
         }
 
-        if (isStaticMode()) {
-          const title = document.getElementById('uploadPhotoTitle').value.trim() || 'New Farm Photo';
-          const category = document.getElementById('uploadPhotoCategory').value || 'farms';
-          const description = document.getElementById('uploadPhotoDesc').value.trim();
-
-          try {
-            const compressedDataUrl = await compressImageFile(fileInput.files[0]);
-
-            const payload = {
-              title: title,
-              category: category,
-              description: description || '',
-              image_url: compressedDataUrl,
-              file_size: fileInput.files[0].size
-            };
-
-            // Sync with Supabase Cloud REST API
-            let newId = null;
-            try {
-              const sbRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/gallery`, {
-                method: 'POST',
-                headers: {
-                  'apikey': SUPABASE_CONFIG.key,
-                  'Authorization': `Bearer ${SUPABASE_CONFIG.key}`,
-                  'Content-Type': 'application/json',
-                  'Prefer': 'return=representation'
-                },
-                body: JSON.stringify(payload)
-              });
-
-              if (sbRes.ok) {
-                const inserted = await sbRes.json();
-                if (Array.isArray(inserted) && inserted.length > 0) {
-                  newId = inserted[0].id;
-                }
-              }
-            } catch (sbErr) {
-              console.warn('Supabase cloud direct post error:', sbErr);
-            }
-
-            const newItem = {
-              id: newId || Date.now(),
-              title: payload.title,
-              category: payload.category,
-              description: payload.description,
-              image_url: payload.image_url,
-              file_size: payload.file_size
-            };
-
-            cachedGalleryItems.unshift(newItem);
-            try {
-              localStorage.setItem('vpsa_static_gallery', JSON.stringify(cachedGalleryItems));
-            } catch (err) {}
-
-            showToast('Photo uploaded & synced to cloud gallery successfully!', 'success');
-            uploadForm.reset();
-            const chosenNameEl = document.getElementById('fileChosenName');
-            if (chosenNameEl) {
-              chosenNameEl.style.display = 'none';
-              chosenNameEl.innerHTML = '';
-            }
-            closeUploadModal();
-            await loadAdminGallery();
-          } catch (uploadErr) {
-            console.error('Upload processing error:', uploadErr);
-            showToast('Failed to process image file.', 'error');
-          } finally {
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.innerText = 'Upload & Publish Photo';
-            }
-          }
-          return;
-        }
-
         // Live backend upload
         const formData = new FormData(uploadForm);
         try {
@@ -1464,6 +972,11 @@ document.addEventListener('DOMContentLoaded', () => {
           if (res.ok && data.success) {
             showToast('Image uploaded and published successfully!', 'success');
             uploadForm.reset();
+            const chosenNameEl = document.getElementById('fileChosenName');
+            if (chosenNameEl) {
+              chosenNameEl.style.display = 'none';
+              chosenNameEl.innerHTML = '';
+            }
             closeUploadModal();
             await loadAdminGallery();
           } else {

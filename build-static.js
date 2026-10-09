@@ -29,11 +29,24 @@ for (const targetDir of targetDirs) {
     }
   }
 
-  // 2. Add .nojekyll for GitHub Pages
+  // Remove admin JS from static build (admin features are strictly Node-backend authenticated)
+  const staticAdminJs = path.join(targetDir, 'js', 'admin.js');
+  if (fs.existsSync(staticAdminJs)) {
+    fs.rmSync(staticAdminJs, { force: true });
+  }
+
+  // 2. Copy _headers configuration file for static security headers (Cloudflare Pages / Netlify / etc.)
+  const headersSrc = path.join(publicDir, '_headers');
+  if (fs.existsSync(headersSrc)) {
+    fs.copyFileSync(headersSrc, path.join(targetDir, '_headers'));
+  }
+
+  // 3. Add .nojekyll for GitHub Pages
   fs.writeFileSync(path.join(targetDir, '.nojekyll'), '', 'utf8');
 
-  // 3. Read and compile all views/*.html to target/*.html with relative asset links
-  const viewFiles = fs.readdirSync(viewsDir).filter(f => f.endsWith('.html'));
+  // 4. Read and compile all public views/*.html (excluding admin views) to target/*.html with relative asset links
+  const viewFiles = fs.readdirSync(viewsDir)
+    .filter(f => f.endsWith('.html') && !f.startsWith('admin-'));
 
   for (const file of viewFiles) {
     let content = fs.readFileSync(path.join(viewsDir, file), 'utf8');
@@ -48,15 +61,15 @@ for (const targetDir of targetDirs) {
       .split('href="/gallery"').join('href="gallery.html"')
       .split('href="/contact"').join('href="contact.html"')
       .split('href="/privacy"').join('href="privacy.html"')
-      .split('href="/admin/login"').join('href="admin-login.html"')
-      .split('href="/admin/dashboard"').join('href="admin-dashboard.html"')
+      .split('href="/admin/login"').join('href="contact.html"')
+      .split('href="/admin/dashboard"').join('href="contact.html"')
       .split('href="/"').join('href="index.html"');
 
     const destFile = path.join(targetDir, file);
     fs.writeFileSync(destFile, content, 'utf8');
   }
 
-  console.log(`✓ Built static output in ${path.basename(targetDir)}/`);
+  console.log(`✓ Built secure static output in ${path.basename(targetDir)}/ (Excluded admin interfaces)`);
 }
 
-console.log('✨ Build succeeded! Clean distribution generated for GitHub Pages & static hosting.');
+console.log('✨ Build succeeded! Clean & secure distribution generated for GitHub Pages & static hosting.');

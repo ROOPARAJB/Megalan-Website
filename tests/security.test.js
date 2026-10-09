@@ -306,4 +306,30 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
     assert.strictEqual(delRes.status, 403, 'Editor must be denied with 403 Forbidden on inquiry delete API');
     assert.strictEqual(delRes.body.success, false);
   });
+
+  // 9. CORS Policy Non-Reflective Denial Test (V10 hardening)
+  test('[CORS] Non-whitelisted origin should be silently denied without throwing 500 error', async () => {
+    const res = await request(app)
+      .get('/api/health')
+      .set('Origin', 'https://malicious-attacker-site.com');
+
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.headers['access-control-allow-origin'], undefined, 'Disallowed origin must not receive ACAO header');
+  });
+
+  // 10. Client JS Code Hygiene & Hardcoded Secret Check (V1, V4, V5)
+  test('[Code Hygiene] Shipped JavaScript must not contain hardcoded TOTP secrets, backup codes, or mock tokens', async () => {
+    const fs = (await import('fs')).default;
+    const path = (await import('path')).default;
+    
+    const adminJs = fs.readFileSync(path.resolve('./public/js/admin.js'), 'utf8');
+    const contactJs = fs.readFileSync(path.resolve('./public/js/contact.js'), 'utf8');
+
+    assert.ok(!adminJs.includes('3SG6BVQA2JE5NCT4PH3K2TUDD2TSMV4X'), 'Embedded TOTP secret must be removed');
+    assert.ok(!adminJs.includes('VPSA-2026-ADMIN'), 'Static backup code must be removed');
+    assert.ok(!adminJs.includes('vpsa-secure-session-token'), 'Hardcoded session token must be removed');
+    assert.ok(!adminJs.includes('localStorage.setItem(\'vpsa_token\''), 'Persistent JWT in localStorage must be removed');
+    assert.ok(!contactJs.includes('/rest/v1/inquiries'), 'Direct REST inquiry insertion must be removed');
+  });
 });
+
