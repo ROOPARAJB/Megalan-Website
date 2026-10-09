@@ -45,6 +45,16 @@ try {
   if (!columnNames.has('two_factor_backup_codes')) {
     db.exec("ALTER TABLE users ADD COLUMN two_factor_backup_codes TEXT");
   }
+
+  // Migration: Add DPDP consent persistence columns if they do not exist
+  const inqInfo = db.prepare("PRAGMA table_info(inquiries)").all();
+  const inqCols = new Set(inqInfo.map(c => c.name));
+  if (!inqCols.has('dpdp_consent')) {
+    db.exec("ALTER TABLE inquiries ADD COLUMN dpdp_consent INTEGER DEFAULT 1");
+  }
+  if (!inqCols.has('dpdp_consent_timestamp')) {
+    db.exec("ALTER TABLE inquiries ADD COLUMN dpdp_consent_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP");
+  }
 } catch (e) {
   console.error('[DB MIGRATION ERROR]', e);
 }

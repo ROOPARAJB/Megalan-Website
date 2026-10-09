@@ -106,7 +106,8 @@ router.post('/', inquiryRateLimiter, async (req, res) => {
       quantity: cleanQuantity,
       destination: cleanDestination,
       message: message.trim(),
-      ip_address: String(ipAddress)
+      ip_address: String(ipAddress),
+      dpdp_consent: true
     });
 
     logSecurityEvent(

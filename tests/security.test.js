@@ -156,6 +156,12 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
     assert.strictEqual(confirmRes.body.backup_codes.length, 4, '4 recovery codes returned');
     const backupCodes = confirmRes.body.backup_codes;
 
+    // Verify backup codes are stored as bcrypt hashes and NOT plaintext (RET-08)
+    const adminDbRecord = await dbService.getUserByUsername('admin');
+    assert.ok(adminDbRecord.two_factor_backup_codes, 'Backup codes must be stored');
+    assert.ok(!adminDbRecord.two_factor_backup_codes.includes(backupCodes[0]), 'Backup codes must NOT be stored in plaintext');
+    assert.ok(adminDbRecord.two_factor_backup_codes.includes('$2'), 'Backup codes must be bcrypt hashed at rest');
+
     // Step 2: Next login now prompts for 2FA verification (setup_required = false)
     const step2LoginRes = await request(app)
       .post('/api/auth/login')
@@ -189,7 +195,7 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
     assert.strictEqual(goodVerifyRes.status, 200);
     assert.ok(goodVerifyRes.body.token, 'Session token granted');
 
-    // Step 3: Test Emergency Backup Recovery Code login
+    // Step 3: Test Emergency Backup Recovery Code login (Hashed check)
     const step3LoginRes = await request(app)
       .post('/api/auth/login')
       .send({
@@ -223,17 +229,29 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
         code: backupCodeToUse
       });
     assert.strictEqual(reuseVerifyRes.status, 401, 'Used backup code must be invalidated');
-
-    // Restore permanent production admin secret in Supabase
-    await dbService.updateUser2FA('admin', {
-      two_factor_enabled: 1,
-      two_factor_secret: '3SG6BVQA2JE5NCT4PH3K2TUDD2TSMV4X',
-      two_factor_temp_secret: null,
-      two_factor_backup_codes: JSON.stringify(['VPSA-3469-3161', 'VPSA-7377-6479', 'VPSA-4322-5862', 'VPSA-8712-1924', 'VPSA-2026-ADMIN'])
-    });
   });
 
-  // 7. Input Validation & Schema Enforcement
+  // 7. Input Validation & Schema Enforcement & DPDP Persistence (RET-09)
+  test('[Validation] DPDP consent must be validated and persisted in database', async () => {
+    const res = await request(app)
+      .post('/api/enquiries')
+      .send({
+        full_name: 'DPDP Test Buyer',
+        email: 'dpdp.consent@vpsayogafresh.com',
+        mobile_number: '9876543210',
+        country_code: '+91',
+        message: 'Verifying DPDP consent persistence',
+        dpdp_consent: true
+      });
+
+    assert.strictEqual(res.status, 201);
+    const allInq = await dbService.getInquiries();
+    const saved = allInq.find(i => i.email === 'dpdp.consent@vpsayogafresh.com');
+    assert.ok(saved, 'Inquiry must be stored');
+    assert.strictEqual(saved.dpdp_consent, 1, 'DPDP consent must be persisted as 1');
+    assert.ok(saved.dpdp_consent_timestamp, 'DPDP consent timestamp must be recorded');
+  });
+
   test('[Validation] Invalid email address should be rejected with 400', async () => {
     const res = await request(app)
       .post('/api/enquiries')

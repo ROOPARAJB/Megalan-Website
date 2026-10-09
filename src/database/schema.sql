@@ -60,6 +60,8 @@ CREATE TABLE IF NOT EXISTS inquiries (
     message TEXT NOT NULL,
     status TEXT DEFAULT 'new' CHECK(status IN ('new', 'contacted', 'in_review', 'completed')),
     ip_address TEXT,
+    dpdp_consent INTEGER DEFAULT 1 NOT NULL,
+    dpdp_consent_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

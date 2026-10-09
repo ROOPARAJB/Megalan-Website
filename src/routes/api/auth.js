@@ -165,15 +165,19 @@ router.post('/2fa/confirm-setup', authRateLimiter, async (req, res) => {
       });
     }
 
-    // Generate emergency backup recovery codes
+    // Generate emergency backup recovery codes (plaintext given to user once)
     const backupCodes = generateBackupCodes();
+    // Hash each backup code using bcrypt for safe storage at rest
+    const hashedBackupCodes = await Promise.all(
+      backupCodes.map(c => bcrypt.hash(c.toUpperCase(), 10))
+    );
 
-    // Activate 2FA on account
+    // Activate 2FA on account with hashed backup codes
     await dbService.updateUser2FA(user.id, {
       two_factor_secret: user.two_factor_temp_secret,
       two_factor_enabled: 1,
       two_factor_temp_secret: null,
-      two_factor_backup_codes: JSON.stringify(backupCodes),
+      two_factor_backup_codes: JSON.stringify(hashedBackupCodes),
       last_login_at: new Date().toISOString()
     });
 
@@ -267,20 +271,32 @@ router.post('/2fa/verify', authRateLimiter, async (req, res) => {
       isAuthorized = verifyRes && verifyRes.valid === true;
     }
 
-    // 2. Check Emergency Backup Code Fallback
+    // 2. Check Emergency Backup Code Fallback (Hashed via bcrypt)
     if (!isAuthorized && user.two_factor_backup_codes) {
       try {
         const storedCodes = JSON.parse(user.two_factor_backup_codes);
-        const matchIdx = storedCodes.findIndex(c => c.toUpperCase() === cleanInput.toUpperCase());
-        if (matchIdx !== -1) {
-          isAuthorized = true;
-          usedBackupCode = true;
-          // Consume the one-time recovery code
-          storedCodes.splice(matchIdx, 1);
-          await dbService.updateUser2FA(user.id, {
-            two_factor_backup_codes: JSON.stringify(storedCodes)
-          });
-          logSecurityEvent('BACKUP_CODE_USED', `Admin '${user.username}' used one-time emergency backup code to log in.`, user.id, req, 'WARN');
+        if (Array.isArray(storedCodes)) {
+          for (let i = 0; i < storedCodes.length; i++) {
+            const storedCode = storedCodes[i];
+            let match = false;
+            if (typeof storedCode === 'string' && storedCode.startsWith('$2')) {
+              match = await bcrypt.compare(cleanInput.toUpperCase(), storedCode);
+            } else if (typeof storedCode === 'string') {
+              match = storedCode.toUpperCase() === cleanInput.toUpperCase();
+            }
+
+            if (match) {
+              isAuthorized = true;
+              usedBackupCode = true;
+              // Consume the one-time recovery code
+              storedCodes.splice(i, 1);
+              await dbService.updateUser2FA(user.id, {
+                two_factor_backup_codes: JSON.stringify(storedCodes)
+              });
+              logSecurityEvent('BACKUP_CODE_USED', `Admin '${user.username}' used one-time emergency backup code to log in.`, user.id, req, 'WARN');
+              break;
+            }
+          }
         }
       } catch (e) {}
     }

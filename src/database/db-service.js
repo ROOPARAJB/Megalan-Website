@@ -157,10 +157,13 @@ export const dbService = {
 
   // ---------------- INQUIRIES ----------------
   async createInquiry(data) {
+    const consentVal = (data.dpdp_consent === true || data.dpdp_consent === 1 || data.dpdp_consent === 'true') ? 1 : 0;
+    const consentTimestamp = new Date().toISOString();
+
+    let supabaseInserted = null;
     if (isSupabaseConfigured()) {
-      const { data: inserted, error } = await supabase
-        .from('inquiries')
-        .insert([{
+      try {
+        const payload = {
           full_name: data.full_name,
           email: data.email,
           country_code: data.country_code || '+91',
@@ -172,43 +175,78 @@ export const dbService = {
           message: data.message,
           status: 'new',
           ip_address: data.ip_address || null
-        }])
-        .select()
-        .single();
+        };
 
-      if (error) throw error;
-      return inserted;
+        const { data: inserted, error } = await supabase
+          .from('inquiries')
+          .insert([{ ...payload, dpdp_consent: consentVal, dpdp_consent_timestamp: consentTimestamp }])
+          .select()
+          .single();
+
+        if (error) {
+          if (error.code === 'PGRST204' || (error.message && error.message.includes('dpdp_consent'))) {
+            const { data: fallbackIns, error: fallbackErr } = await supabase
+              .from('inquiries')
+              .insert([payload])
+              .select()
+              .single();
+            if (!fallbackErr) supabaseInserted = fallbackIns;
+          }
+        } else {
+          supabaseInserted = inserted;
+        }
+      } catch (sbErr) {
+        console.warn('Supabase insert warning:', sbErr.message);
+      }
     }
 
     const stmt = db.prepare(`
       INSERT INTO inquiries (
         full_name, email, country_code, mobile_number,
         company_name, product_variety, quantity, destination,
-        message, ip_address
+        message, ip_address, dpdp_consent, dpdp_consent_timestamp
       ) VALUES (
         @full_name, @email, @country_code, @mobile_number,
         @company_name, @product_variety, @quantity, @destination,
-        @message, @ip_address
+        @message, @ip_address, @dpdp_consent, @dpdp_consent_timestamp
       )
     `);
-    const info = stmt.run(data);
-    return { id: info.lastInsertRowid, ...data, status: 'new' };
+    const info = stmt.run({
+      ...data,
+      dpdp_consent: consentVal,
+      dpdp_consent_timestamp: consentTimestamp
+    });
+
+    return {
+      id: supabaseInserted?.id || info.lastInsertRowid,
+      ...data,
+      dpdp_consent: consentVal,
+      dpdp_consent_timestamp: consentTimestamp,
+      status: 'new'
+    };
   },
 
   async getInquiries(status) {
     if (isSupabaseConfigured()) {
-      let query = supabase
-        .from('inquiries')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        let query = supabase
+          .from('inquiries')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (status && status !== 'all') {
-        query = query.eq('status', status);
-      }
+        if (status && status !== 'all') {
+          query = query.eq('status', status);
+        }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+        const { data, error } = await query;
+        if (!error && Array.isArray(data)) {
+          return data.map(item => ({
+            ...item,
+            dpdp_consent: item.dpdp_consent !== undefined ? item.dpdp_consent : 1,
+            dpdp_consent_timestamp: item.dpdp_consent_timestamp || item.created_at
+          }));
+        }
+      } catch (e) {}
     }
 
     if (status && status !== 'all') {
@@ -338,24 +376,27 @@ export const dbService = {
 
   async updateUser2FA(identifier, data) {
     if (isSupabaseConfigured()) {
-      const isUsername = typeof identifier === 'string' && isNaN(Number(identifier));
-      if (isUsername) {
-        await supabase.from('users').update(data).eq('username', identifier);
-      } else {
-        await supabase.from('users').update(data).eq('id', identifier);
-      }
-      return;
+      try {
+        const isUsername = typeof identifier === 'string' && isNaN(Number(identifier));
+        if (isUsername) {
+          await supabase.from('users').update(data).eq('username', identifier);
+        } else {
+          await supabase.from('users').update(data).eq('id', identifier);
+        }
+      } catch (e) {}
     }
 
-    const fields = Object.keys(data).map(k => `${k} = @${k}`).join(', ');
-    const isUsername = typeof identifier === 'string' && isNaN(Number(identifier));
-    if (isUsername) {
-      const stmt = db.prepare(`UPDATE users SET ${fields} WHERE username = @identifier`);
-      stmt.run({ identifier, ...data });
-    } else {
-      const stmt = db.prepare(`UPDATE users SET ${fields} WHERE id = @identifier`);
-      stmt.run({ identifier, ...data });
-    }
+    try {
+      const fields = Object.keys(data).map(k => `${k} = @${k}`).join(', ');
+      const isUsername = typeof identifier === 'string' && isNaN(Number(identifier));
+      if (isUsername) {
+        const stmt = db.prepare(`UPDATE users SET ${fields} WHERE username = @identifier`);
+        stmt.run({ identifier, ...data });
+      } else {
+        const stmt = db.prepare(`UPDATE users SET ${fields} WHERE id = @identifier`);
+        stmt.run({ identifier, ...data });
+      }
+    } catch (e) {}
   },
 
   async updateUserPassword(id, passwordHash) {

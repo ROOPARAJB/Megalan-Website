@@ -64,6 +64,8 @@ CREATE TABLE IF NOT EXISTS public.inquiries (
     message TEXT NOT NULL,
     status TEXT DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'in_review', 'completed')),
     ip_address TEXT,
+    dpdp_consent INTEGER DEFAULT 1 NOT NULL,
+    dpdp_consent_timestamp TIMESTAMPTZ DEFAULT NOW(),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -85,39 +87,42 @@ CREATE INDEX IF NOT EXISTS idx_inquiries_status ON public.inquiries(status);
 CREATE INDEX IF NOT EXISTS idx_inquiries_created ON public.inquiries(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_event ON public.audit_logs(event_type);
 
--- 3. Row Level Security (RLS) Policies
+-- 3. Row Level Security (RLS) Policies (Deny-by-default for anon role)
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.gallery ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inquiries ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Products: Public Read, Service/Admin Write
+-- Products: Public Read-Only for anon, Service Role Write
 DROP POLICY IF EXISTS "Public can view products" ON public.products;
 CREATE POLICY "Public can view products" ON public.products FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Service role can modify products" ON public.products;
-CREATE POLICY "Service role can modify products" ON public.products FOR ALL USING (true);
+CREATE POLICY "Service role can modify products" ON public.products FOR ALL TO service_role USING (true) WITH CHECK (true);
 
--- Gallery: Public Read, Service/Admin Write
+-- Gallery: Public Read-Only for anon, Service Role Write
 DROP POLICY IF EXISTS "Public can view gallery" ON public.gallery;
 CREATE POLICY "Public can view gallery" ON public.gallery FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Service role can modify gallery" ON public.gallery;
-CREATE POLICY "Service role can modify gallery" ON public.gallery FOR ALL USING (true);
+CREATE POLICY "Service role can modify gallery" ON public.gallery FOR ALL TO service_role USING (true) WITH CHECK (true);
 
--- Inquiries: Deny Anon/Public direct REST access (All submissions and management must route through Node backend)
+-- Inquiries: Strict Deny-by-default for anon (All submissions/management route via Node backend service_role)
 DROP POLICY IF EXISTS "Public can submit inquiries" ON public.inquiries;
 DROP POLICY IF EXISTS "Public can view inquiries" ON public.inquiries;
 DROP POLICY IF EXISTS "Service role can manage inquiries" ON public.inquiries;
-CREATE POLICY "Service role can manage inquiries" ON public.inquiries FOR ALL USING (true);
+CREATE POLICY "Service role can manage inquiries" ON public.inquiries FOR ALL TO service_role USING (true) WITH CHECK (true);
 
--- Users & Audit Logs: Service/Admin Access
+-- Users: Strict Deny-by-default for anon (No anon select/insert/update/delete)
+DROP POLICY IF EXISTS "Public can view users" ON public.users;
 DROP POLICY IF EXISTS "Service role can manage users" ON public.users;
-CREATE POLICY "Service role can manage users" ON public.users FOR ALL USING (true);
+CREATE POLICY "Service role can manage users" ON public.users FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+-- Audit Logs: Strict Deny-by-default for anon
+DROP POLICY IF EXISTS "Public can view audit logs" ON public.audit_logs;
 DROP POLICY IF EXISTS "Service role can manage audit logs" ON public.audit_logs;
-CREATE POLICY "Service role can manage audit logs" ON public.audit_logs FOR ALL USING (true);
+CREATE POLICY "Service role can manage audit logs" ON public.audit_logs FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- 4. Initial Seed Data: Banana Products
 INSERT INTO public.products (slug, name_en, name_ta, name_hi, name_ml, name_te, name_ar, tagline, health_benefits, taste_profile, shelf_life, packing_specs, ideal_temperature, image_url, is_featured, sort_order)
