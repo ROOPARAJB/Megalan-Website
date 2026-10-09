@@ -53,7 +53,7 @@ try {
     db.exec("ALTER TABLE inquiries ADD COLUMN dpdp_consent INTEGER DEFAULT 1");
   }
   if (!inqCols.has('dpdp_consent_timestamp')) {
-    db.exec("ALTER TABLE inquiries ADD COLUMN dpdp_consent_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP");
+    db.exec("ALTER TABLE inquiries ADD COLUMN dpdp_consent_timestamp DATETIME");
   }
 } catch (e) {
   console.error('[DB MIGRATION ERROR]', e);
