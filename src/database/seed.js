@@ -221,7 +221,18 @@ export async function seedDatabase() {
     for (const item of items) insertProduct.run(item);
   });
   insertManyProducts(products);
-  console.log(`[SEED] Seeded ${products.length} banana varieties.`);
+  console.log(`[SEED] Seeded ${products.length} banana varieties in SQLite.`);
+
+  if (isSupabaseConfigured()) {
+    try {
+      for (const p of products) {
+        await supabase.from('products').upsert(p, { onConflict: 'slug' });
+      }
+      console.log(`[SEED] Synced ${products.length} banana varieties to Supabase.`);
+    } catch (e) {
+      console.warn('[SEED SUPABASE PRODUCTS WARNING]', e.message);
+    }
+  }
 
   // 3. Seed Gallery Items
   const galleryItems = [
@@ -275,7 +286,21 @@ export async function seedDatabase() {
       }
     });
     insertManyGallery(galleryItems);
-    console.log(`[SEED] Seeded ${galleryItems.length} initial gallery items.`);
+    console.log(`[SEED] Seeded ${galleryItems.length} initial gallery items in SQLite.`);
+  }
+
+  if (isSupabaseConfigured()) {
+    try {
+      const { data: existingGal } = await supabase.from('gallery').select('id');
+      if (!existingGal || existingGal.length === 0) {
+        for (const g of galleryItems) {
+          await supabase.from('gallery').insert([{ ...g, file_size: 102400 }]);
+        }
+        console.log(`[SEED] Synced ${galleryItems.length} initial gallery items to Supabase.`);
+      }
+    } catch (e) {
+      console.warn('[SEED SUPABASE GALLERY WARNING]', e.message);
+    }
   }
 
   // 4. Seed sample audit log
@@ -283,6 +308,16 @@ export async function seedDatabase() {
     INSERT INTO audit_logs (event_type, description, severity)
     VALUES ('SYSTEM_INIT', 'Database schema initialized and seed executed successfully.', 'INFO')
   `).run();
+
+  if (isSupabaseConfigured()) {
+    try {
+      await supabase.from('audit_logs').insert([{
+        event_type: 'SYSTEM_INIT',
+        description: 'Database schema initialized and seed executed successfully.',
+        severity: 'INFO'
+      }]);
+    } catch (e) {}
+  }
 
   console.log('[SEED] Seeding completed successfully.');
 }

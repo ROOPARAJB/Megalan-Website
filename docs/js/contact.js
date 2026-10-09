@@ -102,10 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (result && result.error) {
           showToast(result.error, 'error');
         } else {
-          showToast('An error occurred while submitting your enquiry. Please contact us directly at +91 9003755701 or info@vpsayoga.com.', 'error');
+          showToast('Backend unavailable on static mirror. Please contact our Trade Desk directly at +91 9003755701 or info@vpsayoga.com.', 'error');
         }
       } catch (err) {
-        showToast('Unable to connect to the enquiry service. Please contact us directly at +91 9003755701 or info@vpsayoga.com.', 'error');
+        showToast('Backend unavailable on static mirror. Please contact our Trade Desk directly at +91 9003755701 or info@vpsayoga.com.', 'error');
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;

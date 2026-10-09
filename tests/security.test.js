@@ -338,7 +338,7 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
     assert.strictEqual(res.headers['access-control-allow-origin'], undefined, 'Disallowed origin must not receive ACAO header');
   });
 
-  // 10. Client JS Code Hygiene & Hardcoded Secret Check (V1, V4, V5)
+  // 10. Client JS Code Hygiene & Hardcoded Secret Check (W1, W3, W6)
   test('[Code Hygiene] Shipped JavaScript must not contain hardcoded TOTP secrets, backup codes, or mock tokens', async () => {
     const fs = (await import('fs')).default;
     const path = (await import('path')).default;
@@ -350,7 +350,115 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
     assert.ok(!adminJs.includes('VPSA-2026-ADMIN'), 'Static backup code must be removed');
     assert.ok(!adminJs.includes('vpsa-secure-session-token'), 'Hardcoded session token must be removed');
     assert.ok(!adminJs.includes('localStorage.setItem(\'vpsa_token\''), 'Persistent JWT in localStorage must be removed');
+    assert.ok(!adminJs.includes('JBSWY3DPEHPK3PXP'), 'Demo secret must not exist in admin JS');
+    assert.ok(!adminJs.includes('demo-session-token'), 'Demo session token must not exist in admin JS');
     assert.ok(!contactJs.includes('/rest/v1/inquiries'), 'Direct REST inquiry insertion must be removed');
+    assert.ok(!contactJs.includes('wa.me?text='), 'Auto-redirect with full PII must be removed');
+  });
+
+  // 11. Static Build Isolation Test (W1 & W6)
+  test('[Static Build Hygiene] docs/ and dist/ must strictly exclude admin pages, admin scripts, and demo secrets', async () => {
+    const fs = (await import('fs')).default;
+    const path = (await import('path')).default;
+
+    const checkDirs = ['./docs', './dist'];
+    for (const dir of checkDirs) {
+      assert.ok(!fs.existsSync(path.resolve(dir, 'admin-login.html')), `${dir}/admin-login.html must not exist`);
+      assert.ok(!fs.existsSync(path.resolve(dir, 'admin-dashboard.html')), `${dir}/admin-dashboard.html must not exist`);
+      assert.ok(!fs.existsSync(path.resolve(dir, 'js/admin.js')), `${dir}/js/admin.js must not exist`);
+
+      // Read all files in docs/ and dist/ and assert no secrets exist
+      const files = fs.readdirSync(path.resolve(dir));
+      for (const file of files) {
+        if (file.endsWith('.html') || file.endsWith('.js')) {
+          const content = fs.readFileSync(path.resolve(dir, file), 'utf8');
+          assert.ok(!content.includes('DEMO_SECRET'), `${file} must not contain DEMO_SECRET`);
+          assert.ok(!content.includes('demo-session-token'), `${file} must not contain demo-session-token`);
+          assert.ok(!content.includes('JBSWY3DPEHPK3PXP'), `${file} must not contain JBSWY3DPEHPK3PXP`);
+          assert.ok(!content.includes('STATIC_SAMPLE_'), `${file} must not contain STATIC_SAMPLE_`);
+          assert.ok(!content.includes('3SG6BVQA'), `${file} must not contain 3SG6BVQA`);
+          assert.ok(!content.includes('VPSA-2026-ADMIN'), `${file} must not contain VPSA-2026-ADMIN`);
+        }
+      }
+    }
+  });
+
+  // 12. Framebusting & Clickjacking Defense Check (W4)
+  test('[Defense-in-Depth] All public HTML views must include inline framebusting defenses', async () => {
+    const fs = (await import('fs')).default;
+    const path = (await import('path')).default;
+
+    const viewsDir = path.resolve('./views');
+    const viewFiles = fs.readdirSync(viewsDir).filter(f => f.endsWith('.html'));
+    assert.ok(viewFiles.length > 0);
+
+    for (const viewFile of viewFiles) {
+      const content = fs.readFileSync(path.join(viewsDir, viewFile), 'utf8');
+      assert.ok(
+        content.includes('window.top !== window.self') || content.includes('top!==self') || content.includes('top !== self'),
+        `${viewFile} must include inline framebusting logic`
+      );
+    }
+  });
+
+  // 13. Unsigned Translation Script Lazy-Loading Check (W5)
+  test('[Privacy & SRI Defense] Public HTML views must not include auto-loading static translate script tags', async () => {
+    const fs = (await import('fs')).default;
+    const path = (await import('path')).default;
+
+    const viewsDir = path.resolve('./views');
+    const viewFiles = fs.readdirSync(viewsDir).filter(f => f.endsWith('.html'));
+
+    for (const viewFile of viewFiles) {
+      const content = fs.readFileSync(path.join(viewsDir, viewFile), 'utf8');
+      assert.ok(
+        !content.includes('src="https://translate.google.com/translate_a/element.js'),
+        `${viewFile} must not auto-load static Google Translate script tag`
+      );
+    }
+  });
+
+  // 14. Database Synchronization & CRUD Integrity Check
+  test('[Database Sync] dbService operations should execute reliably with dual-sync and fallback capabilities', async () => {
+    // 1. Products retrieval
+    const products = await dbService.getProducts();
+    assert.ok(Array.isArray(products));
+    assert.strictEqual(products.length, 8);
+
+    const redBanana = await dbService.getProductBySlug('red-banana');
+    assert.ok(redBanana);
+    assert.strictEqual(redBanana.slug, 'red-banana');
+
+    // 2. Gallery operations
+    const initialGallery = await dbService.getGallery('all');
+    assert.ok(Array.isArray(initialGallery));
+
+    const newGalleryItem = await dbService.createGalleryItem({
+      title: 'Database Sync Test Item',
+      description: 'Testing bidirectional database synchronization',
+      category: 'harvest',
+      image_url: '/images/products/poovan-banana.jpg',
+      file_size: 150000
+    });
+    assert.ok(newGalleryItem.id);
+
+    const updatedGalleryItem = await dbService.updateGalleryItem(newGalleryItem.id, {
+      title: 'Database Sync Test Item (Updated)'
+    });
+    assert.strictEqual(updatedGalleryItem.title, 'Database Sync Test Item (Updated)');
+
+    const deletedGalleryItem = await dbService.deleteGalleryItem(newGalleryItem.id);
+    assert.ok(deletedGalleryItem);
+
+    // 3. User & Auth operations
+    const adminUser = await dbService.getUserByUsername('admin');
+    assert.ok(adminUser);
+    assert.strictEqual(adminUser.username, 'admin');
+
+    const adminById = await dbService.getUserById(adminUser.id);
+    assert.ok(adminById);
+    assert.strictEqual(adminById.username, 'admin');
   });
 });
+
 
