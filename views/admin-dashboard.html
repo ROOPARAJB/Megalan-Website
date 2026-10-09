@@ -13,16 +13,29 @@
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="icon" type="image/png" href="/images/logo/vpsa-yoga-logo.png">
   <script>
-    // Instant pre-render auth guard to prevent Flash of Unauthorized Content (FOUC)
+    // Instant pre-render auth guard and 5-minute inactivity check to prevent FOUC
     (function() {
       var token = sessionStorage.getItem('vpsa_token') || localStorage.getItem('vpsa_token');
       var isStatic = window.location.hostname.includes('github.io') || 
                      window.location.protocol === 'file:' || 
                      window.location.pathname.endsWith('.html') ||
                      (window.location.port === '' && !window.location.hostname.includes('localhost'));
-      if (!token && isStatic) {
+
+      var lastActiveStr = sessionStorage.getItem('vpsa_last_activity');
+      var isExpired = false;
+      if (lastActiveStr) {
+        var elapsed = Date.now() - Number(lastActiveStr);
+        if (elapsed > 5 * 60 * 1000) {
+          isExpired = true;
+          sessionStorage.removeItem('vpsa_token');
+          localStorage.removeItem('vpsa_token');
+          sessionStorage.removeItem('vpsa_last_activity');
+        }
+      }
+
+      if ((!token || isExpired) && isStatic) {
         document.documentElement.style.display = 'none';
-        window.location.replace('admin-login.html');
+        window.location.replace('admin-login.html' + (isExpired ? '?reason=timeout' : ''));
       }
     })();
   </script>

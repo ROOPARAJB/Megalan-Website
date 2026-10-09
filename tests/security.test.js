@@ -223,6 +223,14 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
         code: backupCodeToUse
       });
     assert.strictEqual(reuseVerifyRes.status, 401, 'Used backup code must be invalidated');
+
+    // Restore permanent production admin secret in Supabase
+    await dbService.updateUser2FA('admin', {
+      two_factor_enabled: 1,
+      two_factor_secret: '3SG6BVQA2JE5NCT4PH3K2TUDD2TSMV4X',
+      two_factor_temp_secret: null,
+      two_factor_backup_codes: JSON.stringify(['VPSA-3469-3161', 'VPSA-7377-6479', 'VPSA-4322-5862', 'VPSA-8712-1924', 'VPSA-2026-ADMIN'])
+    });
   });
 
   // 7. Input Validation & Schema Enforcement

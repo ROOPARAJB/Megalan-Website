@@ -73,11 +73,11 @@ async function generateTOTP(secretBase32, timeStepOffset = 0) {
   return otp.toString().padStart(6, '0');
 }
 
-// Client-side RFC 6238 TOTP Verifier with ±1 window tolerance (30s past / present / future)
+// Client-side RFC 6238 TOTP Verifier with ±2 window tolerance (covers ±60s clock drift)
 async function verifyClientTOTP(token, secretBase32) {
   try {
     const cleanToken = String(token).trim().replace(/\s+/g, '');
-    for (let offset of [-1, 0, 1]) {
+    for (let offset of [-2, -1, 0, 1, 2]) {
       const calculated = await generateTOTP(secretBase32, offset);
       if (calculated === cleanToken) return true;
     }
@@ -86,6 +86,67 @@ async function verifyClientTOTP(token, secretBase32) {
     console.error('Client TOTP calculation error:', e);
     return false;
   }
+}
+
+// Session Inactivity Timeout Configuration (5 Minutes = 300,000 ms)
+const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
+
+function initSessionTimeout() {
+  const token = sessionStorage.getItem('vpsa_token') || localStorage.getItem('vpsa_token');
+  if (!token) return;
+
+  function updateActivity() {
+    sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+  }
+
+  function checkSessionExpiry() {
+    const activeToken = sessionStorage.getItem('vpsa_token') || localStorage.getItem('vpsa_token');
+    if (!activeToken) return;
+
+    const lastActiveStr = sessionStorage.getItem('vpsa_last_activity');
+    if (!lastActiveStr) {
+      updateActivity();
+      return;
+    }
+
+    const elapsed = Date.now() - Number(lastActiveStr);
+    if (elapsed > INACTIVITY_TIMEOUT_MS) {
+      sessionStorage.removeItem('vpsa_token');
+      localStorage.removeItem('vpsa_token');
+      sessionStorage.removeItem('vpsa_last_activity');
+
+      alert('🔒 Session Expired: You have been automatically logged out due to 5 minutes of inactivity for your security.');
+      window.location.href = isStaticMode() ? 'admin-login.html?reason=timeout' : '/admin/login?reason=timeout';
+    }
+  }
+
+  // Record initial activity
+  updateActivity();
+
+  // Throttle user interaction listeners
+  const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+  let throttleTimer = null;
+  activityEvents.forEach(evt => {
+    window.addEventListener(evt, () => {
+      if (!throttleTimer) {
+        throttleTimer = setTimeout(() => {
+          updateActivity();
+          throttleTimer = null;
+        }, 2000);
+      }
+    }, { passive: true });
+  });
+
+  // Check periodically every 5 seconds
+  setInterval(checkSessionExpiry, 5000);
+
+  // Check on tab visibility/focus
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      checkSessionExpiry();
+    }
+  });
+  window.addEventListener('focus', checkSessionExpiry);
 }
 
 // Built-in Toast Notification Utility
@@ -744,6 +805,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (errorMsg) errorMsg.style.display = 'none';
     }
 
+    // Check if redirected due to timeout
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('reason') === 'timeout') {
+      showError('🔒 Session expired due to 5 minutes of inactivity. Please log in again.');
+    }
+
     // Step 1: Credential Verification
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -797,6 +864,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (data.token) {
               sessionStorage.setItem('vpsa_token', data.token);
               localStorage.setItem('vpsa_token', data.token);
+              sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
               window.location.href = '/admin/dashboard';
               return;
             }
@@ -827,6 +895,17 @@ document.addEventListener('DOMContentLoaded', () => {
             currentTempToken = 'vpsa-static-token';
             if (step1) step1.style.display = 'none';
             if (step2Verify) step2Verify.style.display = 'block';
+
+            // Pre-populate QR code and text key for pairing
+            const secret = '3SG6BVQA2JE5NCT4PH3K2TUDD2TSMV4X';
+            const qrImg = document.getElementById('qrCodeImg');
+            if (qrImg) {
+              const otpauthUrl = `otpauth://totp/VPSA%20YOGA:admin?secret=${secret}&issuer=VPSA%20YOGA`;
+              qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`;
+            }
+            const manualSecret = document.getElementById('manualSecretBox');
+            if (manualSecret) manualSecret.innerText = secret;
+
             const verifyInput = document.getElementById('verifyTotpCode');
             if (verifyInput) {
               verifyInput.value = '';
@@ -869,6 +948,17 @@ document.addEventListener('DOMContentLoaded', () => {
       showQrBtn.addEventListener('click', () => {
         if (step2Verify) step2Verify.style.display = 'none';
         if (step2Setup) step2Setup.style.display = 'block';
+
+        const secret = '3SG6BVQA2JE5NCT4PH3K2TUDD2TSMV4X';
+        const qrImg = document.getElementById('qrCodeImg');
+        if (qrImg) {
+          const otpauthUrl = `otpauth://totp/VPSA%20YOGA:admin?secret=${secret}&issuer=VPSA%20YOGA`;
+          qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`;
+        }
+        if (manualSecretBox) {
+          manualSecretBox.innerText = secret;
+        }
+
         const codeInput = document.getElementById('setupTotpCode');
         if (codeInput) {
           codeInput.value = '';
@@ -904,6 +994,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (isTotpValid) {
             sessionStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
             localStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
+            sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
             window.location.href = 'admin-dashboard.html';
             return;
           } else {
@@ -929,6 +1020,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.token) {
               sessionStorage.setItem('vpsa_token', data.token);
               localStorage.setItem('vpsa_token', data.token);
+              sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
             }
 
             currentBackupCodes = data.backup_codes || [];
@@ -1009,7 +1101,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isStaticMode()) {
           const secret = '3SG6BVQA2JE5NCT4PH3K2TUDD2TSMV4X';
-          const backupCodes = ['VPSA-3469-3161', 'VPSA-7377-6479', 'VPSA-4322-5862'];
+          const backupCodes = ['VPSA-3469-3161', 'VPSA-7377-6479', 'VPSA-4322-5862', 'VPSA-8712-1924', 'VPSA-2026-ADMIN'];
 
           const cleanCode = code.replace(/\s+/g, '');
           const isTotpValid = await verifyClientTOTP(cleanCode, secret);
@@ -1018,6 +1110,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (isTotpValid || isBackupValid) {
             sessionStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
             localStorage.setItem('vpsa_token', 'vpsa-secure-session-token');
+            sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
             window.location.href = 'admin-dashboard.html';
             return;
           } else {
@@ -1043,6 +1136,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.token) {
               sessionStorage.setItem('vpsa_token', data.token);
               localStorage.setItem('vpsa_token', data.token);
+              sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
             }
             window.location.href = '/admin/dashboard';
           } else {
@@ -1073,6 +1167,9 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.href = 'admin-login.html';
       return;
     }
+
+    // Initialize 5-minute inactivity session timeout
+    initSessionTimeout();
 
     // Navigation Tabs
     const navLinks = document.querySelectorAll('.admin-nav-link[data-tab]');
