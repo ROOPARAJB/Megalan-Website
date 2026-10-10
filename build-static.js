@@ -59,6 +59,33 @@ for (const targetDir of targetDirs) {
 
     const baseName = file.replace('.html', '');
 
+    if (baseName === 'admin-dashboard') {
+      let embeddedGallery = [];
+      let embeddedInquiries = [];
+      let embeddedAudit = [];
+
+      try {
+        const Database = (await import('better-sqlite3')).default;
+        const dbPath = path.resolve(rootDir, 'data', 'vpsa_database.sqlite');
+        if (fs.existsSync(dbPath)) {
+          const sqlite = new Database(dbPath, { readonly: true });
+          embeddedGallery = sqlite.prepare('SELECT id, title, description, category, image_url, file_size, created_at, updated_at FROM gallery ORDER BY created_at DESC').all();
+          embeddedInquiries = sqlite.prepare('SELECT id, full_name, email, country_code, mobile_number, company_name, product_variety, quantity, destination, message, status, ip_address, created_at FROM inquiries ORDER BY created_at DESC').all();
+          embeddedAudit = sqlite.prepare('SELECT id, event_type, description, user_id, ip_address, user_agent, severity, created_at FROM audit_logs ORDER BY created_at DESC LIMIT 100').all();
+          sqlite.close();
+        }
+      } catch (err) {
+        console.warn('⚠️ SQLite embedding notice:', err.message);
+      }
+
+      const embeddedScript = `<script id="vpsa-embedded-data">
+window.__EMBEDDED_GALLERY__ = ${JSON.stringify(embeddedGallery)};
+window.__EMBEDDED_INQUIRIES__ = ${JSON.stringify(embeddedInquiries)};
+window.__EMBEDDED_AUDIT_LOGS__ = ${JSON.stringify(embeddedAudit)};
+</script>`;
+      content = content.replace('</head>', `${embeddedScript}\n</head>`);
+    }
+
     // Write file.html at root of dist
     fs.writeFileSync(path.join(targetDir, file), content, 'utf8');
 
