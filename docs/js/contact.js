@@ -292,28 +292,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let submissionSuccess = false;
 
-      // 1. Attempt Node Backend API (When hosted on Node server)
-      try {
-        const response = await fetch('/api/enquiries', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({ ...payload, dpdp_consent: true })
-        });
+      // 1. Attempt Node Backend API (When running on local Node server)
+      const isStaticSite = window.location.hostname.includes('github.io') || 
+                           window.location.hostname.includes('vpsayoga.in') ||
+                           window.location.protocol === 'file:';
 
-        if (response.ok) {
-          const resJson = await response.json();
-          if (resJson && resJson.success) {
-            submissionSuccess = true;
+      if (!isStaticSite) {
+        try {
+          const response = await fetch('/api/enquiries', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({ ...payload, dpdp_consent: true })
+          });
+
+          if (response.ok) {
+            const resJson = await response.json();
+            if (resJson && resJson.success) {
+              submissionSuccess = true;
+            }
           }
+        } catch (nodeErr) {
+          // Fallback to Supabase cloud
         }
-      } catch (nodeErr) {
-        // Fallback to direct cloud database on static hosting (GitHub Pages)
       }
 
-      // 2. Direct Supabase Cloud Sync (Active on live GitHub Pages)
+      // 2. Direct Supabase Cloud Sync (Instant on static hosting)
       if (!submissionSuccess) {
         const cloudHost = 'https://sammfailpehmtxlbqmmh.supabase.co';
         const cloudPath = '/rest/' + 'v1/' + 'inquiries';
@@ -336,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
               body: JSON.stringify(payload)
             });
 
-            if (sbRes.ok || sbRes.status === 201) {
+            if (sbRes.ok || (sbRes.status >= 200 && sbRes.status < 300)) {
               submissionSuccess = true;
               break;
             }
