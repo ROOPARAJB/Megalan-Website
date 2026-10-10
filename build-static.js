@@ -48,32 +48,39 @@ for (const targetDir of targetDirs) {
   // 3. Add .nojekyll for GitHub Pages
   fs.writeFileSync(path.join(targetDir, '.nojekyll'), '', 'utf8');
 
-  // 4. Read and compile all public views/*.html (excluding admin views) to target/*.html with relative asset links
+  // 4. Compile all public views into clean-URL directory structures & fallback .html files
   const viewFiles = fs.readdirSync(viewsDir)
     .filter(f => f.endsWith('.html') && !f.startsWith('admin-'));
 
   for (const file of viewFiles) {
     let content = fs.readFileSync(path.join(viewsDir, file), 'utf8');
 
+    // Keep secured standard clean URLs (no .html extensions in user-facing links)
+    // Ensure all internal routes use /about, /products, /gallery, /contact, /privacy, /
     content = content
-      .split('href="/css/').join('href="css/')
-      .split('href="/images/').join('href="images/')
-      .split('src="/images/').join('src="images/')
-      .split('src="/js/').join('src="js/')
-      .split('href="/about"').join('href="about.html"')
-      .split('href="/products"').join('href="products.html"')
-      .split('href="/gallery"').join('href="gallery.html"')
-      .split('href="/contact"').join('href="contact.html"')
-      .split('href="/privacy"').join('href="privacy.html"')
-      .split('href="/admin/login"').join('href="contact.html"')
-      .split('href="/admin/dashboard"').join('href="contact.html"')
-      .split('href="/"').join('href="index.html"');
+      .replace(/href="about\.html"/g, 'href="/about"')
+      .replace(/href="products\.html"/g, 'href="/products"')
+      .replace(/href="gallery\.html"/g, 'href="/gallery"')
+      .replace(/href="contact\.html"/g, 'href="/contact"')
+      .replace(/href="privacy\.html"/g, 'href="/privacy"')
+      .replace(/href="index\.html"/g, 'href="/"');
 
-    const destFile = path.join(targetDir, file);
-    fs.writeFileSync(destFile, content, 'utf8');
+    const baseName = file.replace('.html', '');
+
+    // Write file.html at root of dist
+    fs.writeFileSync(path.join(targetDir, file), content, 'utf8');
+
+    // For clean directory routing (e.g., /about/index.html), create sub-folder unless it's index or 404
+    if (baseName !== 'index' && baseName !== '404') {
+      const subDir = path.join(targetDir, baseName);
+      if (!fs.existsSync(subDir)) {
+        fs.mkdirSync(subDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(subDir, 'index.html'), content, 'utf8');
+    }
   }
 
-  console.log(`✓ Built secure static output in ${path.basename(targetDir)}/ (Excluded admin interfaces)`);
+  console.log(`✓ Built secure static output with Clean URLs in ${path.basename(targetDir)}/`);
 }
 
-console.log('✨ Build succeeded! Clean & secure distribution generated for GitHub Pages & static hosting.');
+console.log('✨ Build succeeded! Clean & secure distribution generated with directory-based clean routes.');

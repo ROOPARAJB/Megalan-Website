@@ -1,63 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://translate.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://translate.google.com https://translate.googleapis.com; connect-src 'self' https://sammfailpehmtxlbqmmh.supabase.co https://translate.googleapis.com; frame-src https://translate.google.com;">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Live Operations Gallery | VPSA YOGA</title>
-  <meta name="description" content="View live photos from VPSA YOGA banana plantations, harvest grading centers, and cold-chain reefer fleet sourcing directly from trusted farmers all over south india.">
-  <link rel="stylesheet" href="/css/styles.css?v=9.5">
-  <link rel="icon" type="image/png" href="/images/logo/vpsa-yoga-logo.png">
-  <script>
-    if (window.top !== window.self) {
-      window.top.location = window.self.location;
-    }
-  </script>
-</head>
-<body>
+import fs from 'fs';
+import path from 'path';
 
-  <!-- Top Bar -->
-  <div class="top-bar">
-    <div class="container top-bar-content">
-      <div>Wholesale &amp; Cold-Chain Banana Supply Across South India &amp; Global Export</div>
-      <div class="top-bar-links">
-        <a href="https://whatsapp.com/channel/0029Vb7kw5cLNSZzMtTqSy0N" target="_blank" rel="noopener noreferrer" class="top-bar-link">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: -3px; display: inline-block;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          <span>WhatsApp Channel</span>
-        </a>
-        <a href="mailto:info@vpsayoga.in" class="top-bar-link">✉️ info@vpsayoga.in</a>
-        <span class="top-bar-link" style="color: var(--accent-light);">❄️ 13-14°C Cold Chain</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Header -->
-  <header class="site-header">
-    <div class="container navbar">
-      <a href="/" class="brand-logo">
-        <img src="/images/logo/vpsa-yoga-logo.png" alt="VPSA YOGA Logo" class="brand-logo-img">
-        <div class="brand-logo-text">
-          <span class="brand-name">VPSA YOGA</span>
-          <span class="brand-tagline">Wholesale &amp; Cold-Chain</span>
-        </div>
-      </a>
-      <nav>
-        <ul class="nav-menu" id="navMenu">
-          <li><a href="/" class="nav-link">Home</a></li>
-          <li><a href="/about" class="nav-link">About Us</a></li>
-          <li><a href="/products" class="nav-link">Banana Varieties</a></li>
-          <li><a href="/gallery" class="nav-link active">Live Gallery</a></li>
-          <li><a href="/contact" class="nav-link">Contact Us</a></li>
-          <li class="mobile-nav-cta-item"><a href="/contact" class="btn btn-primary btn-sm" style="width:100%; justify-content:center; margin-top:0.5rem;">Get Wholesale Quote</a></li>
-        </ul>
-      </nav>
-      <div class="nav-actions">
-                <!-- Custom Language Picker with Crisp SVG Flags -->
+const svgPickerHtml = `        <!-- Custom Language Picker with Crisp SVG Flags -->
         <div class="custom-lang-picker" id="customLangPicker">
           <button class="lang-picker-btn" id="langPickerTrigger" type="button" aria-label="Language Selector">
             <span class="lang-flag-current" id="currentLangFlag">
@@ -167,105 +111,31 @@
               <span>ไทย (Thai)</span>
             </button>
           </div>
-        </div>
+        </div>`;
 
-        <div id="google_translate_element"></div>
-        <a href="/contact" class="btn btn-primary btn-sm nav-desktop-cta">Get Wholesale Quote</a>
-        <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle menu">☰</button>
-      </div>
-    </div>
-  </header>
+const files = ['views/index.html', 'views/about.html', 'views/products.html', 'views/gallery.html', 'views/contact.html', 'views/privacy.html'];
 
-  <!-- Banner -->
-  <section class="page-banner">
-    <div class="container">
-      <span class="hero-badge">Live Operations &amp; Sourcing</span>
-      <h1 class="page-banner-title">
-        Live Sourcing &amp; Operations Gallery
-      </h1>
-      <p class="page-banner-sub">
-        Glimpse into our lush South Indian farms, grading centers, and cold-chain logistics fleet.
-      </p>
-    </div>
-  </section>
+for (const f of files) {
+  if (!fs.existsSync(f)) continue;
+  let content = fs.readFileSync(f, 'utf8');
 
-  <!-- Gallery Section -->
-  <section class="section">
-    <div class="container">
-      
-      <!-- Filter Bar -->
-      <div class="products-filter-bar">
-        <button class="filter-btn active" data-category="all">All Photos</button>
-        <button class="filter-btn" data-category="farms">Farms &amp; Plantations</button>
-        <button class="filter-btn" data-category="harvest">Harvest &amp; Grading</button>
-        <button class="filter-btn" data-category="logistics">Cold Chain Fleet</button>
-        <button class="filter-btn" data-category="products">Varieties</button>
-        <button class="filter-btn" data-category="packaging">Export Packaging</button>
-      </div>
+  // Replace email
+  content = content.replace(/info@vpsayoga\.com/g, 'info@vpsayoga.in');
 
-      <!-- Gallery Grid (Dynamically Populated from Database & Uploads) -->
-      <div class="gallery-grid" id="galleryGrid">
-        <!-- Rendered by /js/gallery.js -->
-      </div>
+  // Replace WhatsApp channel link
+  content = content.replace(/https:\/\/whatsapp\.com\/channel\/[a-zA-Z0-9_-]+/g, 'https://whatsapp.com/channel/0029Vb7kw5cLNSZzMtTqSy0N');
 
-    </div>
-  </section>
+  // Replace language picker
+  const pickerRegex = /<!-- Custom Language Picker[\s\S]*?<\/div>\s*<\/div>/;
+  if (pickerRegex.test(content)) {
+    content = content.replace(pickerRegex, svgPickerHtml);
+  }
 
-  <!-- Footer -->
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div>
-          <div class="footer-brand" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-            <img src="/images/logo/vpsa-yoga-logo.png" alt="VPSA YOGA Logo" class="brand-logo-img" style="width: 44px; height: 44px; border-color: rgba(255,255,255,0.2);">
-            <div>
-              <div style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.35rem; color: #ffffff; letter-spacing: 0.04em;">VPSA YOGA</div>
-              <div style="font-size: 0.7rem; font-weight: 700; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase;">Wholesale &amp; Cold-Chain</div>
-            </div>
-          </div>
-          <p class="footer-brand-text">
-            Leading wholesale banana supplier and temperature-controlled logistics operator based in Tamil Nadu, India. Direct sourcing from trusted farmers all over South India.
-          </p>
-          <div style="color: #94a3b8; font-size: 0.85rem; line-height: 1.8;">
-            📍 Direct Farm Sourcing All Over South India<br>
-            🚚 Reefer Cold Chain Fleet (13-14°C)<br>
-            📞 Enquiries: +91 9003755701, +91 7530045701 | info@vpsayoga.in
-          </div>
-        </div>
+  // Update script version
+  content = content.replace(/main\.js\?v=[\d\.]+/g, 'main.js?v=9.5');
+  content = content.replace(/contact\.js\?v=[\d\.]+/g, 'contact.js?v=9.5');
+  content = content.replace(/styles\.css(\?v=[\d\.]+)?/g, 'styles.css?v=9.5');
 
-        <div>
-          <h4 class="footer-heading">Quick Navigation</h4>
-          <ul class="footer-nav">
-            <li class="footer-nav-item"><a href="/" class="footer-nav-link">Home</a></li>
-            <li class="footer-nav-item"><a href="/about" class="footer-nav-link">About Us</a></li>
-            <li class="footer-nav-item"><a href="/products" class="footer-nav-link">Banana Varieties</a></li>
-            <li class="footer-nav-item"><a href="/gallery" class="footer-nav-link">Live Gallery</a></li>
-            <li class="footer-nav-item"><a href="/contact" class="footer-nav-link">Contact Us</a></li>
-            <li class="footer-nav-item"><a href="/privacy" class="footer-nav-link">Privacy Policy</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 class="footer-heading">Logistics &amp; Supply</h4>
-          <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 1.25rem; line-height: 1.7;">
-            Daily harvest dispatches across Tamil Nadu, Kerala, Karnataka, Andhra Pradesh, and global export destinations.
-          </p>
-          <a href="/contact" class="btn btn-outline-white btn-sm" style="width: 100%; justify-content: center;">
-            Contact Trade Desk →
-          </a>
-        </div>
-      </div>
-
-      <div class="footer-bottom">
-        <div>© 2026 VPSA YOGA. All rights reserved. | <a href="/privacy" style="color: #cbd5e1; text-decoration: underline;">Privacy Policy</a></div>
-        <div style="display: flex; gap: 0.75rem; align-items: center;">
-          <span class="security-badge">🌱 100% Direct Farm Sourced</span>
-        </div>
-      </div>
-    </div>
-  </footer>
-
-  <script src="/js/main.js?v=9.5"></script>
-  <script src="/js/gallery.js?v=9.0"></script>
-</body>
-</html>
+  fs.writeFileSync(f, content, 'utf8');
+  console.log(`Updated ${f}`);
+}
