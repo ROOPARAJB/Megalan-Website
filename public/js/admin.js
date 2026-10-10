@@ -349,25 +349,11 @@ async function loadAdminGallery() {
   const container = document.getElementById('adminGalleryGrid');
   if (!container) return;
 
+  const isLocalNodeHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   let loaded = false;
 
-  // 1. Try Node Express API
-  try {
-    const res = await fetch('/api/gallery', {
-      credentials: 'include',
-      headers: getAuthHeaders(false)
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && Array.isArray(data.data)) {
-        cachedGalleryItems = data.data;
-        loaded = true;
-      }
-    }
-  } catch (err) {}
-
-  // 2. Direct Supabase Cloud Sync
-  if (!loaded) {
+  // 1. Direct Supabase Cloud Fetch (Fastest & Guaranteed on Live Host)
+  if (!isLocalNodeHost) {
     try {
       const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/gallery?select=*&order=created_at.desc`, {
         headers: getSupabaseHeaders(false)
@@ -382,6 +368,39 @@ async function loadAdminGallery() {
     } catch (e) {
       console.warn('Supabase gallery load error:', e);
     }
+  }
+
+  // 2. Try Node Express API (For localhost development)
+  if (!loaded) {
+    try {
+      const res = await fetch('/api/gallery', {
+        credentials: 'include',
+        headers: getAuthHeaders(false)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          cachedGalleryItems = data.data;
+          loaded = true;
+        }
+      }
+    } catch (err) {}
+  }
+
+  // 3. Direct Supabase fallback
+  if (!loaded) {
+    try {
+      const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/gallery?select=*&order=created_at.desc`, {
+        headers: getSupabaseHeaders(false)
+      });
+      if (sbRes.ok) {
+        const sbData = await sbRes.json();
+        if (Array.isArray(sbData)) {
+          cachedGalleryItems = sbData;
+          loaded = true;
+        }
+      }
+    } catch (e) {}
   }
 
   const countEl = document.getElementById('totalPhotosCount');
@@ -413,25 +432,11 @@ async function loadAdminInquiries() {
   const tbody = document.getElementById('inquiriesTableBody');
   if (!tbody) return;
 
+  const isLocalNodeHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   let loaded = false;
 
-  // 1. Try Node Express API
-  try {
-    const res = await fetch('/api/enquiries', {
-      credentials: 'include',
-      headers: getAuthHeaders(false)
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && Array.isArray(data.data)) {
-        cachedInquiries = data.data;
-        loaded = true;
-      }
-    }
-  } catch (err) {}
-
-  // 2. Direct Supabase Cloud Sync
-  if (!loaded) {
+  // 1. Direct Supabase Cloud Fetch (Fastest & Guaranteed on Live Host)
+  if (!isLocalNodeHost) {
     try {
       const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/inquiries?select=*&order=created_at.desc`, {
         headers: getSupabaseHeaders(false)
@@ -445,6 +450,41 @@ async function loadAdminInquiries() {
       }
     } catch (e) {
       console.warn('Supabase inquiries load error:', e);
+    }
+  }
+
+  // 2. Try Node Express API (For localhost development)
+  if (!loaded) {
+    try {
+      const res = await fetch('/api/enquiries', {
+        credentials: 'include',
+        headers: getAuthHeaders(false)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          cachedInquiries = data.data;
+          loaded = true;
+        }
+      }
+    } catch (err) {}
+  }
+
+  // 3. Direct Supabase Fallback
+  if (!loaded) {
+    try {
+      const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/inquiries?select=*&order=created_at.desc`, {
+        headers: getSupabaseHeaders(false)
+      });
+      if (sbRes.ok) {
+        const sbData = await sbRes.json();
+        if (Array.isArray(sbData)) {
+          cachedInquiries = sbData;
+          loaded = true;
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase inquiries fallback error:', e);
     }
   }
 
@@ -499,7 +539,7 @@ async function loadAdminInquiries() {
 async function updateInquiryStatus(id, status) {
   let updateSuccess = false;
 
-  // 1. Try Node API
+  // 1. Try Node API (on localhost)
   try {
     const res = await fetch(`/api/enquiries/${id}/status`, {
       method: 'PATCH',
@@ -539,7 +579,7 @@ async function deleteInquiry(id) {
 
   let deleteSuccess = false;
 
-  // 1. Try Node API
+  // 1. Try Node API (on localhost)
   try {
     const res = await fetch(`/api/enquiries/${id}`, {
       method: 'DELETE',
@@ -577,25 +617,46 @@ async function loadAdminAuditLogs() {
   const tbody = document.getElementById('auditLogsTableBody');
   if (!tbody) return;
 
+  const isLocalNodeHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   let logs = [];
   let loaded = false;
 
-  // 1. Try Node API
-  try {
-    const res = await fetch('/api/audit-logs', {
-      credentials: 'include',
-      headers: getAuthHeaders(false)
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && data.data) {
-        logs = data.data;
-        loaded = true;
+  // 1. Direct Supabase Cloud Fetch (Fastest & Guaranteed on Live Host)
+  if (!isLocalNodeHost) {
+    try {
+      const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/audit_logs?select=*&order=created_at.desc&limit=100`, {
+        headers: getSupabaseHeaders(false)
+      });
+      if (sbRes.ok) {
+        const sbData = await sbRes.json();
+        if (Array.isArray(sbData)) {
+          logs = sbData;
+          loaded = true;
+        }
       }
+    } catch (e) {
+      console.warn('Supabase audit logs load error:', e);
     }
-  } catch (err) {}
+  }
 
-  // 2. Direct Supabase Cloud Sync
+  // 2. Try Node API (for localhost development)
+  if (!loaded) {
+    try {
+      const res = await fetch('/api/audit-logs', {
+        credentials: 'include',
+        headers: getAuthHeaders(false)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.data) {
+          logs = data.data;
+          loaded = true;
+        }
+      }
+    } catch (err) {}
+  }
+
+  // 3. Direct Supabase Fallback
   if (!loaded) {
     try {
       const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/audit_logs?select=*&order=created_at.desc&limit=100`, {
@@ -624,6 +685,18 @@ async function loadAdminAuditLogs() {
       <td><code style="font-family: monospace; color: #0284c7; background: #f0f9ff; padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.8rem;">${escapeHtml(log.ip_address || '127.0.0.1')}</code></td>
     </tr>
   `).join('');
+}
+
+// 6. Universal Two-Way Synchronizer for Admin Panel
+async function syncAllAdminData(showToastNotification = false) {
+  await Promise.all([
+    loadAdminGallery(),
+    loadAdminInquiries(),
+    loadAdminAuditLogs()
+  ]);
+  if (showToastNotification) {
+    showToast(`✓ Live DB Synchronized: ${cachedInquiries.length} Quotes, ${cachedGalleryItems.length} Photos!`, 'success');
+  }
 }
 
 // Export Inquiries as CSV
@@ -673,6 +746,7 @@ window.exportInquiriesCSV = exportInquiriesCSV;
 window.loadAdminInquiries = loadAdminInquiries;
 window.loadAdminAuditLogs = loadAdminAuditLogs;
 window.loadAdminGallery = loadAdminGallery;
+window.syncAllAdminData = syncAllAdminData;
 window.switchTab = switchTab;
 
 // Multi-step 2FA login state
@@ -1380,10 +1454,13 @@ function initAdmin() {
       }
     });
 
-    // Initial data loads
-    loadAdminGallery();
-    loadAdminInquiries();
-    loadAdminAuditLogs();
+    // Initial data loads & start automatic background sync (every 25 seconds)
+    syncAllAdminData(false);
+    setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        syncAllAdminData(false);
+      }
+    }, 25000);
   }
 }
 
