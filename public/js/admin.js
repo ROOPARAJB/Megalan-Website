@@ -774,7 +774,7 @@ async function verifyClientTotp(secret, inputCode) {
 }
 
 // 6. DOM Initialization
-document.addEventListener('DOMContentLoaded', () => {
+function initAdmin() {
   // Check if we are on the Admin Login page
   const loginForm = document.getElementById('adminLoginForm');
   if (loginForm) {
@@ -1385,4 +1385,13 @@ document.addEventListener('DOMContentLoaded', () => {
     loadAdminInquiries();
     loadAdminAuditLogs();
   }
-});
+}
+
+// Self-executing initialization (works in all lifecycle phases)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAdmin);
+} else {
+  initAdmin();
+}
+
+window.initAdmin = initAdmin;

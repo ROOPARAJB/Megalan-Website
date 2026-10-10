@@ -163,7 +163,7 @@ function closeLightbox() {
   if (modal) modal.classList.remove('active');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function initPublicGallery() {
   const galleryGrid = document.getElementById('galleryGrid');
   if (galleryGrid) {
     loadGalleryItems('all');
@@ -193,4 +193,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeLightbox();
   });
-});
+}
+
+// Self-executing initialization (works in all lifecycle phases)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPublicGallery);
+} else {
+  initPublicGallery();
+}
+
+window.initPublicGallery = initPublicGallery;
