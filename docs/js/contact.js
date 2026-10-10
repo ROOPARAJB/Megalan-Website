@@ -72,6 +72,12 @@ async function handleFormSubmit(e, form) {
   }
   if (!form) return false;
 
+  // Guard against double / concurrent submissions
+  if (form.dataset.submitting === 'true') {
+    return false;
+  }
+  form.dataset.submitting = 'true';
+
   clearAllFormErrors(form);
 
   const submitBtn = form.querySelector('button[type="submit"]');
@@ -176,6 +182,7 @@ async function handleFormSubmit(e, form) {
 
   // If validation failed, focus field and notify
   if (hasError) {
+    form.dataset.submitting = 'false';
     if (firstErrorField) {
       firstErrorField.focus();
       firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -269,6 +276,7 @@ async function handleFormSubmit(e, form) {
     submitBtn.innerHTML = originalBtnText;
   }
 
+  form.dataset.submitting = 'false';
   return false;
 }
 
