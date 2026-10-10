@@ -122,7 +122,7 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
       .post('/api/auth/login')
       .send({
         username: 'admin',
-        password: 'VPSA#Secure2026!'
+        password: process.env.ADMIN_PASSWORD || 'ChangeMeImmediately#2026!'
       });
 
     assert.strictEqual(step1Res.status, 200);
@@ -170,7 +170,7 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
       .post('/api/auth/login')
       .send({
         username: 'admin',
-        password: 'VPSA#Secure2026!'
+        password: process.env.ADMIN_PASSWORD || 'ChangeMeImmediately#2026!'
       });
 
     assert.strictEqual(step2LoginRes.status, 200);
@@ -203,7 +203,7 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
       .post('/api/auth/login')
       .send({
         username: 'admin',
-        password: 'VPSA#Secure2026!'
+        password: process.env.ADMIN_PASSWORD || 'ChangeMeImmediately#2026!'
       });
     const tempBackupToken = step3LoginRes.body.temp_token;
 
@@ -223,7 +223,7 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
       .post('/api/auth/login')
       .send({
         username: 'admin',
-        password: 'VPSA#Secure2026!'
+        password: process.env.ADMIN_PASSWORD || 'ChangeMeImmediately#2026!'
       });
     const reuseVerifyRes = await request(app)
       .post('/api/auth/2fa/verify')

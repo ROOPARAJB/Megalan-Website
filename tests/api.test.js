@@ -28,7 +28,7 @@ describe('VPSA YOGA FRISH Business Logic & API Tests', async () => {
       .post('/api/auth/login')
       .send({
         username: 'admin',
-        password: 'VPSA#Secure2026!'
+        password: process.env.ADMIN_PASSWORD || 'ChangeMeImmediately#2026!'
       });
 
     assert.strictEqual(loginRes.status, 200);
