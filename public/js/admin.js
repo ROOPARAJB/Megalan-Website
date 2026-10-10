@@ -124,31 +124,9 @@ function getSupabaseKey() {
 }
 
 async function ensureSupabaseAuthSession() {
-  const existingToken = sessionStorage.getItem('vpsa_supabase_token');
+  const existingToken = sessionStorage.getItem('vpsa_supabase_token') || sessionStorage.getItem('vpsa_token');
   if (existingToken && existingToken.startsWith('eyJ')) {
     return existingToken;
-  }
-  try {
-    const res = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_ADMIN_CONFIG.anonKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: 'megalan@vpsayogafresh.com',
-        password: 'VPSA#Secure2026!'
-      })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.access_token) {
-        sessionStorage.setItem('vpsa_supabase_token', data.access_token);
-        return data.access_token;
-      }
-    }
-  } catch (e) {
-    console.warn('Supabase Auth session notice:', e);
   }
   return null;
 }
@@ -996,21 +974,46 @@ function initAdmin() {
         }
       } catch (err) {}
 
-      // 2. Direct Cloud Static Verification Mode (for GitHub Pages / Live static host)
+      // 2. Cloud Fallback via Supabase Auth (when Node server is not active)
       if (!serverResponded) {
-        if (username.toLowerCase() === 'admin' && (password === 'VPSA#Secure2026!' || password.length >= 8)) {
-          isCloudAuthMode = true;
-          currentTempToken = 'cloud_temp_' + Date.now();
-          if (step1) step1.style.display = 'none';
-          if (step2Verify) step2Verify.style.display = 'block';
-          const verifyInput = document.getElementById('verifyTotpCode');
-          if (verifyInput) {
-            verifyInput.value = '';
-            verifyInput.focus();
+        try {
+          const supaEmail = username.includes('@') 
+            ? username 
+            : (username.toLowerCase() === 'admin' ? 'megalan@vpsayogafresh.com' : username + '@vpsayogafresh.com');
+
+          const res = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/auth/v1/token?grant_type=password`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_ADMIN_CONFIG.anonKey,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              email: supaEmail,
+              password: password
+            })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.access_token) {
+            sessionStorage.setItem('vpsa_supabase_token', data.access_token);
+            sessionStorage.setItem('vpsa_token', data.access_token);
+            sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+            sessionStorage.setItem('vpsa_admin_user', username);
+            showSuccess('Authenticated successfully! Entering dashboard...');
+            setTimeout(() => {
+              window.location.href = '/admin-dashboard.html';
+            }, 400);
+            return;
+          } else {
+            showError(data.error_description || data.msg || 'Invalid admin username or password.');
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Next: Verify Identity →';
+            }
+            return;
           }
-          return;
-        } else {
-          showError('Invalid admin username or password.');
+        } catch (cloudErr) {
+          showError('Authentication service unreachable. Please try again.');
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerText = 'Next: Verify Identity →';
@@ -1039,58 +1042,31 @@ function initAdmin() {
         }
         if (errorMsg) errorMsg.style.display = 'none';
 
-        // 1. Try Node Server 2FA
-        if (!isCloudAuthMode) {
-          try {
-            const res = await fetch('/api/auth/2fa/verify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ temp_token: currentTempToken, code })
-            });
-
-            const data = await res.json();
-            if (res.ok && data.success) {
-              if (data.token) {
-                sessionStorage.setItem('vpsa_token', data.token);
-                sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
-              }
-              window.location.href = '/admin-dashboard.html';
-              return;
-            } else {
-              showError(data.error || 'Invalid code entered.');
-              if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.innerText = 'Confirm & Enter Dashboard';
-              }
-              return;
-            }
-          } catch (err) {}
-        }
-
-        // 2. Direct Cloud 2FA Verification Mode
         try {
-          const secret = 'V43MDMV3AHZFX4XEM7YJVR57HZ2OGXMC';
-          const isValid = await verifyClientTotp(secret, code);
-          const isBackupMatch = code.toUpperCase().startsWith('VPSA-') || code.length >= 8;
+          const res = await fetch('/api/auth/2fa/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ temp_token: currentTempToken, code })
+          });
 
-          if (isValid || isBackupMatch) {
-            const p1 = 'sb_secret_iBZu40NMlS_';
-            const p2 = 'PtiOc2XEORA_m2u6A75A';
-            sessionStorage.setItem('vpsa_cloud_key', p1 + p2);
-            sessionStorage.setItem('vpsa_token', 'vpsa_admin_active_session_' + Date.now());
-            sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
-            sessionStorage.setItem('vpsa_admin_user', 'Megalan A');
+          const data = await res.json();
+          if (res.ok && data.success) {
+            if (data.token) {
+              sessionStorage.setItem('vpsa_token', data.token);
+              sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+            }
             window.location.href = '/admin-dashboard.html';
             return;
           } else {
-            showError('Invalid 6-digit code. Please check Microsoft Authenticator and try again.');
+            showError(data.error || 'Invalid code entered.');
             if (submitBtn) {
               submitBtn.disabled = false;
               submitBtn.innerText = 'Confirm & Enter Dashboard';
             }
+            return;
           }
-        } catch (e) {
-          showError('Verification error. Please try again.');
+        } catch (err) {
+          showError('Verification service error. Please try again.');
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerText = 'Confirm & Enter Dashboard';
@@ -1115,17 +1091,6 @@ function initAdmin() {
     if (showQrSetupBtn) {
       showQrSetupBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        const secret = 'V43MDMV3AHZFX4XEM7YJVR57HZ2OGXMC';
-        const otpauthUrl = `otpauth://totp/VPSA%20YOGA:admin?secret=${secret}&issuer=VPSA%20YOGA`;
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`;
-
-        const qrImg = document.getElementById('qrCodeImg');
-        if (qrImg) qrImg.src = qrUrl;
-
-        if (manualSecretBox) {
-          manualSecretBox.innerText = secret;
-        }
-
         if (step2Verify) step2Verify.style.display = 'none';
         if (step2Setup) step2Setup.style.display = 'block';
 
@@ -1156,64 +1121,42 @@ function initAdmin() {
         }
         if (errorMsg) errorMsg.style.display = 'none';
 
-        // 1. Try Node Server
-        if (!isCloudAuthMode) {
-          try {
-            const res = await fetch('/api/auth/2fa/confirm-setup', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ temp_token: currentTempToken, code })
-            });
-
-            const data = await res.json();
-            if (res.ok && data.success) {
-              if (data.token) {
-                sessionStorage.setItem('vpsa_token', data.token);
-                sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
-              }
-
-              currentBackupCodes = data.backup_codes || [];
-              if (step2Setup) step2Setup.style.display = 'none';
-
-              const codesList = document.getElementById('backupCodesList');
-              if (codesList && currentBackupCodes.length > 0) {
-                codesList.innerHTML = currentBackupCodes.map(c => `
-                  <div style="background: #ffffff; border: 1px solid #cbd5e1; padding: 0.45rem 0.6rem; border-radius: 6px; letter-spacing: 1px; user-select: all;">${escapeHtml(c)}</div>
-                `).join('');
-              }
-
-              if (backupDisplay) backupDisplay.style.display = 'block';
-              showSuccess('Microsoft Authenticator connected successfully!');
-              return;
-            }
-          } catch (err) {}
-        }
-
-        // 2. Direct Cloud Verify
         try {
-          const secret = 'V43MDMV3AHZFX4XEM7YJVR57HZ2OGXMC';
-          const isValid = await verifyClientTotp(secret, code);
-          if (isValid || code.length >= 6) {
-            const p1 = 'sb_secret_iBZu40NMlS_';
-            const p2 = 'PtiOc2XEORA_m2u6A75A';
-            sessionStorage.setItem('vpsa_cloud_key', p1 + p2);
-            sessionStorage.setItem('vpsa_token', 'vpsa_admin_active_session_' + Date.now());
-            sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
-            sessionStorage.setItem('vpsa_admin_user', 'Megalan A');
-            showSuccess('Authenticator verified! Entering dashboard...');
-            setTimeout(() => {
-              window.location.href = '/admin-dashboard.html';
-            }, 600);
+          const res = await fetch('/api/auth/2fa/confirm-setup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ temp_token: currentTempToken, code })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            if (data.token) {
+              sessionStorage.setItem('vpsa_token', data.token);
+              sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+            }
+
+            currentBackupCodes = data.backup_codes || [];
+            if (step2Setup) step2Setup.style.display = 'none';
+
+            const codesList = document.getElementById('backupCodesList');
+            if (codesList && currentBackupCodes.length > 0) {
+              codesList.innerHTML = currentBackupCodes.map(c => `
+                <div style="background: #ffffff; border: 1px solid #cbd5e1; padding: 0.45rem 0.6rem; border-radius: 6px; letter-spacing: 1px; user-select: all;">${escapeHtml(c)}</div>
+              `).join('');
+            }
+
+            if (backupDisplay) backupDisplay.style.display = 'block';
+            showSuccess('Microsoft Authenticator connected successfully!');
             return;
           } else {
-            showError('Invalid 6-digit code. Please check Microsoft Authenticator and try again.');
+            showError(data.error || 'Invalid code.');
             if (submitBtn) {
               submitBtn.disabled = false;
               submitBtn.innerText = 'Verify & Activate Authenticator';
             }
           }
-        } catch (e) {
-          showError('Verification error.');
+        } catch (err) {
+          showError('Setup verification error.');
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerText = 'Verify & Activate Authenticator';

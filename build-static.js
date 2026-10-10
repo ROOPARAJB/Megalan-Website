@@ -29,6 +29,19 @@ for (const targetDir of targetDirs) {
     }
   }
 
+  // Strip developer comments and documentation from published admin.js
+  const destAdminJs = path.join(targetDir, 'js', 'admin.js');
+  if (fs.existsSync(destAdminJs)) {
+    let adminContent = fs.readFileSync(destAdminJs, 'utf8');
+    adminContent = adminContent.replace(/\/\*[\s\S]*?\*\//g, '');
+    adminContent = adminContent
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => !line.startsWith('//') && line.length > 0)
+      .join('\n');
+    fs.writeFileSync(destAdminJs, adminContent, 'utf8');
+  }
+
   // 2. Copy _headers and CNAME configuration files
   const headersSrc = path.join(publicDir, '_headers');
   if (fs.existsSync(headersSrc)) {

@@ -352,6 +352,10 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
     assert.ok(!adminJs.includes('localStorage.setItem(\'vpsa_token\''), 'Persistent JWT in localStorage must be removed');
     assert.ok(!adminJs.includes('JBSWY3DPEHPK3PXP'), 'Demo secret must not exist in admin JS');
     assert.ok(!adminJs.includes('demo-session-token'), 'Demo session token must not exist in admin JS');
+    assert.ok(!adminJs.includes('sb_secret_'), 'Private service role key must not exist in admin JS');
+    assert.ok(!adminJs.includes('VPSA#Secure2026!'), 'Hardcoded password must not exist in admin JS');
+    assert.ok(!adminJs.includes('V43MDMV3AHZFX4XEM7YJVR57HZ2OGXMC'), 'TOTP secret must not exist in admin JS');
+    assert.ok(!adminJs.includes('PtiOc2XE'), 'Secret fragment must not exist in admin JS');
     assert.ok(!contactJs.includes('sb_secret_'), 'Private service role key must not exist in contact JS');
     assert.ok(!contactJs.includes('wa.me?text='), 'Auto-redirect with full PII must be removed');
   });

@@ -18,15 +18,21 @@
     }
   </script>
   <script>
-    // 5-minute inactivity check
+    // Enforce immediate client-side authentication check
     (function() {
+      var token = sessionStorage.getItem('vpsa_token') || sessionStorage.getItem('vpsa_supabase_token');
+      if (!token) {
+        window.location.replace('/admin-login.html');
+        return;
+      }
       var lastActiveStr = sessionStorage.getItem('vpsa_last_activity');
       if (lastActiveStr) {
         var elapsed = Date.now() - Number(lastActiveStr);
         if (elapsed > 5 * 60 * 1000) {
           sessionStorage.removeItem('vpsa_token');
+          sessionStorage.removeItem('vpsa_supabase_token');
           sessionStorage.removeItem('vpsa_last_activity');
-          window.location.replace('/admin/login?reason=timeout');
+          window.location.replace('/admin-login.html?reason=timeout');
         }
       }
     })();
