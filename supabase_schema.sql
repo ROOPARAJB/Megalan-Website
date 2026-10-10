@@ -29,6 +29,12 @@ CREATE TABLE IF NOT EXISTS public.inquiries (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Ensure all columns exist if the table was created previously
+ALTER TABLE public.inquiries ADD COLUMN IF NOT EXISTS bot_honey TEXT;
+ALTER TABLE public.inquiries ADD COLUMN IF NOT EXISTS dpdp_consent BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.inquiries ADD COLUMN IF NOT EXISTS dpdp_consent_timestamp TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.inquiries ADD COLUMN IF NOT EXISTS consent_text_version TEXT DEFAULT 'dpdp-v1';
+
 -- ==============================================================================
 -- 2. Performance Indexes
 -- ==============================================================================
@@ -46,8 +52,8 @@ AS $$
 DECLARE
     v_domain TEXT;
 BEGIN
-    -- 1. Honeypot Bot Shield
-    IF NEW.bot_honey IS NOT NULL AND trim(NEW.bot_honey) <> '' THEN
+    -- 1. Honeypot Bot Shield (Safe jsonb access)
+    IF (to_jsonb(NEW) ? 'bot_honey') AND trim(coalesce(to_jsonb(NEW) ->> 'bot_honey', '')) <> '' THEN
         RAISE EXCEPTION 'Bot submission detected and rejected.';
     END IF;
 
@@ -97,8 +103,10 @@ BEGIN
     END IF;
 
     -- 7. Mandatory DPDP Consent
-    IF NEW.dpdp_consent IS NOT TRUE THEN
-        RAISE EXCEPTION 'Privacy consent must be accepted to submit inquiry.';
+    IF (to_jsonb(NEW) ? 'dpdp_consent') THEN
+        IF (to_jsonb(NEW) ->> 'dpdp_consent')::text NOT IN ('true', 't', '1') THEN
+            RAISE EXCEPTION 'Privacy consent must be accepted to submit inquiry.';
+        END IF;
     END IF;
 
     -- 8. Timestamps

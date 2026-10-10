@@ -282,6 +282,7 @@ export const dbService = {
   },
 
   async getInquiries(status) {
+    let results = [];
     if (isSupabaseConfigured()) {
       try {
         let query = supabase
@@ -294,8 +295,8 @@ export const dbService = {
         }
 
         const { data, error } = await query;
-        if (!error && Array.isArray(data) && data.length > 0) {
-          return data.map(item => ({
+        if (!error && Array.isArray(data)) {
+          results = data.map(item => ({
             ...item,
             dpdp_consent: item.dpdp_consent !== undefined ? item.dpdp_consent : 1,
             dpdp_consent_timestamp: item.dpdp_consent_timestamp || item.created_at
@@ -306,10 +307,21 @@ export const dbService = {
       }
     }
 
-    if (status && status !== 'all') {
-      return db.prepare(`SELECT * FROM inquiries WHERE status = ? ORDER BY created_at DESC`).all(status);
+    const localRows = (status && status !== 'all')
+      ? db.prepare(`SELECT * FROM inquiries WHERE status = ? ORDER BY created_at DESC`).all(status)
+      : db.prepare(`SELECT * FROM inquiries ORDER BY created_at DESC`).all();
+
+    if (results.length === 0) {
+      return localRows;
     }
-    return db.prepare(`SELECT * FROM inquiries ORDER BY created_at DESC`).all();
+
+    // Merge recent local entries if not yet synced to remote
+    for (const localRow of localRows) {
+      if (!results.some(r => r.email === localRow.email && r.message === localRow.message)) {
+        results.unshift(localRow);
+      }
+    }
+    return results;
   },
 
   async updateInquiryStatus(id, status) {

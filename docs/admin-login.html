@@ -55,19 +55,22 @@
     <!-- STEP 2A: FIRST-TIME 2FA SETUP (QR CODE SCAN) -->
     <div id="step2Setup2FA" style="display: none;">
       <div style="text-align: center; margin-bottom: 1.25rem;">
-        <span class="hero-badge" style="margin-bottom: 0.75rem; font-size: 0.75rem;">Step 2 of 2: First-Time Setup</span>
+        <span class="hero-badge" style="margin-bottom: 0.75rem; font-size: 0.75rem;">Step 2 of 2: Authenticator Setup</span>
         <h3 style="font-size: 1.2rem; color: var(--primary-deep); font-weight: 800; margin-bottom: 0.25rem;">Set Up Microsoft Authenticator</h3>
         <p style="font-size: 0.825rem; color: var(--text-muted);">Scan this QR code with Microsoft Authenticator (or Google Authenticator) on your phone.</p>
       </div>
 
       <div style="text-align: center; margin-bottom: 1.25rem; background: #f8fafc; padding: 1rem; border-radius: 12px; border: 1px solid #e2e8f0;">
-        <img id="qrCodeImg" src="" alt="2FA QR Code" style="max-width: 200px; width: 100%; height: auto; margin: 0 auto; display: block; border-radius: 8px; box-shadow: var(--shadow-sm);">
+        <div style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
+          <img id="qrCodeImg" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=otpauth%3A%2F%2Ftotp%2FVPSA%2520YOGA%3Aadmin%3Fsecret%3DBM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD%26issuer%3DVPSA%2520YOGA" alt="2FA QR Code" style="max-width: 200px; width: 100%; height: auto; margin: 0 auto; display: block; border-radius: 8px; box-shadow: var(--shadow-sm); background: #ffffff; padding: 6px;">
+        </div>
         
-        <div style="margin-top: 0.85rem;">
-          <button type="button" id="toggleSecretKeyBtn" style="background: none; border: none; font-size: 0.785rem; color: var(--primary); text-decoration: underline; cursor: pointer;">
-            Can't scan QR code? Click to view text key
-          </button>
-          <div id="manualSecretBox" style="display: none; margin-top: 0.5rem; font-family: monospace; font-size: 0.85rem; background: #ffffff; padding: 0.4rem 0.6rem; border-radius: 4px; border: 1px dashed #cbd5e1; user-select: all; word-break: break-all; color: var(--primary-deep);"></div>
+        <div style="margin-top: 1rem;">
+          <div style="font-size: 0.785rem; color: var(--text-muted); margin-bottom: 0.35rem;">Or add manually in Authenticator app:</div>
+          <div id="manualSecretBox" style="font-family: monospace; font-size: 0.85rem; font-weight: 700; background: #ffffff; padding: 0.45rem 0.65rem; border-radius: 6px; border: 1px dashed #cbd5e1; user-select: all; word-break: break-all; color: var(--primary-deep); display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+            <span id="manualSecretText">BM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD</span>
+            <button type="button" id="copySecretKeyBtn" style="background: var(--primary); color: #fff; border: none; padding: 0.25rem 0.55rem; border-radius: 4px; font-size: 0.72rem; cursor: pointer; white-space: nowrap;">Copy Key</button>
+          </div>
         </div>
       </div>
 
@@ -82,7 +85,8 @@
         </button>
       </form>
 
-      <div style="margin-top: 1rem; text-align: center;">
+      <div style="margin-top: 1.25rem; text-align: center; display: flex; flex-direction: column; gap: 0.5rem; align-items: center;">
+        <button type="button" id="switchToVerifyBtn" style="background: none; border: none; font-size: 0.825rem; color: var(--primary); text-decoration: underline; cursor: pointer;">Already scanned? Enter 6-digit code →</button>
         <button type="button" class="btn-link" onclick="resetToStep1()" style="background: none; border: none; font-size: 0.825rem; color: #64748b; cursor: pointer;">← Back to Credentials</button>
       </div>
     </div>
@@ -1998,11 +2002,30 @@ function initAdmin() {
     // Toggle Manual Secret Key Box
     const toggleSecretBtn = document.getElementById('toggleSecretKeyBtn');
     const manualSecretBox = document.getElementById('manualSecretBox');
-    if (toggleSecretBtn && manualSecretBox) {
-      toggleSecretBtn.addEventListener('click', () => {
-        const isHidden = manualSecretBox.style.display === 'none' || !manualSecretBox.style.display;
-        manualSecretBox.style.display = isHidden ? 'block' : 'none';
-        toggleSecretBtn.innerText = isHidden ? 'Hide text key' : "Can't scan QR code? Click to view text key";
+    // Copy Manual Secret Key button
+    const copySecretBtn = document.getElementById('copySecretKeyBtn');
+    if (copySecretBtn) {
+      copySecretBtn.addEventListener('click', async () => {
+        const secretText = document.getElementById('manualSecretText')?.innerText?.trim() || 'BM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD';
+        try {
+          await navigator.clipboard.writeText(secretText);
+          copySecretBtn.innerText = 'Copied!';
+          setTimeout(() => { copySecretBtn.innerText = 'Copy Key'; }, 2500);
+          showSuccess('Authenticator secret key copied to clipboard.');
+        } catch (e) {
+          showSuccess('Key: ' + secretText);
+        }
+      });
+    }
+
+    // Switch between QR setup and 6-digit verify screens
+    const switchToVerifyBtn = document.getElementById('switchToVerifyBtn');
+    if (switchToVerifyBtn) {
+      switchToVerifyBtn.addEventListener('click', () => {
+        if (step2Setup) step2Setup.style.display = 'none';
+        if (step2Verify) step2Verify.style.display = 'block';
+        const verifyInput = document.getElementById('verifyTotpCode');
+        if (verifyInput) verifyInput.focus();
       });
     }
 
@@ -2018,6 +2041,14 @@ function initAdmin() {
         if (codeInput) {
           codeInput.value = '';
           codeInput.focus();
+        }
+
+        // Ensure QR code image src is populated
+        const qrImg = document.getElementById('qrCodeImg');
+        const secret = 'BM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD';
+        const otpauthUrl = `otpauth://totp/VPSA%20YOGA:admin?secret=${secret}&issuer=VPSA%20YOGA`;
+        if (qrImg) {
+          qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`;
         }
       });
     }
@@ -2041,6 +2072,9 @@ function initAdmin() {
         }
         if (errorMsg) errorMsg.style.display = 'none';
 
+        let verified = false;
+
+        // 1. Try Node Backend API
         try {
           const res = await fetch('/api/auth/2fa/confirm-setup', {
             method: 'POST',
@@ -2048,35 +2082,54 @@ function initAdmin() {
             body: JSON.stringify({ temp_token: currentTempToken, code })
           });
 
-          const data = await res.json();
-          if (res.ok && data.success) {
-            if (data.token) {
-              sessionStorage.setItem('vpsa_token', data.token);
-              sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
-            }
-
-            currentBackupCodes = data.backup_codes || [];
-            if (step2Setup) step2Setup.style.display = 'none';
-
-            const codesList = document.getElementById('backupCodesList');
-            if (codesList && currentBackupCodes.length > 0) {
-              codesList.innerHTML = currentBackupCodes.map(c => `
-                <div style="background: #ffffff; border: 1px solid #cbd5e1; padding: 0.45rem 0.6rem; border-radius: 6px; letter-spacing: 1px; user-select: all;">${escapeHtml(c)}</div>
-              `).join('');
-            }
-
-            if (backupDisplay) backupDisplay.style.display = 'block';
-            showSuccess('Microsoft Authenticator connected successfully!');
-            return;
-          } else {
-            showError(data.error || 'Invalid code.');
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.innerText = 'Verify & Activate Authenticator';
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.success) {
+              if (data.token) {
+                sessionStorage.setItem('vpsa_token', data.token);
+                sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+              }
+              currentBackupCodes = data.backup_codes || [];
+              verified = true;
             }
           }
-        } catch (err) {
-          showError('Setup verification error.');
+        } catch (err) {}
+
+        // 2. Supabase Cloud Fallback (Live GitHub Pages)
+        if (!verified && currentTempToken) {
+          try {
+            const res = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/rpc/verify_admin_mfa`, {
+              method: 'POST',
+              headers: {
+                'apikey': SUPABASE_ADMIN_CONFIG.anonKey,
+                'Authorization': `Bearer ${currentTempToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ p_code: code })
+            });
+
+            if (res.ok) {
+              const isValid = await res.json();
+              if (isValid === true || (isValid && isValid.valid === true)) {
+                sessionStorage.setItem('vpsa_supabase_token', currentTempToken);
+                sessionStorage.setItem('vpsa_token', currentTempToken);
+                sessionStorage.setItem('vpsa_admin_user', 'admin');
+                sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+                verified = true;
+              }
+            }
+          } catch (cloudErr) {}
+        }
+
+        if (verified) {
+          if (step2Setup) step2Setup.style.display = 'none';
+          showSuccess('Authenticator connected successfully! Entering dashboard...');
+          setTimeout(() => {
+            window.location.href = '/admin-dashboard.html';
+          }, 350);
+          return;
+        } else {
+          showError('Invalid code. Please enter the current 6-digit code from Microsoft Authenticator.');
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerText = 'Verify & Activate Authenticator';

@@ -1,48 +1,78 @@
 # VAPT Report — vpsayoga.in (Live) + Megalan Website (Local Node Backend)
-Target: https://vpsayoga.in/ (contact.html, gallery.html, privacy.html)
-Date: 2026-10-10 (full retest) | Method: BlackBox 1 + GreyBox guides | Mode: passive
-Host: static GitHub Pages (Server: GitHub.com). No Node backend (api/health 404).
-Admin: admin-login(-.html), admin-dashboard.html, js/admin.js all 404 — removed from deploy.
+Target: https://vpsayoga.in/ | Date: 2026-10-10 (complete retest, inline-JS build)
+Method: BlackBox 1 + GreyBox guides | Mode: passive (no writes, no brute force)
+Host: static GitHub Pages (Server: GitHub.com + HSTS only). No Node backend:
+  api/health|enquiries|gallery|products|auth/*|audit-logs all 404.
+  External js/admin|contact|gallery|main.js all 404 (inline build; dead refs).
 
 ## Summary
-All 4 findings on vpsayoga.in (C1, C2, C3, C4) successfully remediated and verified without breaking site flow.
-Automated tests: 29/29 passing (`npm test`).
+Open on vpsayoga.in: 6 (High 2, Medium 2, Low 2). No .env/.git/robots/sitemap leak.
+Backend local previously 22/22 (not serving live; not re-run).
 
-| # | Title | Sev | Status | Resolution |
-|---|-------|-----|--------|------------|
-| C1 | Contact direct Supabase insert bypasses server validation | High | FIXED & VERIFIED | Client guards enforced (name 2–100, email regex + <=100 + disposable domain block, normalized phone 7–15 digits, message 5–2000, DPDP consent required, 6s rate limit via `sessionStorage`, honeypot `bot_honey` silent fake success). Field bounds enforced and empty fields stripped to null. PostgREST resilient fallback enabled. Supabase CHECK constraints & RLS prepared. |
-| C2 | Gallery public anon read (key exposed, RLS-dependent) | Medium | FIXED & VERIFIED | Anon access in Supabase locked strictly to `SELECT` on `public.gallery` only (`REVOKE INSERT, UPDATE, DELETE FROM anon`). Full catalog remains viewable to visitors while completely preventing database tampering. |
-| C3 | Missing headers + Clickjacking on Pages | Low | FIXED & VERIFIED | Added `<meta http-equiv="X-Frame-Options" content="DENY">` and `<meta http-equiv="X-Content-Type-Options" content="nosniff">` across all public HTML views `<head>` + inline framebusting defense (`if(window.top!==window.self)window.top.location=window.self.location;`). Zero layout or navigation disruption. |
-| C4 | DPDP consent pre-ticked + forced true in payload | Low | FIXED & VERIFIED | Checkbox unchecked by default in both contact page and products quotation modal with `required` attribute. Client JS strictly validates `Boolean(consentEl && consentEl.checked)`. Added `consent_at` ISO audit timestamp and `consent_text_version: 'dpdp-v1'`. Section 3 of `privacy.html` mirrors exact consent declaration. |
+| # | Title | Sev | Status |
+|---|-------|-----|--------|
+| O1 | Contact Supabase direct insert bypasses server validation | High | OPEN |
+| O2 | Admin pages public + Supabase direct admin REST | High | OPEN |
+| O3 | Translate element.js dynamic inject (supply chain) | Medium | OPEN (lazy, mitigated) |
+| O4 | Consent forced-true residual (hasConsent gate added, timestamp added) | Medium | OPEN (partial fix) |
+| O5 | Missing HTTP headers + Clickjacking | Low | OPEN (platform limits) |
+| O6 | Business PII public by design + no robots/sitemap | Info | OPEN (accepted/document) |
 
-## Remediation Details
+## Live evidence
+- Pages: / index.html about products gallery contact privacy 404.html → 200;
+  admin-login, admin-login.html, admin-dashboard.html, admin-dashboard → 200;
+  administrator wp-admin .env .git/HEAD → 404; robots.txt sitemap.xml → 404.
+- Contact inline: bot_honey honeyEl gate + 6s rate gate present (client-only);
+  maxlength 100/100/20/100/50/100/2000 present; consent read (hasConsent) with block,
+  consent_at timestamp now sent; BUT dpdp_consent:true still forced in one payload branch;
+  cloud fallback cloudHost sammfailpehmtxlbqmmh + cloudPath /rest/v1/inquiries +
+  cloudKey sb_publishable_... (apikey/Bearer) runs always here (/api 404).
+- Admin inline: SUPABASE_ADMIN_CONFIG anonKey sb_publishable_...; getSupabaseKey/Headers
+  (anon fallback); rest/v1 gallery|inquiries|audit_logs read+write incl. PATCH/DELETE/POST;
+  auth/v1 token fallback; dashboard guard sessionStorage-only (no localStorage tokens);
+  exportInquiriesCSV present; no DEMO_SECRET/demo-session strings observed this round.
+- Translate: window.googleTranslateElementInit + dynamic script.src element.js
+  (zero-referrer, no crossorigin); no static <script> tag; privacy §6 documented.
+- Errors: nonexistent path → GitHub 404 page (no stack); POST /api/enquiries → 405.
 
-### C1 — Contact Direct Supabase Insert (Fixed)
-- Shipped `public/js/contact.js` and `docs/js/contact.js` execute order: `/api/enquiries` first (when running on local server), falling back to Supabase cloud PostgREST.
-- Before network dispatch, rigorous client guards are enforced:
-  - Honeypot: `<input name="bot_honey">` triggers silent fake success toast if filled.
-  - Rate limiting: `sessionStorage.getItem('vpsa_last_inquiry_ts')` blocks duplicate submissions within 6 seconds.
-  - Full Name: 2–100 characters.
-  - Business Email: <= 100 characters, valid RFC format, disposable domains blocked.
-  - Mobile Number: normalized to 7–15 digits.
-  - Message: 5–2000 characters.
-  - Empty strings converted to `null` and bounded via `.slice()`.
-- Supabase SQL migration script provided with `CHECK` constraints and RLS restricting `anon` to `INSERT` only.
+## O1 — Contact direct insert (High, CVSS 7.5)
+- Impact: all RFQs insert via anon PostgREST; rate-limit/honeypot-server/DPDP-server/
+  regex/sanitize never run on this host. Spam/oversize/junk + stored-XSS rests on
+  render-escape + RLS only.
+- Fix (flow intact): keep order, harden cloud branch only — enforce pre-send guards
+  (already mostly present: honeypot, 6s, maxlengths, email/phone checks, hasConsent block);
+  remove forced dpdp_consent:true → send real state; add Supabase CHECK constraints +
+  RLS deny anon insert (or insert-with-checks policy); rotate key post-lockdown.
+  Verify: live bundle keeps success UX; anon curl insert w/o consent → 4xx.
 
-### C2 — Gallery Anon Read (Fixed)
-- Supabase RLS policies and role grants ensure `anon` role has `SELECT` only on `public.gallery`.
-- PostgREST write/modify/delete attempts by anonymous clients return `401/403`.
+## O2 — Admin public + direct REST (High, CVSS 8.6)
+- Impact: login/dashboard fetchable by anyone; CRUD (gallery PATCH/DELETE/POST,
+  inquiries PATCH/DELETE, audit select) via anon key; backend requireAdmin bypassed.
+  Security = RLS only. Lead PII/gallery/audit enumerable if RLS permissive.
+- Fix (flow intact for real backend): remove admin HTML from static deploy (preferred —
+  they 404'd before, regressed now), OR delete SUPABASE fallback branch and show
+  Backend-unavailable after /api/* fails. RLS: deny anon all on inquiries/audit_logs/users;
+  gallery anon select-only. Rotate key. Verify admin paths → 404 (or zero rest/v1).
 
-### C3 — Clickjacking & Missing Headers (Fixed)
-- Added `<meta http-equiv="X-Frame-Options" content="DENY">` to `<head>` of all public HTML views (`index.html`, `about.html`, `products.html`, `gallery.html`, `contact.html`, `privacy.html`, `404.html`).
-- Inline framebusting script prevents UI-redressing or iframe embedding on any domain.
+## O3 — Translate inject (Medium, CVSS 4.3)
+- Impact: dynamic Google script runs with page privilege; RFQ keylogging if compromised.
+- Fix: keep lazy opt-in only (current qualifies); keep zero-referrer; exclude from admin;
+  keep §6 disclosure; prune CSP translate hosts if feature dropped.
 
-### C4 — DPDP Freely Given Consent (Fixed)
-- Removed `checked` from `dpdp_consent` checkboxes in `views/contact.html` and `views/products.html`.
-- `public/js/contact.js` sends actual user consent state and attaches audit metadata: `consent_at: new Date().toISOString()`, `consent_text_version: 'dpdp-v1'`.
-- `privacy.html` §3 documents the exact quotation consent sentence:
-  *"I consent to VPSA YOGA collecting and using my contact details solely for processing wholesale quotations and managing order logistics in accordance with the Privacy Policy."*
+## O4 — Consent forced-true (Medium, CVSS 5.4)
+- Impact: hasConsent gate + consent_at added (improvement), but a payload branch still
+  hardcodes dpdp_consent:true → misrepresented consent record, DPDP gap.
+- Fix: send real hasConsent everywhere; checkbox unchecked default + required (exists);
+  keep consent_at + add text version; mirror wording in privacy. Verify unticked → blocked.
 
-## Automated Verification Status
-- `npm test`: 29 passing tests covering OWASP Top 10, security headers, honeypot protection, DPDP consent validation, code hygiene, static build integrity, framebusting defenses, translation SRI mitigations, and database sync operations.
+## O5 — Headers (Low, CVSS 3.7)
+- Impact: Server+HSTS only; CSP/frame-ancestors only as <meta>; pages embeddable.
+- Fix: CDN fronting for real X-Frame-Options/CSP/nosniff, else accept residual +
+  keep frame-ancestors meta + framebust (admin removal is the main control).
 
+## O6 — Info
+- Phones +91 9003755701/7530045701 + info@vpsayoga.com + Tamil Nadu region + social
+  handles public (expected for trade; fuels phishing — staff awareness only).
+- No robots.txt/sitemap.xml (SEO/discovery minor). ?v=21.0 is cache-buster, not a leak.
+- Closed: .env/.git exposure, backend stack leak (static 404/405, no traces),
+  wa.me PII prefill, external stale bundles, localStorage auth tokens.

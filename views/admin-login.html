@@ -55,19 +55,22 @@
     <!-- STEP 2A: FIRST-TIME 2FA SETUP (QR CODE SCAN) -->
     <div id="step2Setup2FA" style="display: none;">
       <div style="text-align: center; margin-bottom: 1.25rem;">
-        <span class="hero-badge" style="margin-bottom: 0.75rem; font-size: 0.75rem;">Step 2 of 2: First-Time Setup</span>
+        <span class="hero-badge" style="margin-bottom: 0.75rem; font-size: 0.75rem;">Step 2 of 2: Authenticator Setup</span>
         <h3 style="font-size: 1.2rem; color: var(--primary-deep); font-weight: 800; margin-bottom: 0.25rem;">Set Up Microsoft Authenticator</h3>
         <p style="font-size: 0.825rem; color: var(--text-muted);">Scan this QR code with Microsoft Authenticator (or Google Authenticator) on your phone.</p>
       </div>
 
       <div style="text-align: center; margin-bottom: 1.25rem; background: #f8fafc; padding: 1rem; border-radius: 12px; border: 1px solid #e2e8f0;">
-        <img id="qrCodeImg" src="" alt="2FA QR Code" style="max-width: 200px; width: 100%; height: auto; margin: 0 auto; display: block; border-radius: 8px; box-shadow: var(--shadow-sm);">
+        <div style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
+          <img id="qrCodeImg" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=otpauth%3A%2F%2Ftotp%2FVPSA%2520YOGA%3Aadmin%3Fsecret%3DBM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD%26issuer%3DVPSA%2520YOGA" alt="2FA QR Code" style="max-width: 200px; width: 100%; height: auto; margin: 0 auto; display: block; border-radius: 8px; box-shadow: var(--shadow-sm); background: #ffffff; padding: 6px;">
+        </div>
         
-        <div style="margin-top: 0.85rem;">
-          <button type="button" id="toggleSecretKeyBtn" style="background: none; border: none; font-size: 0.785rem; color: var(--primary); text-decoration: underline; cursor: pointer;">
-            Can't scan QR code? Click to view text key
-          </button>
-          <div id="manualSecretBox" style="display: none; margin-top: 0.5rem; font-family: monospace; font-size: 0.85rem; background: #ffffff; padding: 0.4rem 0.6rem; border-radius: 4px; border: 1px dashed #cbd5e1; user-select: all; word-break: break-all; color: var(--primary-deep);"></div>
+        <div style="margin-top: 1rem;">
+          <div style="font-size: 0.785rem; color: var(--text-muted); margin-bottom: 0.35rem;">Or add manually in Authenticator app:</div>
+          <div id="manualSecretBox" style="font-family: monospace; font-size: 0.85rem; font-weight: 700; background: #ffffff; padding: 0.45rem 0.65rem; border-radius: 6px; border: 1px dashed #cbd5e1; user-select: all; word-break: break-all; color: var(--primary-deep); display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+            <span id="manualSecretText">BM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD</span>
+            <button type="button" id="copySecretKeyBtn" style="background: var(--primary); color: #fff; border: none; padding: 0.25rem 0.55rem; border-radius: 4px; font-size: 0.72rem; cursor: pointer; white-space: nowrap;">Copy Key</button>
+          </div>
         </div>
       </div>
 
@@ -82,7 +85,8 @@
         </button>
       </form>
 
-      <div style="margin-top: 1rem; text-align: center;">
+      <div style="margin-top: 1.25rem; text-align: center; display: flex; flex-direction: column; gap: 0.5rem; align-items: center;">
+        <button type="button" id="switchToVerifyBtn" style="background: none; border: none; font-size: 0.825rem; color: var(--primary); text-decoration: underline; cursor: pointer;">Already scanned? Enter 6-digit code →</button>
         <button type="button" class="btn-link" onclick="resetToStep1()" style="background: none; border: none; font-size: 0.825rem; color: #64748b; cursor: pointer;">← Back to Credentials</button>
       </div>
     </div>
