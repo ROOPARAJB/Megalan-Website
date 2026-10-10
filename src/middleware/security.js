@@ -43,6 +43,8 @@ export const configureHelmet = () => {
         mediaSrc: ["'self'", "data:", "blob:", "https:"],
         connectSrc: [
           "'self'",
+          "https://sammfailpehmtxlbqmmh.supabase.co",
+          "https://*.supabase.co",
           "https://translate.google.com",
           "https://translate.googleapis.com",
           "https://translate-pa.googleapis.com"

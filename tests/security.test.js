@@ -402,7 +402,7 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
     }
   });
 
-  // 13. Unsigned Translation Script Lazy-Loading Check (W5)
+  // 13. Unsigned Translation Script Lazy-Loading & B5 Hardening Check
   test('[Privacy & SRI Defense] Public HTML views must not include auto-loading static translate script tags', async () => {
     const fs = (await import('fs')).default;
     const path = (await import('path')).default;
@@ -417,6 +417,26 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
         `${viewFile} must not auto-load static Google Translate script tag`
       );
     }
+
+    // Verify main.js enforces B5 mitigations
+    const mainJs = fs.readFileSync(path.resolve('./public/js/main.js'), 'utf8');
+    assert.ok(mainJs.includes("referrerpolicy', 'no-referrer'"), 'Translate script must enforce referrerpolicy=no-referrer');
+    assert.ok(!mainJs.includes("setAttribute('crossorigin'"), 'Translate script must not set crossorigin to avoid CORS execution failure');
+    assert.ok(mainJs.includes("pathname.includes('admin')"), 'Translate engine must strictly exclude admin routes');
+
+    // Verify admin views do not include translation container or translate CSP
+    const adminViews = ['admin-dashboard.html', 'admin-login.html'];
+    for (const adminFile of adminViews) {
+      const adminContent = fs.readFileSync(path.join(viewsDir, adminFile), 'utf8');
+      assert.ok(!adminContent.includes('google_translate_element'), `${adminFile} must not contain google_translate_element`);
+      assert.ok(!adminContent.includes('translate.google.com'), `${adminFile} CSP must not allow translate.google.com`);
+    }
+
+    // Verify privacy.html documents Google Translate subprocessor and admin exclusion
+    const privacyContent = fs.readFileSync(path.join(viewsDir, 'privacy.html'), 'utf8');
+    assert.ok(privacyContent.includes('Google Translate'), 'privacy.html must document Google Translate');
+    assert.ok(privacyContent.includes('no-referrer'), 'privacy.html must document no-referrer policy');
+    assert.ok(privacyContent.includes('admin-dashboard'), 'privacy.html must document admin exclusion');
   });
 
   // 14. Database Synchronization & CRUD Integrity Check
