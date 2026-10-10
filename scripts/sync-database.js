@@ -57,9 +57,10 @@ export async function syncDatabase() {
 
     // 3. Inquiries Sync
     const { data: remoteInquiries, error: inqErr } = await supabase.from('inquiries').select('*');
-    if (!inqErr && Array.isArray(remoteInquiries) && remoteInquiries.length > 0) {
+    if (!inqErr && Array.isArray(remoteInquiries)) {
+      db.prepare('DELETE FROM inquiries').run();
       const insertInquiry = db.prepare(`
-        INSERT OR REPLACE INTO inquiries (
+        INSERT INTO inquiries (
           id, full_name, email, country_code, mobile_number,
           company_name, product_variety, quantity, destination,
           message, status, ip_address, dpdp_consent, dpdp_consent_timestamp, created_at

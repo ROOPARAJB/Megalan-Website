@@ -342,15 +342,10 @@ async function loadAdminGallery() {
   const container = document.getElementById('adminGalleryGrid');
   if (!container) return;
 
-  // Initialize from embedded data if cache empty
-  if (cachedGalleryItems.length === 0 && Array.isArray(window.__EMBEDDED_GALLERY__) && window.__EMBEDDED_GALLERY__.length > 0) {
-    cachedGalleryItems = [...window.__EMBEDDED_GALLERY__];
-  }
-
   const isLocalNodeHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   let loaded = false;
 
-  // 1. Direct Supabase Cloud Fetch (Fastest & Guaranteed on Live Host)
+  // 1. Direct Supabase Cloud Fetch (Fastest & Authoritative Live Source)
   if (!isLocalNodeHost) {
     try {
       const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/gallery?select=*&order=created_at.desc`, {
@@ -358,7 +353,7 @@ async function loadAdminGallery() {
       });
       if (sbRes.ok) {
         const sbData = await sbRes.json();
-        if (Array.isArray(sbData) && sbData.length > 0) {
+        if (Array.isArray(sbData)) {
           cachedGalleryItems = sbData;
           loaded = true;
         }
@@ -377,7 +372,7 @@ async function loadAdminGallery() {
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+        if (data.success && Array.isArray(data.data)) {
           cachedGalleryItems = data.data;
           loaded = true;
         }
@@ -393,7 +388,7 @@ async function loadAdminGallery() {
       });
       if (sbRes.ok) {
         const sbData = await sbRes.json();
-        if (Array.isArray(sbData) && sbData.length > 0) {
+        if (Array.isArray(sbData)) {
           cachedGalleryItems = sbData;
           loaded = true;
         }
@@ -401,8 +396,8 @@ async function loadAdminGallery() {
     } catch (e) {}
   }
 
-  // Fallback to embedded snapshot if still empty
-  if (cachedGalleryItems.length === 0 && Array.isArray(window.__EMBEDDED_GALLERY__) && window.__EMBEDDED_GALLERY__.length > 0) {
+  // 4. ONLY if network completely failed (offline), use embedded snapshot
+  if (!loaded && cachedGalleryItems.length === 0 && Array.isArray(window.__EMBEDDED_GALLERY__)) {
     cachedGalleryItems = [...window.__EMBEDDED_GALLERY__];
   }
 
@@ -435,15 +430,10 @@ async function loadAdminInquiries() {
   const tbody = document.getElementById('inquiriesTableBody');
   if (!tbody) return;
 
-  // Initialize from embedded data if cache empty
-  if (cachedInquiries.length === 0 && Array.isArray(window.__EMBEDDED_INQUIRIES__) && window.__EMBEDDED_INQUIRIES__.length > 0) {
-    cachedInquiries = [...window.__EMBEDDED_INQUIRIES__];
-  }
-
   const isLocalNodeHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   let loaded = false;
 
-  // 1. Direct Supabase Cloud Fetch (Fastest & Guaranteed on Live Host)
+  // 1. Direct Supabase Cloud Fetch (Fastest & Authoritative Live Source)
   if (!isLocalNodeHost) {
     try {
       const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/inquiries?select=*&order=created_at.desc`, {
@@ -451,7 +441,7 @@ async function loadAdminInquiries() {
       });
       if (sbRes.ok) {
         const sbData = await sbRes.json();
-        if (Array.isArray(sbData) && sbData.length > 0) {
+        if (Array.isArray(sbData)) {
           cachedInquiries = sbData;
           loaded = true;
         }
@@ -470,7 +460,7 @@ async function loadAdminInquiries() {
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+        if (data.success && Array.isArray(data.data)) {
           cachedInquiries = data.data;
           loaded = true;
         }
@@ -486,7 +476,7 @@ async function loadAdminInquiries() {
       });
       if (sbRes.ok) {
         const sbData = await sbRes.json();
-        if (Array.isArray(sbData) && sbData.length > 0) {
+        if (Array.isArray(sbData)) {
           cachedInquiries = sbData;
           loaded = true;
         }
@@ -496,8 +486,8 @@ async function loadAdminInquiries() {
     }
   }
 
-  // Fallback to embedded data if still empty
-  if (cachedInquiries.length === 0 && Array.isArray(window.__EMBEDDED_INQUIRIES__) && window.__EMBEDDED_INQUIRIES__.length > 0) {
+  // 4. ONLY if network completely failed (offline), use embedded fallback
+  if (!loaded && cachedInquiries.length === 0 && Array.isArray(window.__EMBEDDED_INQUIRIES__)) {
     cachedInquiries = [...window.__EMBEDDED_INQUIRIES__];
   }
 
@@ -655,7 +645,7 @@ async function loadAdminAuditLogs() {
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.success && data.data && data.data.length > 0) {
+        if (data.success && Array.isArray(data.data)) {
           logs = data.data;
           loaded = true;
         }
@@ -671,15 +661,16 @@ async function loadAdminAuditLogs() {
       });
       if (sbRes.ok) {
         const sbData = await sbRes.json();
-        if (Array.isArray(sbData) && sbData.length > 0) {
+        if (Array.isArray(sbData)) {
           logs = sbData;
+          loaded = true;
         }
       }
     } catch (e) {}
   }
 
-  // Fallback to embedded logs if empty
-  if (logs.length === 0 && Array.isArray(window.__EMBEDDED_AUDIT_LOGS__)) {
+  // 4. Fallback to embedded logs only if offline / network failed
+  if (!loaded && logs.length === 0 && Array.isArray(window.__EMBEDDED_AUDIT_LOGS__)) {
     logs = [...window.__EMBEDDED_AUDIT_LOGS__];
   }
 
