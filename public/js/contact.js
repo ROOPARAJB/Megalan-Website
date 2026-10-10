@@ -4,8 +4,6 @@
  * Red Error Highlights, Supabase Cloud Database Fallback & Multi-Device Sync.
  */
 
-
-
 // Disposable & Temporary Mail Blacklist Domains
 const BLOCKED_EMAIL_DOMAINS = new Set([
   '10minutemail.com', '10minutemail.net', 'tempmail.com', 'tempmail.net', 'temp-mail.org',
@@ -57,14 +55,35 @@ function clearAllFormErrors(form) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Pre-fill variety from URL parameter if present
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const prefilledVariety = urlParams.get('variety');
+    if (prefilledVariety) {
+      const varietySelect = document.querySelector('select[name="product_variety"]');
+      if (varietySelect) {
+        for (let i = 0; i < varietySelect.options.length; i++) {
+          const opt = varietySelect.options[i];
+          if (opt.value && (opt.value.toLowerCase().includes(prefilledVariety.toLowerCase()) || 
+              opt.text.toLowerCase().includes(prefilledVariety.toLowerCase()) ||
+              prefilledVariety.toLowerCase().includes(opt.value.toLowerCase()))) {
+            varietySelect.selectedIndex = i;
+            break;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // Ignore URL param parse error
+  }
+
   const forms = document.querySelectorAll('.inquiry-form');
 
   forms.forEach((form) => {
-    // Real-time keystroke filtering
+    // Real-time keystroke filtering for Full Name (Alphabet & spaces only)
     const nameInput = form.querySelector('input[name="full_name"]');
     if (nameInput) {
       nameInput.addEventListener('input', () => {
-        // Remove any non-alphabet, non-space character immediately
         const cleaned = nameInput.value.replace(/[^A-Za-z\s]/g, '');
         if (nameInput.value !== cleaned) {
           nameInput.value = cleaned;
@@ -75,10 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Real-time keystroke filtering for Mobile Number (Digits only, max 10 digits for India)
     const phoneInput = form.querySelector('input[name="mobile_number"]');
     if (phoneInput) {
       phoneInput.addEventListener('input', () => {
-        // Remove any non-digit character immediately
         const digitsOnly = phoneInput.value.replace(/\D/g, '');
         if (phoneInput.value !== digitsOnly) {
           phoneInput.value = digitsOnly;
@@ -175,19 +194,19 @@ document.addEventListener('DOMContentLoaded', () => {
         hasError = true;
         if (!firstErrorField) firstErrorField = emailEl;
       } else if (!emailRegex.test(email)) {
-        setFieldError(emailEl, 'Please enter a valid email address (e.g. name@company.com).');
+        setFieldError(emailEl, 'Please provide a valid corporate or business email address.');
         hasError = true;
         if (!firstErrorField) firstErrorField = emailEl;
       } else {
         const domain = email.split('@')[1];
         if (domain && BLOCKED_EMAIL_DOMAINS.has(domain)) {
-          setFieldError(emailEl, 'Temporary/disposable email addresses are not permitted. Please use a business or standard email.');
+          setFieldError(emailEl, 'Disposable/temporary email addresses are not accepted. Please use a legitimate business or personal email.');
           hasError = true;
           if (!firstErrorField) firstErrorField = emailEl;
         }
       }
 
-      // Validate Mobile Number (No extra/less numbers, strict format)
+      // Validate Mobile Number
       if (!mobileNumber) {
         setFieldError(mobileEl, 'Mobile number is required.');
         hasError = true;
@@ -252,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Construct Payload
+      // Construct Clean Payload (Strictly matching Supabase 'inquiries' table schema)
       const payload = {
         full_name: fullName,
         email: email,
@@ -273,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let submissionSuccess = false;
 
-      // 1. Attempt Node Backend API
+      // 1. Attempt Node Backend API (When hosted on Node server)
       try {
         const response = await fetch('/api/enquiries', {
           method: 'POST',
@@ -281,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ ...payload, dpdp_consent: true })
         });
 
         if (response.ok) {
@@ -291,10 +310,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       } catch (nodeErr) {
-        // Static hosting fallback mode
+        // Fallback to direct cloud database on static hosting (GitHub Pages)
       }
 
-      // 2. Direct Supabase Cloud Sync for live static deployment
+      // 2. Direct Supabase Cloud Sync (Active on live GitHub Pages)
       if (!submissionSuccess) {
         try {
           const cloudHost = 'https://sammfailpehmtxlbqmmh.supabase.co';
@@ -302,6 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const cloudKey = typeof atob === 'function' 
             ? atob('c2Jfc2VjcmV0X2lCWnU0ME5NbFNfUHRpT2MyWEVPUkFfbTJ1NkE3NUE=')
             : Buffer.from('c2Jfc2VjcmV0X2lCWnU0ME5NbFNfUHRpT2MyWEVPUkFfbTJ1NkE3NUE=', 'base64').toString('utf8');
+
           const sbRes = await fetch(cloudHost + cloudPath, {
             method: 'POST',
             headers: {
@@ -315,9 +335,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (sbRes.ok || sbRes.status === 201) {
             submissionSuccess = true;
+          } else {
+            const errText = await sbRes.text();
+            console.error('Supabase Cloud Sync Response Error:', sbRes.status, errText);
           }
         } catch (sbErr) {
-          console.warn('Cloud sync error:', sbErr);
+          console.error('Supabase Cloud Sync Network Error:', sbErr);
         }
       }
 
@@ -330,8 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
           setTimeout(closeQuoteModal, 1500);
         }
       } else {
-        showToast('Enquiry received! You can also reach our 24/7 Trade Desk directly at +91 9003755701 or info@vpsayoga.in.', 'success');
-        form.reset();
+        showToast('Unable to submit inquiry. Please try again or reach our Trade Desk at +91 9003755701 / info@vpsayoga.in.', 'error');
       }
 
       if (submitBtn) {
