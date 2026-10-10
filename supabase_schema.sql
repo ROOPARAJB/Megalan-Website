@@ -282,7 +282,7 @@ BEGIN
             v_bits := v_bits + 5;
             IF v_bits >= 8 THEN
                 v_byte := (v_val >> (v_bits - 8)) & 255;
-                v_key_bytes := v_key_bytes || set_byte('\x00'::bytea, 0, v_byte);
+                v_key_bytes := v_key_bytes || decode(lpad(to_hex(v_byte), 2, '0'), 'hex');
                 v_bits := v_bits - 8;
             END IF;
         END IF;
@@ -293,16 +293,8 @@ BEGIN
 
     -- Drift tolerance: window of -1, 0, +1 (current ± 30 seconds)
     FOR v_diff IN -1..1 LOOP
-        v_counter_bytes := set_byte(set_byte(set_byte(set_byte(set_byte(set_byte(set_byte(set_byte(
-            '\x0000000000000000'::bytea,
-            0, ((v_counter + v_diff) >> 56) & 255),
-            1, ((v_counter + v_diff) >> 48) & 255),
-            2, ((v_counter + v_diff) >> 40) & 255),
-            3, ((v_counter + v_diff) >> 32) & 255),
-            4, ((v_counter + v_diff) >> 24) & 255),
-            5, ((v_counter + v_diff) >> 16) & 255),
-            6, ((v_counter + v_diff) >> 8) & 255),
-            7, (v_counter + v_diff) & 255);
+        -- Type-safe 8-byte big-endian counter using to_hex and decode
+        v_counter_bytes := decode(lpad(to_hex(v_counter + v_diff), 16, '0'), 'hex');
 
         -- HMAC-SHA1
         v_hash := hmac(v_counter_bytes, v_key_bytes, 'sha1');
