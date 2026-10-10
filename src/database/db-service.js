@@ -417,14 +417,24 @@ export const dbService = {
           .maybeSingle();
 
         if (!error && data) {
-          return data;
+          return {
+            ...data,
+            two_factor_enabled: (data.two_factor_enabled === true || data.two_factor_enabled === 1 || data.two_factor_enabled === 'true') ? 1 : 0
+          };
         }
       } catch (err) {
         console.warn('[DB SERVICE] Supabase getUserByUsername fallback to SQLite:', err.message);
       }
     }
 
-    return db.prepare(`SELECT * FROM users WHERE username = ?`).get(cleanUsername);
+    const localUser = db.prepare(`SELECT * FROM users WHERE username = ?`).get(cleanUsername);
+    if (localUser) {
+      return {
+        ...localUser,
+        two_factor_enabled: (localUser.two_factor_enabled === 1 || localUser.two_factor_enabled === true) ? 1 : 0
+      };
+    }
+    return null;
   },
 
   async getUserById(id) {
@@ -439,14 +449,24 @@ export const dbService = {
           .maybeSingle();
 
         if (!error && data) {
-          return data;
+          return {
+            ...data,
+            two_factor_enabled: (data.two_factor_enabled === true || data.two_factor_enabled === 1 || data.two_factor_enabled === 'true') ? 1 : 0
+          };
         }
       } catch (err) {
         console.warn('[DB SERVICE] Supabase getUserById fallback to SQLite:', err.message);
       }
     }
 
-    return db.prepare(`SELECT * FROM users WHERE id = ?`).get(numId);
+    const localUser = db.prepare(`SELECT * FROM users WHERE id = ?`).get(numId);
+    if (localUser) {
+      return {
+        ...localUser,
+        two_factor_enabled: (localUser.two_factor_enabled === 1 || localUser.two_factor_enabled === true) ? 1 : 0
+      };
+    }
+    return null;
   },
 
   async updateUserLogin(id) {
@@ -480,12 +500,16 @@ export const dbService = {
 
     if (isSupabaseConfigured()) {
       try {
-        if (resolvedUsername) {
-          await supabase.from('users').update(data).eq('username', resolvedUsername);
-        } else if (resolvedId) {
-          await supabase.from('users').update(data).eq('id', resolvedId);
+        const supabaseData = { ...data };
+        if ('two_factor_enabled' in supabaseData) {
+          supabaseData.two_factor_enabled = (supabaseData.two_factor_enabled === 1 || supabaseData.two_factor_enabled === true || supabaseData.two_factor_enabled === '1') ? 1 : 0;
         }
-        await supabase.from('users').update(data).eq('username', 'admin');
+        if (resolvedUsername) {
+          await supabase.from('users').update(supabaseData).eq('username', resolvedUsername);
+        } else if (resolvedId) {
+          await supabase.from('users').update(supabaseData).eq('id', resolvedId);
+        }
+        await supabase.from('users').update(supabaseData).eq('username', 'admin');
       } catch (e) {
         console.warn('[updateUser2FA Supabase Exception]', e.message);
       }

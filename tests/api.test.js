@@ -34,19 +34,35 @@ describe('VPSA YOGA FRISH Business Logic & API Tests', async () => {
     assert.strictEqual(loginRes.status, 200);
     assert.strictEqual(loginRes.body.require_2fa, true);
 
-    // Step 2: Confirm 2FA Setup with valid TOTP code
-    const totpCode = generateSync({ secret: loginRes.body.secret });
-    const confirmRes = await request(app)
-      .post('/api/auth/2fa/confirm-setup')
-      .send({
-        temp_token: loginRes.body.temp_token,
-        code: totpCode
-      });
+    // Step 2: 2FA Authentication
+    if (loginRes.body.setup_required) {
+      const totpCode = generateSync({ secret: loginRes.body.secret });
+      const confirmRes = await request(app)
+        .post('/api/auth/2fa/confirm-setup')
+        .send({
+          temp_token: loginRes.body.temp_token,
+          code: totpCode
+        });
 
-    assert.strictEqual(confirmRes.status, 200);
-    assert.strictEqual(confirmRes.body.success, true);
-    adminToken = confirmRes.body.token;
-    sessionCookie = confirmRes.headers['set-cookie'];
+      assert.strictEqual(confirmRes.status, 200);
+      assert.strictEqual(confirmRes.body.success, true);
+      adminToken = confirmRes.body.token;
+      sessionCookie = confirmRes.headers['set-cookie'];
+    } else {
+      const user = await dbService.getUserByUsername('admin');
+      const totpCode = generateSync({ secret: user.two_factor_secret });
+      const verifyRes = await request(app)
+        .post('/api/auth/2fa/verify')
+        .send({
+          temp_token: loginRes.body.temp_token,
+          code: totpCode
+        });
+
+      assert.strictEqual(verifyRes.status, 200);
+      assert.strictEqual(verifyRes.body.success, true);
+      adminToken = verifyRes.body.token;
+      sessionCookie = verifyRes.headers['set-cookie'];
+    }
   });
 
   // Health Check Endpoint
