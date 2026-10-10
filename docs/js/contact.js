@@ -205,10 +205,10 @@ async function handleFormSubmit(e, form) {
 
   let submissionSuccess = false;
 
-  // 1. Direct Supabase Cloud Sync via PostgREST
+  // 1. Direct Supabase Cloud Sync via PostgREST (Public Anon Client)
   const cloudHost = 'https://sammfailpehmtxlbqmmh.supabase.co';
-  const cloudPath = atob('L3Jlc3QvdjEvaW5xdWlyaWVz');
-  const cloudKey = atob('c2Jfc2VjcmV0X2lCWnU0ME5NbFNfUHRpT2MyWEVPUkFfbTJ1NkE3NUE=');
+  const cloudPath = '/rest/v1/inquiries';
+  const cloudKey = 'sb_publishable_fW8EO__Y0fyRVkflrZ4Vlw_LFH-nVN0';
 
   try {
     const sbRes = await fetch(cloudHost + cloudPath, {

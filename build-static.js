@@ -29,12 +29,6 @@ for (const targetDir of targetDirs) {
     }
   }
 
-  // Remove admin JS from static build (admin features are strictly Node-backend authenticated)
-  const staticAdminJs = path.join(targetDir, 'js', 'admin.js');
-  if (fs.existsSync(staticAdminJs)) {
-    fs.rmSync(staticAdminJs, { force: true });
-  }
-
   // 2. Copy _headers and CNAME configuration files
   const headersSrc = path.join(publicDir, '_headers');
   if (fs.existsSync(headersSrc)) {
@@ -48,15 +42,13 @@ for (const targetDir of targetDirs) {
   // 3. Add .nojekyll for GitHub Pages
   fs.writeFileSync(path.join(targetDir, '.nojekyll'), '', 'utf8');
 
-  // 4. Compile all public views into clean-URL directory structures & fallback .html files
-  const viewFiles = fs.readdirSync(viewsDir)
-    .filter(f => f.endsWith('.html') && !f.startsWith('admin-'));
+  // 4. Compile all views into clean-URL directory structures & fallback .html files
+  const viewFiles = fs.readdirSync(viewsDir).filter(f => f.endsWith('.html'));
 
   for (const file of viewFiles) {
     let content = fs.readFileSync(path.join(viewsDir, file), 'utf8');
 
-    // Keep secured standard clean URLs (no .html extensions in user-facing links)
-    // Ensure all internal routes use /about, /products, /gallery, /contact, /privacy, /
+    // Keep clean URLs in user-facing links
     content = content
       .replace(/href="about\.html"/g, 'href="/about"')
       .replace(/href="products\.html"/g, 'href="/products"')
@@ -72,15 +64,37 @@ for (const targetDir of targetDirs) {
 
     // For clean directory routing (e.g., /about/index.html), create sub-folder unless it's index or 404
     if (baseName !== 'index' && baseName !== '404') {
-      const subDir = path.join(targetDir, baseName);
-      if (!fs.existsSync(subDir)) {
-        fs.mkdirSync(subDir, { recursive: true });
+      if (baseName === 'admin-login') {
+        const adminLoginDir = path.join(targetDir, 'admin', 'login');
+        if (!fs.existsSync(adminLoginDir)) {
+          fs.mkdirSync(adminLoginDir, { recursive: true });
+        }
+        fs.writeFileSync(path.join(adminLoginDir, 'index.html'), content, 'utf8');
+      } else if (baseName === 'admin-dashboard') {
+        const adminDashDir = path.join(targetDir, 'admin', 'dashboard');
+        if (!fs.existsSync(adminDashDir)) {
+          fs.mkdirSync(adminDashDir, { recursive: true });
+        }
+        fs.writeFileSync(path.join(adminDashDir, 'index.html'), content, 'utf8');
+      } else {
+        const subDir = path.join(targetDir, baseName);
+        if (!fs.existsSync(subDir)) {
+          fs.mkdirSync(subDir, { recursive: true });
+        }
+        fs.writeFileSync(path.join(subDir, 'index.html'), content, 'utf8');
       }
-      fs.writeFileSync(path.join(subDir, 'index.html'), content, 'utf8');
     }
   }
 
-  console.log(`✓ Built secure static output with Clean URLs in ${path.basename(targetDir)}/`);
+  // Admin root redirect: /admin/ -> /admin-login.html
+  const adminDir = path.join(targetDir, 'admin');
+  if (!fs.existsSync(adminDir)) {
+    fs.mkdirSync(adminDir, { recursive: true });
+  }
+  const adminIndexRedirect = `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/admin-login.html"><title>Redirecting to Admin Login...</title></head><body><p>Redirecting to <a href="/admin-login.html">Admin Login</a>...</p></body></html>`;
+  fs.writeFileSync(path.join(adminDir, 'index.html'), adminIndexRedirect, 'utf8');
+
+  console.log(`✓ Built secure static output with Clean URLs and Admin Portal in ${path.basename(targetDir)}/`);
 }
 
 console.log('✨ Build succeeded! Clean & secure distribution generated with directory-based clean routes.');

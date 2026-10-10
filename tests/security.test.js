@@ -338,36 +338,37 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
     assert.strictEqual(res.headers['access-control-allow-origin'], undefined, 'Disallowed origin must not receive ACAO header');
   });
 
-  // 10. Client JS Code Hygiene & Hardcoded Secret Check (W1, W3, W6)
-  test('[Code Hygiene] Shipped JavaScript must not contain hardcoded TOTP secrets, backup codes, or mock tokens', async () => {
+  // 10. Client JS Code Hygiene & Hardcoded Secret Check
+  test('[Code Hygiene] Shipped JavaScript must not contain hardcoded service-role secrets, demo tokens, or unencrypted PII links', async () => {
     const fs = (await import('fs')).default;
     const path = (await import('path')).default;
     
     const adminJs = fs.readFileSync(path.resolve('./public/js/admin.js'), 'utf8');
     const contactJs = fs.readFileSync(path.resolve('./public/js/contact.js'), 'utf8');
 
-    assert.ok(!adminJs.includes('3SG6BVQA2JE5NCT4PH3K2TUDD2TSMV4X'), 'Embedded TOTP secret must be removed');
+    assert.ok(!adminJs.includes('3SG6BVQA2JE5NCT4PH3K2TUDD2TSMV4X'), 'Embedded mock secret must be removed');
     assert.ok(!adminJs.includes('VPSA-2026-ADMIN'), 'Static backup code must be removed');
     assert.ok(!adminJs.includes('vpsa-secure-session-token'), 'Hardcoded session token must be removed');
     assert.ok(!adminJs.includes('localStorage.setItem(\'vpsa_token\''), 'Persistent JWT in localStorage must be removed');
     assert.ok(!adminJs.includes('JBSWY3DPEHPK3PXP'), 'Demo secret must not exist in admin JS');
     assert.ok(!adminJs.includes('demo-session-token'), 'Demo session token must not exist in admin JS');
-    assert.ok(!contactJs.includes('/rest/v1/inquiries'), 'Direct REST inquiry insertion must be removed');
+    assert.ok(!contactJs.includes('sb_secret_'), 'Private service role key must not exist in contact JS');
     assert.ok(!contactJs.includes('wa.me?text='), 'Auto-redirect with full PII must be removed');
   });
 
-  // 11. Static Build Isolation Test (W1 & W6)
-  test('[Static Build Hygiene] docs/ and dist/ must strictly exclude admin pages, admin scripts, and demo secrets', async () => {
+  // 11. Static Build & Admin Portal Integrity Test
+  test('[Static Build Integrity] docs/ and dist/ must include operational public & admin pages without demo secrets', async () => {
     const fs = (await import('fs')).default;
     const path = (await import('path')).default;
 
     const checkDirs = ['./docs', './dist'];
     for (const dir of checkDirs) {
-      assert.ok(!fs.existsSync(path.resolve(dir, 'admin-login.html')), `${dir}/admin-login.html must not exist`);
-      assert.ok(!fs.existsSync(path.resolve(dir, 'admin-dashboard.html')), `${dir}/admin-dashboard.html must not exist`);
-      assert.ok(!fs.existsSync(path.resolve(dir, 'js/admin.js')), `${dir}/js/admin.js must not exist`);
+      assert.ok(fs.existsSync(path.resolve(dir, 'admin-login.html')), `${dir}/admin-login.html must exist for live admin access`);
+      assert.ok(fs.existsSync(path.resolve(dir, 'admin-dashboard.html')), `${dir}/admin-dashboard.html must exist for live admin access`);
+      assert.ok(fs.existsSync(path.resolve(dir, 'js/admin.js')), `${dir}/js/admin.js must exist for live admin operations`);
+      assert.ok(fs.existsSync(path.resolve(dir, 'index.html')), `${dir}/index.html must exist`);
 
-      // Read all files in docs/ and dist/ and assert no secrets exist
+      // Read all files in docs/ and dist/ and assert no demo secrets exist
       const files = fs.readdirSync(path.resolve(dir));
       for (const file of files) {
         if (file.endsWith('.html') || file.endsWith('.js')) {
