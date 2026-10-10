@@ -62,13 +62,14 @@
 
       <div style="text-align: center; margin-bottom: 1.25rem; background: #f8fafc; padding: 1rem; border-radius: 12px; border: 1px solid #e2e8f0;">
         <div style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
-          <img id="qrCodeImg" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=otpauth%3A%2F%2Ftotp%2FVPSA%2520YOGA%3Aadmin%3Fsecret%3DBM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD%26issuer%3DVPSA%2520YOGA" alt="2FA QR Code" style="max-width: 200px; width: 100%; height: auto; margin: 0 auto; display: block; border-radius: 8px; box-shadow: var(--shadow-sm); background: #ffffff; padding: 6px;">
+          <img id="qrCodeImg" src="" alt="2FA QR Code" style="display: none; max-width: 200px; width: 100%; height: auto; margin: 0 auto; border-radius: 8px; box-shadow: var(--shadow-sm); background: #ffffff; padding: 6px;">
+          <div id="qrPlaceholder" style="color: var(--text-muted); font-size: 0.85rem; padding: 1rem;">QR Code generated securely by server upon authentication.</div>
         </div>
         
         <div style="margin-top: 1rem;">
           <div style="font-size: 0.785rem; color: var(--text-muted); margin-bottom: 0.35rem;">Or add manually in Authenticator app:</div>
           <div id="manualSecretBox" style="font-family: monospace; font-size: 0.85rem; font-weight: 700; background: #ffffff; padding: 0.45rem 0.65rem; border-radius: 6px; border: 1px dashed #cbd5e1; user-select: all; word-break: break-all; color: var(--primary-deep); display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
-            <span id="manualSecretText">BM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD</span>
+            <span id="manualSecretText">Contact administrator to provision</span>
             <button type="button" id="copySecretKeyBtn" style="background: var(--primary); color: #fff; border: none; padding: 0.25rem 0.55rem; border-radius: 4px; font-size: 0.72rem; cursor: pointer; white-space: nowrap;">Copy Key</button>
           </div>
         </div>

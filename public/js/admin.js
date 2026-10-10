@@ -814,61 +814,6 @@ function resetToStep1() {
 }
 window.resetToStep1 = resetToStep1;
 
-// RFC 6238 Standard Base32 Decoder & TOTP Generator (Works offline in all modern browsers)
-function base32ToBytes(base32) {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = '';
-  const clean = base32.replace(/=+$/, '').toUpperCase();
-  for (let i = 0; i < clean.length; i++) {
-    const val = alphabet.indexOf(clean[i]);
-    if (val === -1) continue;
-    bits += val.toString(2).padStart(5, '0');
-  }
-  const bytes = [];
-  for (let i = 0; i + 8 <= bits.length; i += 8) {
-    bytes.push(parseInt(bits.substr(i, 8), 2));
-  }
-  return new Uint8Array(bytes);
-}
-
-async function computeTotp(secret, epochSeconds = Math.floor(Date.now() / 1000)) {
-  const secretBytes = base32ToBytes(secret);
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    secretBytes,
-    { name: 'HMAC', hash: 'SHA-1' },
-    false,
-    ['sign']
-  );
-  const timeStep = Math.floor(epochSeconds / 30);
-  const timeBuffer = new ArrayBuffer(8);
-  const timeView = new DataView(timeBuffer);
-  timeView.setBigUint64(0, BigInt(timeStep));
-
-  const signature = await crypto.subtle.sign('HMAC', cryptoKey, timeBuffer);
-  const hmac = new Uint8Array(signature);
-  const offset = hmac[hmac.length - 1] & 0x0f;
-  const code = (
-    ((hmac[offset] & 0x7f) << 24) |
-    ((hmac[offset + 1] & 0xff) << 16) |
-    ((hmac[offset + 2] & 0xff) << 8) |
-    (hmac[offset + 3] & 0xff)
-  ) % 1000000;
-  return code.toString().padStart(6, '0');
-}
-
-async function verifyClientTotp(secret, inputCode) {
-  const cleanInput = String(inputCode).trim().replace(/\s+/g, '');
-  const now = Math.floor(Date.now() / 1000);
-  // Check current, previous (-30s), and next (+30s) time windows
-  for (const offset of [0, -30, 30]) {
-    const code = await computeTotp(secret, now + offset);
-    if (code === cleanInput) {
-      return true;
-    }
-  }
-  return false;
-}
 
 // 6. DOM Initialization
 function initAdmin() {
@@ -1071,56 +1016,7 @@ function initAdmin() {
           }
         } catch (err) {}
 
-// Local WebCrypto RFC 6238 TOTP verification (supports drift ±30s)
-async function verifyTotpLocally(inputCode, secret = 'BM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD') {
-  try {
-    const cleanInput = String(inputCode || '').replace(/\s+/g, '');
-    if (cleanInput.length !== 6) return false;
-
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-    const cleanedSecret = secret.toUpperCase().replace(/=+$/, '');
-    let bits = 0, val = 0;
-    const bytes = [];
-    for (let i = 0; i < cleanedSecret.length; i++) {
-      const idx = alphabet.indexOf(cleanedSecret[i]);
-      if (idx === -1) continue;
-      val = (val << 5) | idx;
-      bits += 5;
-      if (bits >= 8) {
-        bytes.push((val >>> (bits - 8)) & 255);
-        bits -= 8;
-      }
-    }
-    const keyBytes = new Uint8Array(bytes);
-    const key = await window.crypto.subtle.importKey(
-      'raw', keyBytes, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']
-    );
-
-    const nowCounter = Math.floor(Date.now() / 30000);
-    for (let diff = -1; diff <= 1; diff++) {
-      const counter = nowCounter + diff;
-      const buffer = new ArrayBuffer(8);
-      const view = new DataView(buffer);
-      view.setBigUint64(0, BigInt(counter), false);
-
-      const sig = await window.crypto.subtle.sign('HMAC', key, buffer);
-      const sigBytes = new Uint8Array(sig);
-      const offset = sigBytes[19] & 0x0f;
-      const truncated =
-        ((sigBytes[offset] & 0x7f) << 24) |
-        ((sigBytes[offset + 1] & 0xff) << 16) |
-        ((sigBytes[offset + 2] & 0xff) << 8) |
-        (sigBytes[offset + 3] & 0xff);
-      const otp = (truncated % 1000000).toString().padStart(6, '0');
-      if (otp === cleanInput) return true;
-    }
-    return false;
-  } catch (e) {
-    return false;
-  }
-}
-
-        // 2. Supabase Cloud MFA Verification (when live on GitHub Pages)
+        // 2. Supabase Server RPC (Zero Client-Side Logic - Verified strictly by PostgreSQL on Supabase)
         if (!verified && currentTempToken) {
           try {
             const res = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/rpc/verify_admin_mfa`, {
@@ -1144,21 +1040,6 @@ async function verifyTotpLocally(inputCode, secret = 'BM6P52QVLSCQU63M5ZQ6SMGXRQ
               }
             }
           } catch (cloudErr) {}
-        }
-
-        // 3. Resilient WebCrypto Fallback Verification
-        if (!verified) {
-          try {
-            const isLocalValid = await verifyTotpLocally(code);
-            if (isLocalValid) {
-              const activeToken = currentTempToken || sessionStorage.getItem('vpsa_token') || 'vpsa-admin-mfa-session';
-              sessionStorage.setItem('vpsa_supabase_token', activeToken);
-              sessionStorage.setItem('vpsa_token', activeToken);
-              sessionStorage.setItem('vpsa_admin_user', 'admin');
-              sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
-              verified = true;
-            }
-          } catch (e) {}
         }
 
         if (verified) {
@@ -1185,7 +1066,11 @@ async function verifyTotpLocally(inputCode, secret = 'BM6P52QVLSCQU63M5ZQ6SMGXRQ
     const copySecretBtn = document.getElementById('copySecretKeyBtn');
     if (copySecretBtn) {
       copySecretBtn.addEventListener('click', async () => {
-        const secretText = document.getElementById('manualSecretText')?.innerText?.trim() || 'BM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD';
+        const secretText = document.getElementById('manualSecretText')?.innerText?.trim();
+        if (!secretText || secretText.includes('Contact administrator')) {
+          showError('Authenticator secret key not available.');
+          return;
+        }
         try {
           await navigator.clipboard.writeText(secretText);
           copySecretBtn.innerText = 'Copied!';
@@ -1220,14 +1105,6 @@ async function verifyTotpLocally(inputCode, secret = 'BM6P52QVLSCQU63M5ZQ6SMGXRQ
         if (codeInput) {
           codeInput.value = '';
           codeInput.focus();
-        }
-
-        // Ensure QR code image src is populated
-        const qrImg = document.getElementById('qrCodeImg');
-        const secret = 'BM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD';
-        const otpauthUrl = `otpauth://totp/VPSA%20YOGA:admin?secret=${secret}&issuer=VPSA%20YOGA`;
-        if (qrImg) {
-          qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`;
         }
       });
     }
@@ -1274,7 +1151,7 @@ async function verifyTotpLocally(inputCode, secret = 'BM6P52QVLSCQU63M5ZQ6SMGXRQ
           }
         } catch (err) {}
 
-        // 2. Supabase Cloud Fallback (Live GitHub Pages)
+        // 2. Supabase Server RPC (Zero Client Validation)
         if (!verified && currentTempToken) {
           try {
             const res = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/rpc/verify_admin_mfa`, {
@@ -1298,21 +1175,6 @@ async function verifyTotpLocally(inputCode, secret = 'BM6P52QVLSCQU63M5ZQ6SMGXRQ
               }
             }
           } catch (cloudErr) {}
-        }
-
-        // 3. Resilient WebCrypto Fallback Verification
-        if (!verified) {
-          try {
-            const isLocalValid = await verifyTotpLocally(code);
-            if (isLocalValid) {
-              const activeToken = currentTempToken || sessionStorage.getItem('vpsa_token') || 'vpsa-admin-mfa-session';
-              sessionStorage.setItem('vpsa_supabase_token', activeToken);
-              sessionStorage.setItem('vpsa_token', activeToken);
-              sessionStorage.setItem('vpsa_admin_user', 'admin');
-              sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
-              verified = true;
-            }
-          } catch (e) {}
         }
 
         if (verified) {
