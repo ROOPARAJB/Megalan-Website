@@ -108,11 +108,30 @@ CREATE POLICY "Public can view gallery" ON public.gallery FOR SELECT USING (true
 DROP POLICY IF EXISTS "Service role can modify gallery" ON public.gallery;
 CREATE POLICY "Service role can modify gallery" ON public.gallery FOR ALL TO service_role USING (true) WITH CHECK (true);
 
--- Inquiries: Strict Deny-by-default for anon (All submissions/management route via Node backend service_role)
+-- Inquiries: Public Insert allowed (Write-Only), Admin Full Access
+DROP POLICY IF EXISTS "Allow public insert to inquiries" ON public.inquiries;
 DROP POLICY IF EXISTS "Public can submit inquiries" ON public.inquiries;
 DROP POLICY IF EXISTS "Public can view inquiries" ON public.inquiries;
 DROP POLICY IF EXISTS "Service role can manage inquiries" ON public.inquiries;
-CREATE POLICY "Service role can manage inquiries" ON public.inquiries FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+CREATE POLICY "Allow public insert to inquiries" 
+ON public.inquiries 
+FOR INSERT 
+TO anon, authenticated, service_role 
+WITH CHECK (true);
+
+CREATE POLICY "Service role can manage inquiries" 
+ON public.inquiries 
+FOR ALL 
+TO service_role 
+USING (true) 
+WITH CHECK (true);
+
+-- Grant privileges
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT INSERT ON TABLE public.inquiries TO anon, authenticated;
+GRANT ALL ON TABLE public.inquiries TO service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
 
 -- Users: Strict Deny-by-default for anon (No anon select/insert/update/delete)
 DROP POLICY IF EXISTS "Public can view users" ON public.users;
