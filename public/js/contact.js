@@ -3,19 +3,6 @@
  * Multi-device Supabase Direct Cloud Sync, Input Validation & Real-time Feedback.
  */
 
-// Disposable & Temporary Mail Blacklist Domains
-const BLOCKED_EMAIL_DOMAINS = new Set([
-  '10minutemail.com', '10minutemail.net', 'tempmail.com', 'tempmail.net', 'temp-mail.org',
-  'mailinator.com', 'guerrillamail.com', 'guerrillamailblock.com', 'guerrillamail.org',
-  'guerrillamail.biz', 'guerrillamail.info', 'grr.la', 'sharklasers.com', 'throwawaymail.com',
-  'yopmail.com', 'yopmail.net', 'dispostable.com', 'trashmail.com', 'trashmail.net',
-  'getairmail.com', 'mohmal.com', 'maildrop.cc', 'mintemail.com', 'fakeinbox.com',
-  'fakemailgenerator.com', 'crazymailing.com', 'generator.email', 'tempinbox.com',
-  'mytemp.email', 'inboxbear.com', 'emailondeck.com', 'burnermail.io', 'getnada.com',
-  'abcvg.com', 'dropmail.me', 'tempail.com', 'clipmail.eu', 'moakt.com', 'mytempemail.com',
-  'nada.ltd', 'inboxkitten.com', 'spam4.me', 'trashmail.de', 'tempmailaddress.com'
-]);
-
 // Helper to display error on a specific form field
 function setFieldError(field, message) {
   if (!field) return;
@@ -157,23 +144,11 @@ async function handleFormSubmit(e, form) {
     if (!firstErrorField) firstErrorField = fullNameEl;
   }
 
-  // Validate Email (<= 100 characters, valid format, disposable domain block)
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!email || email.length > 100) {
-    setFieldError(emailEl, 'Valid email address is required (up to 100 characters).');
+  // Validate Email
+  if (!email) {
+    setFieldError(emailEl, 'Email address is required.');
     hasError = true;
     if (!firstErrorField) firstErrorField = emailEl;
-  } else if (!emailRegex.test(email)) {
-    setFieldError(emailEl, 'Please provide a valid email address (e.g. name@domain.com).');
-    hasError = true;
-    if (!firstErrorField) firstErrorField = emailEl;
-  } else {
-    const domain = email.split('@')[1];
-    if (domain && BLOCKED_EMAIL_DOMAINS.has(domain)) {
-      setFieldError(emailEl, 'Temporary disposable emails are not accepted. Please use a valid email.');
-      hasError = true;
-      if (!firstErrorField) firstErrorField = emailEl;
-    }
   }
 
   // Validate Mobile Number (7 to 15 digits)
@@ -296,34 +271,19 @@ async function handleFormSubmit(e, form) {
 
       if (sbRes.ok || (sbRes.status >= 200 && sbRes.status < 300)) {
         submissionSuccess = true;
-      } else if (sbRes.status === 400) {
-        // Resilient fallback: in case new schema columns (consent_at, dpdp_consent) are not yet in Supabase cache
-        const basePayload = {
-          full_name: payload.full_name,
-          email: payload.email,
-          country_code: payload.country_code,
-          mobile_number: payload.mobile_number,
-          company_name: payload.company_name,
-          product_variety: payload.product_variety,
-          quantity: payload.quantity,
-          destination: payload.destination,
-          message: payload.message,
-          status: 'new'
-        };
-        const retryRes = await fetch(cloudHost + cloudPath, {
-          method: 'POST',
-          cache: 'no-store',
-          headers: {
-            'apikey': cloudKey,
-            'Authorization': `Bearer ${cloudKey}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify(basePayload)
-        });
-        if (retryRes.ok || (retryRes.status >= 200 && retryRes.status < 300)) {
-          submissionSuccess = true;
-        }
+      } else {
+        try {
+          const errData = await sbRes.json();
+          if (errData && errData.message) {
+            safeShowToast(errData.message, 'error');
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = originalBtnText;
+            }
+            form.dataset.submitting = 'false';
+            return false;
+          }
+        } catch (e) {}
       }
     } catch (sbErr) {
       // Offline fallback

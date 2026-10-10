@@ -139,7 +139,2248 @@
     </div>
   </div>
 
-  <script src="/js/main.js?v=21.0"></script>
-  <script src="/js/admin.js?v=21.0"></script>
+  <script>
+/* Inlined: main.js */
+/**
+ * VPSA YOGA - Main Client Script
+ * Ultra-Smooth Flow, Micro-Interactions, Crisp SVG Flags, Bulletproof Multi-Language Handlers,
+ * Variety Details Popup Modal (Live Gallery Pattern), and Clean URL Normalizer
+ */
+
+// Global Banana Varieties Master Catalog (Used for Variety Lightbox Popups)
+const BANANA_VARIETIES = {
+  'red-banana': {
+    id: 'red-banana',
+    name: 'Red Banana (செவ்வாழை)',
+    badge: 'Nutrient Superfruit',
+    tagline: 'Rich in Vitamin C, B6 & Beta-Carotene',
+    description: 'Rich in potassium, magnesium, vitamin B6, and significantly higher levels of vitamin C and beta-carotene than standard yellow bananas. Known for immunity boosting, blood pressure regulation, and ocular health.',
+    shelf_life: '6 to 8 Days @ 13-14°C',
+    ideal_temp: '13.0°C - 14.5°C',
+    taste_profile: 'Velvety berry sweetness',
+    packing: '7kg / 13kg Corrugated Box, Foam Wrapped',
+    image: '/images/products/red-banana.jpg'
+  },
+  'poovan-banana': {
+    id: 'poovan-banana',
+    name: 'Poovan Banana (பூவன்)',
+    badge: 'Digestive Health',
+    tagline: 'Gentle on Stomach & Easy Digestion',
+    description: 'Rich in dietary fiber, making it gentle on the stomach and exceptionally easy to digest. Enhances intestinal health, relieves acidity, and provides quick, sustained energy.',
+    shelf_life: '7 to 10 Days @ 13-14°C',
+    ideal_temp: '13.5°C - 14.0°C',
+    taste_profile: 'Tangy-sweet, fragrant',
+    packing: '10kg / 15kg Telescopic Cartons',
+    image: '/images/products/poovan-banana.jpg'
+  },
+  'nendran-banana': {
+    id: 'nendran-banana',
+    name: 'Nendran Banana (நேந்திரன்)',
+    badge: 'Specialty Plantain',
+    tagline: 'High Resistant Starch & Heart Health',
+    description: 'High in resistant starch, dietary fiber, potassium, and Vitamin B6, making them beneficial for gut and heart health. Premier choice for traditional culinary delicacies and banana chips.',
+    shelf_life: '8 to 12 Days @ 13-14°C',
+    ideal_temp: '13.0°C - 14.0°C',
+    taste_profile: 'Rich, firm, versatile',
+    packing: '12kg / 18kg Heavy Duty Crates',
+    image: '/images/products/nendran-banana.jpg'
+  },
+  'robusta-banana': {
+    id: 'robusta-banana',
+    name: 'Robusta Cavendish (ரோபஸ்டா)',
+    badge: 'Export Leader',
+    tagline: 'Global Favorite for Commercial Wholesale',
+    description: 'Robusta is a widely consumed, medium-to-large Cavendish banana variety known for its sweet flavor, soft creamy texture, and thick green peel that ripens to a bright golden-yellow.',
+    shelf_life: '14 to 21 Days @ 13.5°C',
+    ideal_temp: '13.2°C - 14.0°C',
+    taste_profile: 'Smooth, rich, classic',
+    packing: '13.5kg / 18.14kg Reefer Export Boxes',
+    image: '/images/products/robusta-banana.jpg'
+  },
+  'yelakki-banana': {
+    id: 'yelakki-banana',
+    name: 'Yelakki Banana (ஏலக்கி)',
+    badge: 'Honey Sweet Aroma',
+    tagline: 'Small, Highly Sweet & Aromatic Variety',
+    description: 'Yelakki bananas are a small, highly sweet, and aromatic variety widely cultivated in South India. Packed with instant energy, calcium, vitamin C, and dietary fiber.',
+    shelf_life: '5 to 7 Days @ 13-14°C',
+    ideal_temp: '13.5°C - 14.5°C',
+    taste_profile: 'Concentrated honey sweetness',
+    packing: '5kg / 10kg Premium Cartons',
+    image: '/images/products/yelakki-banana.jpg'
+  },
+  'karpuravalli-banana': {
+    id: 'karpuravalli-banana',
+    name: 'Karpuravalli Banana (கற்பூரவள்ளி)',
+    badge: 'Creamy & Traditional',
+    tagline: 'Plump, Golden-Yellow & Ash-Grey Flesh',
+    description: 'Karpuravalli is a popular, traditional South Indian banana variety known for its plump shape, ash-grey or golden-yellow skin, and exceptionally sweet, creamy honey flesh.',
+    shelf_life: '6 to 9 Days @ 13-14°C',
+    ideal_temp: '13.0°C - 14.0°C',
+    taste_profile: 'Creamy, fragrant sweetness',
+    packing: '10kg Ventilated Export Boxes',
+    image: '/images/products/karpuravalli-banana.jpg'
+  },
+  'rasthali-banana': {
+    id: 'rasthali-banana',
+    name: 'Rasthali Banana (ரஸ்தாளி)',
+    badge: 'Apple-Aroma Delicacy',
+    tagline: 'Silky Texture & Subtle Apple-Like Aroma',
+    description: 'Rasthali is a premium, traditional Indian banana variety known for its exceptionally sweet taste, silky smooth texture, and delicate apple-like aroma. High in natural enzymes and vitamins.',
+    shelf_life: '5 to 8 Days @ 13-14°C',
+    ideal_temp: '13.5°C - 14.0°C',
+    taste_profile: 'Silky sweet with apple notes',
+    packing: '8kg / 12kg Master Boxes',
+    image: '/images/products/rasthali-banana.jpg'
+  },
+  'monthan-banana': {
+    id: 'monthan-banana',
+    name: 'Monthan Banana (மொந்தன்)',
+    badge: 'Robust Culinary Variety',
+    tagline: 'Large Stocky Fruits & Starchy Mealy Pulp',
+    description: 'Monthan banana is a robust culinary plantain in India known for its large, stocky green fruits and nutrient-dense, starchy pulp. Perfect for bulk culinary processing and export.',
+    shelf_life: '15 to 25 Days @ 14°C',
+    ideal_temp: '14.0°C - 16.0°C',
+    taste_profile: 'Savory, starchy, firm',
+    packing: '20kg / 25kg Ventilated Heavy Bags',
+    image: '/images/products/monthan-banana.jpg'
+  }
+};
+
+// High-Quality SVG Flags Map (Crisp rendering on Windows, Mac, iOS, Android, Linux)
+const FLAG_SVGS = {
+  // UK Flag
+  'gb': '<svg class="lang-flag-svg" viewBox="0 0 60 30" aria-hidden="true"><clipPath id="uk_c"><path d="M0 0v30h60V0z"/></clipPath><clipPath id="uk_d"><path d="M30 15h30v15zM30 15v15H0zM30 15H0V0zM30 15V0h30z"/></clipPath><g clip-path="url(#uk_c)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" clip-path="url(#uk_d)" stroke="#C8102E" stroke-width="4"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#C8102E" stroke-width="6"/></g></svg>',
+  // India Flag with Ashoka Chakra
+  'in': '<svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="4.8" fill="none" stroke="#000088" stroke-width="0.9"/><circle cx="30" cy="20" r="1.1" fill="#000088"/></svg>',
+  // UAE Flag
+  'ae': '<svg class="lang-flag-svg" viewBox="0 0 60 30" aria-hidden="true"><rect width="60" height="10" fill="#00732f"/><rect y="10" width="60" height="10" fill="#ffffff"/><rect y="20" width="60" height="10" fill="#000000"/><rect width="18" height="30" fill="#ff0000"/></svg>',
+  // Spain Flag
+  'es': '<svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="10" fill="#AA151B"/><rect y="10" width="60" height="20" fill="#F1BF00"/><rect y="30" width="60" height="10" fill="#AA151B"/></svg>',
+  // France Flag
+  'fr': '<svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="20" height="40" fill="#002654"/><rect x="20" width="20" height="40" fill="#FFFFFF"/><rect x="40" width="20" height="40" fill="#CE1126"/></svg>',
+  // Germany Flag
+  'de': '<svg class="lang-flag-svg" viewBox="0 0 60 36" aria-hidden="true"><rect width="60" height="12" fill="#000000"/><rect y="12" width="60" height="12" fill="#DD0000"/><rect y="24" width="60" height="12" fill="#FFCC00"/></svg>',
+  // China Flag
+  'cn': '<svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#DE2910"/><polygon points="10,6 12,12 8,8 12,8 8,12" fill="#FFDE00"/></svg>',
+  // Japan Flag
+  'jp': '<svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#FFFFFF"/><circle cx="30" cy="20" r="11" fill="#BC002D"/></svg>',
+  // Russia Flag
+  'ru': '<svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FFFFFF"/><rect y="13.33" width="60" height="13.34" fill="#0039A6"/><rect y="26.67" width="60" height="13.33" fill="#D52B1E"/></svg>',
+  // Portugal Flag
+  'pt': '<svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="24" height="40" fill="#006600"/><rect x="24" width="36" height="40" fill="#FF0000"/><circle cx="24" cy="20" r="7" fill="#FFFF00"/></svg>',
+  // Italy Flag
+  'it': '<svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="20" height="40" fill="#009246"/><rect x="20" width="20" height="40" fill="#FFFFFF"/><rect x="40" width="20" height="40" fill="#CE2B37"/></svg>',
+  // Malaysia Flag
+  'my': '<svg class="lang-flag-svg" viewBox="0 0 60 30" aria-hidden="true"><rect width="60" height="30" fill="#CC0000"/><rect y="4.28" width="60" height="4.28" fill="#FFFFFF"/><rect y="12.84" width="60" height="4.28" fill="#FFFFFF"/><rect y="21.4" width="60" height="4.28" fill="#FFFFFF"/><rect width="30" height="16" fill="#000066"/><circle cx="15" cy="8" r="5" fill="#FFCC00"/></svg>',
+  // Indonesia Flag
+  'id': '<svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="20" fill="#FF0000"/><rect y="20" width="60" height="20" fill="#FFFFFF"/></svg>',
+  // Vietnam Flag
+  'vn': '<svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#DA251D"/><polygon points="30,10 33,21 21,14 39,14 27,21" fill="#FFFF00"/></svg>',
+  // Thailand Flag
+  'th': '<svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="6.67" fill="#A51931"/><rect y="6.67" width="60" height="6.67" fill="#F4F5F8"/><rect y="13.34" width="60" height="13.32" fill="#2D2A4A"/><rect y="26.66" width="60" height="6.67" fill="#F4F5F8"/><rect y="33.33" width="60" height="6.67" fill="#A51931"/></svg>'
+};
+
+// Toast Notification Utility
+function showToast(message, type = 'success') {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <span style="font-size: 1.1rem; line-height: 1;">${type === 'success' ? '✓' : '⚠️'}</span>
+    <div>${message}</div>
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100%)';
+    toast.style.transition = 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+    setTimeout(() => toast.remove(), 350);
+  }, 4000);
+}
+
+// Clean URL Normalizer (Enforces Secured Standard Paths without .html)
+function normalizeCurrentUrl() {
+  if (window.location.pathname.endsWith('.html')) {
+    let cleanPath = window.location.pathname.replace(/\/index\.html$/, '/').replace(/\.html$/, '');
+    if (!cleanPath) cleanPath = '/';
+    window.history.replaceState({}, '', cleanPath + window.location.search + window.location.hash);
+  }
+}
+
+// Privacy & Data Notice Banner
+function initPrivacyConsentBanner() {
+  if (localStorage.getItem('vpsa_privacy_consent') === 'accepted') {
+    return;
+  }
+  if (window.location.pathname.startsWith('/admin')) {
+    return;
+  }
+
+  const banner = document.createElement('div');
+  banner.id = 'privacyConsentBanner';
+  banner.className = 'dpdp-consent-banner';
+  banner.innerHTML = `
+    <div class="dpdp-consent-text">
+      <strong>🍪 Privacy &amp; Data Notice:</strong> We collect and process your contact details solely for wholesale quotations, orders, and logistics fulfillment. We never sell or share your data with third parties. Learn more in our <a href="/privacy" style="color: var(--accent); text-decoration: underline;">Privacy Policy</a>.
+    </div>
+    <div class="dpdp-consent-actions">
+      <button type="button" id="acceptPrivacyBtn" class="btn btn-sm btn-primary" style="white-space: nowrap; padding: 0.45rem 1.25rem;">
+        Accept &amp; Continue
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(banner);
+
+  const acceptBtn = document.getElementById('acceptPrivacyBtn');
+  if (acceptBtn) {
+    acceptBtn.addEventListener('click', () => {
+      localStorage.setItem('vpsa_privacy_consent', 'accepted');
+      banner.classList.add('hidden');
+      setTimeout(() => banner.remove(), 300);
+    });
+  }
+}
+
+// Banana Variety Popup Modal (Live Gallery Lightbox Design Pattern)
+function openVarietyModal(varietyKey) {
+  const variety = BANANA_VARIETIES[varietyKey] || Object.values(BANANA_VARIETIES).find(v => v.name.toLowerCase().includes((varietyKey || '').toLowerCase()));
+  if (!variety) return;
+
+  let modal = document.getElementById('varietyLightboxModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'varietyLightboxModal';
+    modal.className = 'lightbox-modal';
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div class="variety-modal-dialog">
+      <button type="button" class="variety-modal-close" onclick="closeVarietyModal()" aria-label="Close modal">&times;</button>
+      
+      <div class="variety-modal-img-col">
+        <img src="${variety.image}" alt="${variety.name}" class="variety-modal-img" onerror="this.src='/images/logo/vpsa-yoga-logo.png'">
+      </div>
+
+      <div class="variety-modal-content">
+        <span class="variety-modal-badge">${variety.badge}</span>
+        <h3 class="variety-modal-title">${variety.name}</h3>
+        <div class="variety-modal-tagline">${variety.tagline}</div>
+        <p class="variety-modal-desc">${variety.description}</p>
+
+        <div class="variety-modal-specs-grid">
+          <div class="variety-spec-card">
+            <span class="variety-spec-k">Ideal Storage Temp</span>
+            <span class="variety-spec-v">❄️ ${variety.ideal_temp}</span>
+          </div>
+          <div class="variety-spec-card">
+            <span class="variety-spec-k">Shelf Life</span>
+            <span class="variety-spec-v">⏱️ ${variety.shelf_life}</span>
+          </div>
+          <div class="variety-spec-card">
+            <span class="variety-spec-k">Taste Profile</span>
+            <span class="variety-spec-v">🍌 ${variety.taste_profile}</span>
+          </div>
+          <div class="variety-spec-card">
+            <span class="variety-spec-k">Standard Packaging</span>
+            <span class="variety-spec-v">📦 ${variety.packing}</span>
+          </div>
+        </div>
+
+        <div class="variety-modal-actions">
+          <button type="button" class="btn btn-primary btn-sm" style="flex: 1; justify-content: center;" onclick="triggerVarietyEnquiry('${variety.name}')">
+            Enquire This Variety →
+          </button>
+          <a href="https://whatsapp.com/channel/0029Vb7kw5cLNSZzMtTqSy0N" target="_blank" rel="noopener noreferrer" class="btn btn-accent btn-sm" style="justify-content: center; gap: 0.4rem;">
+            WhatsApp Channel
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      closeVarietyModal();
+    }
+  };
+}
+
+function closeVarietyModal() {
+  const modal = document.getElementById('varietyLightboxModal');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+  document.body.style.overflow = '';
+}
+
+function triggerVarietyEnquiry(varietyName) {
+  closeVarietyModal();
+  if (typeof openQuoteModal === 'function') {
+    openQuoteModal(varietyName);
+  } else {
+    window.location.href = `/contact?variety=${encodeURIComponent(varietyName)}`;
+  }
+}
+
+// Setup Product Card Click Listeners
+function initVarietyCardClicks() {
+  document.querySelectorAll('.product-card').forEach(card => {
+    // Determine variety key
+    let key = card.getAttribute('data-variety');
+    if (!key) {
+      const title = card.querySelector('.product-title');
+      if (title) {
+        const text = title.textContent.toLowerCase();
+        if (text.includes('red') || text.includes('செவ்')) key = 'red-banana';
+        else if (text.includes('poovan') || text.includes('பூவன்')) key = 'poovan-banana';
+        else if (text.includes('nendran') || text.includes('நேந்')) key = 'nendran-banana';
+        else if (text.includes('robusta') || text.includes('cavendish') || text.includes('ரோப')) key = 'robusta-banana';
+        else if (text.includes('yelakki') || text.includes('ஏல')) key = 'yelakki-banana';
+        else if (text.includes('karpuravalli') || text.includes('கற்பூர')) key = 'karpuravalli-banana';
+        else if (text.includes('rasthali') || text.includes('ரஸ்தா')) key = 'rasthali-banana';
+        else if (text.includes('monthan') || text.includes('மொந்')) key = 'monthan-banana';
+      }
+    }
+    if (key) {
+      card.setAttribute('data-variety', key);
+      card.addEventListener('click', (e) => {
+        // If clicking directly on a button inside, let button handler execute
+        if (e.target.closest('button, a')) return;
+        openVarietyModal(key);
+      });
+    }
+  });
+}
+
+// Google Translate Engine with Lazy-Loading, Zero-Referrer Policy, & Multi-Device Sync (B5 Mitigation)
+let googleTranslateScriptLoading = false;
+let googleTranslateScriptLoaded = false;
+const googleTranslateCallbacks = [];
+
+function flushGoogleTranslateCallbacks() {
+  while (googleTranslateCallbacks.length > 0) {
+    const cb = googleTranslateCallbacks.shift();
+    try {
+      if (typeof cb === 'function') cb();
+    } catch (e) {}
+  }
+}
+
+function clearAllGoogleTranslateCookies() {
+  const hostname = window.location.hostname;
+  const domains = ['', hostname];
+  if (hostname.includes('.') && !hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+    domains.push('.' + hostname);
+    const parts = hostname.split('.');
+    if (parts.length > 1) {
+      domains.push('.' + parts.slice(-2).join('.'));
+    }
+  }
+  const paths = ['/', window.location.pathname];
+  domains.forEach(d => {
+    paths.forEach(p => {
+      const domStr = d ? `; domain=${d}` : '';
+      document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${p}${domStr}`;
+    });
+  });
+}
+
+function loadGoogleTranslateScript(cb) {
+  // Hard supply-chain isolation: Translate must NEVER run on administrative portals or RFQ data views
+  if (window.location.pathname.includes('admin') || window.location.pathname.includes('/admin')) {
+    return;
+  }
+
+  if (cb) {
+    googleTranslateCallbacks.push(cb);
+  }
+
+  if (googleTranslateScriptLoaded) {
+    flushGoogleTranslateCallbacks();
+    return;
+  }
+
+  if (googleTranslateScriptLoading || document.getElementById('googleTranslateScript')) {
+    return;
+  }
+
+  googleTranslateScriptLoading = true;
+
+  // Global callback required by Google Translate element.js
+  window.googleTranslateElementInit = function() {
+    try {
+      let container = document.getElementById('google_translate_element');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'google_translate_element';
+        container.style.display = 'none';
+        document.body.appendChild(container);
+      }
+
+      if (window.google && window.google.translate && window.google.translate.TranslateElement) {
+        new window.google.translate.TranslateElement({
+          pageLanguage: 'en',
+          includedLanguages: 'ar,bn,de,en,es,fr,gu,hi,id,it,ja,kn,ml,mr,ms,pa,pt,ru,ta,te,th,ur,vi,zh-CN',
+          layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
+          autoDisplay: false
+        }, 'google_translate_element');
+      }
+    } catch (e) {
+      console.warn('Google Translate initialization notice:', e);
+    }
+    googleTranslateScriptLoaded = true;
+    googleTranslateScriptLoading = false;
+    flushGoogleTranslateCallbacks();
+  };
+
+  const script = document.createElement('script');
+  script.id = 'googleTranslateScript';
+  script.type = 'text/javascript';
+  script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+  // Enforce zero-referrer policy (B5) without setting crossorigin (which causes CORS termination on element.js)
+  script.setAttribute('referrerpolicy', 'no-referrer');
+  script.onerror = function() {
+    googleTranslateScriptLoading = false;
+    console.warn('Unable to load Google Translate service');
+  };
+  document.body.appendChild(script);
+}
+
+function setGoogleLanguage(langCode, langName, flagCode = 'in') {
+  if (window.location.pathname.includes('admin') || window.location.pathname.includes('/admin')) {
+    return;
+  }
+
+  const hostname = window.location.hostname;
+  
+  // Clear any existing cookies to avoid domain conflicts
+  clearAllGoogleTranslateCookies();
+
+  // Set translation cookies
+  if (langCode === 'en') {
+    document.cookie = 'googtrans=/en/en; path=/;';
+    if (hostname.includes('.') && !hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+      const root = '.' + hostname.split('.').slice(-2).join('.');
+      document.cookie = `googtrans=/en/en; domain=${root}; path=/;`;
+    }
+  } else {
+    document.cookie = `googtrans=/en/${langCode}; path=/;`;
+    if (hostname.includes('.') && !hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+      const root = '.' + hostname.split('.').slice(-2).join('.');
+      document.cookie = `googtrans=/en/${langCode}; domain=${root}; path=/;`;
+    }
+  }
+
+  localStorage.setItem('vpsa_lang_code', langCode);
+  if (langName) localStorage.setItem('vpsa_lang_name', langName);
+  if (flagCode) localStorage.setItem('vpsa_lang_flag', flagCode);
+
+  updateLanguageTriggerUI(langCode, langName, flagCode);
+
+  document.querySelectorAll('.lang-btn-item').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-lang') === langCode);
+  });
+
+  const picker = document.getElementById('customLangPicker');
+  if (picker) picker.classList.remove('open');
+
+  // Adjust RTL for Arabic / Urdu
+  if (langCode === 'ar' || langCode === 'ur') {
+    document.documentElement.dir = 'rtl';
+    document.body.classList.add('rtl-layout');
+  } else {
+    document.documentElement.dir = 'ltr';
+    document.body.classList.remove('rtl-layout');
+  }
+
+  // Ensure Google Translate Script is loaded & trigger combo
+  loadGoogleTranslateScript(() => {
+    let attempts = 0;
+    const maxAttempts = 25;
+    const triggerTranslate = () => {
+      const googleCombo = document.querySelector('.goog-te-combo');
+      if (googleCombo) {
+        const targetVal = (langCode === 'en') ? '' : langCode;
+        googleCombo.value = targetVal;
+        googleCombo.dispatchEvent(new Event('change', { bubbles: true }));
+        googleCombo.dispatchEvent(new Event('input', { bubbles: true }));
+
+        // If reverting to English, reload if DOM has translated markers to restore clean layout
+        if (langCode === 'en' && document.documentElement.classList.contains('translated-ltr')) {
+          setTimeout(() => {
+            window.location.reload();
+          }, 100);
+        }
+      } else if (attempts < maxAttempts) {
+        attempts++;
+        setTimeout(triggerTranslate, 200);
+      } else {
+        // Fallback: reload with the cookie set
+        if (langCode === 'en' || !googleCombo) {
+          window.location.reload();
+        }
+      }
+    };
+    triggerTranslate();
+  });
+}
+
+function updateLanguageTriggerUI(langCode, langName, flagCode) {
+  const labelEl = document.getElementById('currentLangLabel');
+  const flagEl = document.getElementById('currentLangFlag');
+  
+  if (labelEl && langName) {
+    labelEl.textContent = langName;
+  }
+  
+  const flagSvg = FLAG_SVGS[flagCode || 'in'] || (langCode === 'en' ? FLAG_SVGS.gb : FLAG_SVGS.in);
+  if (flagEl && flagSvg) {
+    flagEl.innerHTML = flagSvg;
+  }
+}
+
+function initCustomLanguagePicker() {
+  if (window.location.pathname.includes('admin') || window.location.pathname.includes('/admin')) {
+    return;
+  }
+
+  const picker = document.getElementById('customLangPicker');
+  const trigger = document.getElementById('langPickerTrigger');
+  if (!picker || !trigger) return;
+
+  const savedName = localStorage.getItem('vpsa_lang_name') || 'English';
+  const savedCode = localStorage.getItem('vpsa_lang_code') || 'en';
+  const savedFlag = localStorage.getItem('vpsa_lang_flag') || (savedCode === 'en' ? 'gb' : 'in');
+
+  updateLanguageTriggerUI(savedCode, savedName, savedFlag);
+
+  if (savedCode === 'ar' || savedCode === 'ur') {
+    document.documentElement.dir = 'rtl';
+    document.body.classList.add('rtl-layout');
+  }
+
+  document.querySelectorAll('.lang-btn-item').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-lang') === savedCode);
+  });
+
+  // If user previously selected non-English language, load translator on startup
+  if (savedCode && savedCode !== 'en') {
+    loadGoogleTranslateScript(() => {
+      let attempts = 0;
+      const syncGoogleCombo = () => {
+        const googleCombo = document.querySelector('.goog-te-combo');
+        if (googleCombo) {
+          if (googleCombo.value !== savedCode) {
+            googleCombo.value = savedCode;
+            googleCombo.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        } else if (attempts < 20) {
+          attempts++;
+          setTimeout(syncGoogleCombo, 200);
+        }
+      };
+      syncGoogleCombo();
+    });
+  }
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    loadGoogleTranslateScript();
+    picker.classList.toggle('open');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!picker.contains(e.target)) {
+      picker.classList.remove('open');
+    }
+  });
+
+  document.querySelectorAll('.lang-btn-item').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const langCode = btn.getAttribute('data-lang');
+      const langName = btn.getAttribute('data-name') || btn.textContent.trim();
+      const flagCode = btn.getAttribute('data-flag') || (langCode === 'en' ? 'gb' : 'in');
+      setGoogleLanguage(langCode, langName, flagCode);
+    });
+  });
+}
+
+// Google Translate Cleaner
+function initGoogleTranslateCleaners() {
+  const cleanHighlights = () => {
+    document.querySelectorAll('.goog-text-highlight').forEach(el => {
+      el.classList.remove('goog-text-highlight');
+      el.style.backgroundColor = 'transparent';
+      el.style.boxShadow = 'none';
+      el.style.border = 'none';
+      el.style.outline = 'none';
+    });
+    const tooltip = document.getElementById('goog-gt-tt');
+    if (tooltip) {
+      tooltip.style.display = 'none';
+      tooltip.style.visibility = 'hidden';
+    }
+    const frame = document.querySelector('.goog-te-balloon-frame');
+    if (frame) frame.style.display = 'none';
+  };
+
+  cleanHighlights();
+
+  if (window.MutationObserver && document.body) {
+    const observer = new MutationObserver(() => cleanHighlights());
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style']
+    });
+  }
+
+  document.addEventListener('mouseover', (e) => {
+    if (e.target && (e.target.classList.contains('goog-text-highlight') || e.target.tagName === 'FONT')) {
+      e.target.classList.remove('goog-text-highlight');
+      e.target.style.backgroundColor = 'transparent';
+    }
+  }, true);
+}
+
+// Dynamic Header System
+function initDynamicHeaderLayout() {
+  const header = document.querySelector('.site-header');
+  const navbar = document.querySelector('.navbar');
+  const brandLogo = document.querySelector('.brand-logo');
+  const navMenu = document.getElementById('navMenu');
+  const navActions = document.querySelector('.nav-actions');
+
+  if (!header || !navbar || !navMenu || !navActions) return;
+
+  function evaluateHeaderLayout() {
+    const windowWidth = window.innerWidth;
+    if (windowWidth <= 1024) {
+      header.classList.add('navbar-dynamic-collapse');
+      return;
+    }
+
+    const wasActive = navMenu.classList.contains('active');
+    header.classList.remove('navbar-dynamic-collapse');
+
+    const containerWidth = navbar.clientWidth;
+    const logoWidth = brandLogo ? brandLogo.getBoundingClientRect().width : 0;
+    const actionsWidth = navActions ? navActions.getBoundingClientRect().width : 0;
+
+    let navItemsWidth = 0;
+    const navItems = navMenu.querySelectorAll('li:not(.mobile-nav-cta-item)');
+    navItems.forEach(item => {
+      navItemsWidth += item.getBoundingClientRect().width;
+    });
+
+    const gapBuffer = (navItems.length + 2) * 18 + 40;
+    const totalRequiredWidth = logoWidth + navItemsWidth + actionsWidth + gapBuffer;
+
+    if (totalRequiredWidth > containerWidth || windowWidth <= 1180) {
+      header.classList.add('navbar-dynamic-collapse');
+      if (wasActive) navMenu.classList.add('active');
+    } else {
+      header.classList.remove('navbar-dynamic-collapse');
+      navMenu.classList.remove('active');
+    }
+  }
+
+  evaluateHeaderLayout();
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    cancelAnimationFrame(resizeTimer);
+    resizeTimer = requestAnimationFrame(evaluateHeaderLayout);
+  }, { passive: true });
+
+  if (document.fonts) {
+    document.fonts.ready.then(evaluateHeaderLayout);
+  }
+}
+
+// Global DOM Ready Initialization
+document.addEventListener('DOMContentLoaded', () => {
+  normalizeCurrentUrl();
+  initPrivacyConsentBanner();
+  initCustomLanguagePicker();
+  initGoogleTranslateCleaners();
+  initDynamicHeaderLayout();
+  initVarietyCardClicks();
+
+  // Mobile Nav Menu Toggle
+  const toggleBtn = document.getElementById('mobileNavToggle');
+  const navMenu = document.getElementById('navMenu');
+
+  if (toggleBtn && navMenu) {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      navMenu.classList.toggle('active');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!navMenu.contains(e.target) && !toggleBtn.contains(e.target)) {
+        navMenu.classList.remove('active');
+      }
+    });
+
+    navMenu.querySelectorAll('.nav-link, .btn').forEach(link => {
+      link.addEventListener('click', () => {
+        navMenu.classList.remove('active');
+      });
+    });
+  }
+
+  // Active navigation highlight based on current path
+  const currentPath = window.location.pathname;
+  document.querySelectorAll('.nav-link').forEach((link) => {
+    const href = link.getAttribute('href');
+    if (href === currentPath || (currentPath === '/' && href === '/') || (currentPath !== '/' && href !== '/' && currentPath.startsWith(href))) {
+      link.classList.add('active');
+    }
+  });
+
+  // Sticky Header elevation on scroll
+  const siteHeader = document.querySelector('.site-header');
+  if (siteHeader) {
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 20) {
+        siteHeader.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)';
+      } else {
+        siteHeader.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.03)';
+      }
+    }, { passive: true });
+  }
+
+  // Escape key closes modals
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeVarietyModal();
+    }
+  });
+});
+
+</script>
+  <script>
+/* Inlined: admin.js */
+/**
+ * VPSA YOGA - Admin Dashboard & Gallery Management Script
+ * Dual-Mode Authenticated Admin Client: Works seamlessly on Node.js Backend & Live Supabase Cloud
+ */
+
+// Supabase Cloud Configuration for Direct Live Administration
+const SUPABASE_ADMIN_CONFIG = {
+  url: 'https://sammfailpehmtxlbqmmh.supabase.co',
+  anonKey: 'sb_publishable_fW8EO__Y0fyRVkflrZ4Vlw_LFH-nVN0'
+};
+
+// Global in-memory data caches
+let cachedGalleryItems = [];
+let cachedInquiries = [];
+
+// Helper to normalize image paths
+function resolveImageUrl(url) {
+  if (!url) return '/images/logo/vpsa-yoga-logo.png';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+    return url;
+  }
+  return url.startsWith('/') ? url : '/' + url;
+}
+
+// Session Inactivity Timeout Configuration (5 Minutes = 300,000 ms)
+const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
+
+function initSessionTimeout() {
+  function updateActivity() {
+    sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+  }
+
+  async function checkSessionExpiry() {
+    const lastActiveStr = sessionStorage.getItem('vpsa_last_activity');
+    if (!lastActiveStr) {
+      updateActivity();
+      return;
+    }
+
+    const elapsed = Date.now() - Number(lastActiveStr);
+    if (elapsed > INACTIVITY_TIMEOUT_MS) {
+      sessionStorage.removeItem('vpsa_token');
+      sessionStorage.removeItem('vpsa_cloud_key');
+      sessionStorage.removeItem('vpsa_last_activity');
+      sessionStorage.removeItem('vpsa_admin_user');
+
+      try {
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      } catch (e) {}
+
+      alert('🔒 Session Expired: You have been automatically logged out due to 5 minutes of inactivity for your security.');
+      window.location.href = '/admin-login.html?reason=timeout';
+    }
+  }
+
+  updateActivity();
+
+  const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+  let throttleTimer = null;
+  activityEvents.forEach(evt => {
+    window.addEventListener(evt, () => {
+      if (!throttleTimer) {
+        throttleTimer = setTimeout(() => {
+          updateActivity();
+          throttleTimer = null;
+        }, 2000);
+      }
+    }, { passive: true });
+  });
+
+  setInterval(checkSessionExpiry, 5000);
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      checkSessionExpiry();
+    }
+  });
+  window.addEventListener('focus', checkSessionExpiry);
+}
+
+// Built-in Toast Notification Utility
+function showToast(message, type = 'success') {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <span style="font-size: 1.1rem; line-height: 1;">${type === 'success' ? '✓' : '⚠️'}</span>
+    <div>${escapeHtml(message)}</div>
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100%)';
+    toast.style.transition = 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+    setTimeout(() => toast.remove(), 350);
+  }, 4000);
+}
+
+// Authentication Header Helper
+function getAuthHeaders(isJson = true) {
+  const headers = {};
+  if (isJson) {
+    headers['Content-Type'] = 'application/json';
+  }
+  const token = sessionStorage.getItem('vpsa_token');
+  if (token && token !== 'null' && token !== 'undefined') {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+// Helper to construct Supabase REST Headers
+function getSupabaseKey() {
+  return SUPABASE_ADMIN_CONFIG.anonKey;
+}
+
+async function ensureSupabaseAuthSession() {
+  const existingToken = sessionStorage.getItem('vpsa_supabase_token') || sessionStorage.getItem('vpsa_token');
+  if (existingToken && existingToken.startsWith('eyJ')) {
+    return existingToken;
+  }
+  return null;
+}
+
+function getSupabaseHeaders(isJson = true) {
+  const key = getSupabaseKey();
+  const token = sessionStorage.getItem('vpsa_supabase_token');
+  const authHeader = (token && token.startsWith('eyJ')) ? `Bearer ${token}` : `Bearer ${key}`;
+  const headers = {
+    'apikey': key,
+    'Authorization': authHeader
+  };
+  if (isJson) {
+    headers['Content-Type'] = 'application/json';
+    headers['Prefer'] = 'return=representation';
+  }
+  return headers;
+}
+
+// HTML Escaping Helper
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// 1. Modal Control Functions
+function openUploadModal() {
+  const modal = document.getElementById('uploadPhotoModal');
+  if (!modal) return;
+  const form = document.getElementById('uploadGalleryForm');
+  if (form) form.reset();
+
+  const chosenEl = document.getElementById('fileChosenName');
+  if (chosenEl) {
+    chosenEl.style.display = 'none';
+    chosenEl.innerHTML = '';
+  }
+
+  modal.style.cssText = 'display: flex !important; opacity: 1 !important; pointer-events: auto !important; position: fixed !important; inset: 0 !important; z-index: 999999 !important; background-color: rgba(15, 23, 42, 0.85) !important; align-items: center !important; justify-content: center !important; padding: 1.5rem !important;';
+  modal.classList.add('active');
+
+  const titleInput = document.getElementById('uploadPhotoTitle');
+  if (titleInput) titleInput.focus();
+}
+
+function closeUploadModal() {
+  const modal = document.getElementById('uploadPhotoModal');
+  if (!modal) return;
+  modal.classList.remove('active');
+  modal.style.cssText = 'display: none !important; opacity: 0 !important; pointer-events: none !important;';
+}
+
+function openEditModalById(event, id) {
+  if (event && event.stopPropagation) event.stopPropagation();
+  if (event && event.preventDefault) event.preventDefault();
+
+  const numId = Number(id);
+  const item = cachedGalleryItems.find(x => Number(x.id) === numId);
+  const modal = document.getElementById('editPhotoModal');
+  if (!modal) return;
+
+  document.getElementById('editPhotoId').value = item ? item.id : numId;
+  document.getElementById('editPhotoTitle').value = item ? (item.title || '') : '';
+  document.getElementById('editPhotoDesc').value = item ? (item.description || '') : '';
+  document.getElementById('editPhotoCategory').value = item ? (item.category || 'farms') : 'farms';
+
+  modal.style.cssText = 'display: flex !important; opacity: 1 !important; pointer-events: auto !important; position: fixed !important; inset: 0 !important; z-index: 999999 !important; background-color: rgba(15, 23, 42, 0.85) !important; align-items: center !important; justify-content: center !important; padding: 1.5rem !important;';
+  modal.classList.add('active');
+
+  const titleInput = document.getElementById('editPhotoTitle');
+  if (titleInput) titleInput.focus();
+}
+
+function closeEditModal() {
+  const modal = document.getElementById('editPhotoModal');
+  if (!modal) return;
+  modal.classList.remove('active');
+  modal.style.cssText = 'display: none !important; opacity: 0 !important; pointer-events: none !important;';
+}
+
+async function savePhotoEdit() {
+  const id = document.getElementById('editPhotoId').value;
+  const title = document.getElementById('editPhotoTitle').value.trim();
+  const description = document.getElementById('editPhotoDesc').value.trim();
+  const category = document.getElementById('editPhotoCategory').value;
+  const submitBtn = document.getElementById('editSubmitBtn');
+
+  if (!id) {
+    showToast('Missing photo identifier.', 'error');
+    return;
+  }
+
+  if (!title) {
+    showToast('Please enter a photo title.', 'error');
+    return;
+  }
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Saving changes...';
+  }
+
+  let updateSuccess = false;
+
+  // 1. Try Node Express API
+  try {
+    const res = await fetch(`/api/gallery/${id}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ title, description, category })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success) {
+        updateSuccess = true;
+      }
+    }
+  } catch (err) {}
+
+  // 2. Direct Supabase Cloud Fallback (Live static host)
+  if (!updateSuccess) {
+    try {
+      const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/gallery?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: getSupabaseHeaders(true),
+        body: JSON.stringify({
+          title,
+          description: description || null,
+          category,
+          updated_at: new Date().toISOString()
+        })
+      });
+      if (sbRes.ok) {
+        updateSuccess = true;
+      }
+    } catch (e) {
+      console.error('Supabase edit error:', e);
+    }
+  }
+
+  if (updateSuccess) {
+    showToast('Gallery item updated successfully!', 'success');
+    closeEditModal();
+    await loadAdminGallery();
+  } else {
+    showToast('Failed to update photo details.', 'error');
+  }
+
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.innerText = 'Save Changes';
+  }
+}
+
+async function deleteGalleryItem(event, id) {
+  if (event && event.stopPropagation) event.stopPropagation();
+  if (event && event.preventDefault) event.preventDefault();
+  
+  if (!confirm('Are you sure you want to delete this photo from the gallery?')) {
+    return;
+  }
+
+  let deleteSuccess = false;
+
+  // 1. Try Node API
+  try {
+    const res = await fetch(`/api/gallery/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: getAuthHeaders(false)
+    });
+    if (res.ok) {
+      deleteSuccess = true;
+    }
+  } catch (err) {}
+
+  // 2. Direct Supabase Cloud Fallback
+  if (!deleteSuccess) {
+    try {
+      const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/gallery?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: getSupabaseHeaders(false)
+      });
+      if (sbRes.ok) {
+        deleteSuccess = true;
+      }
+    } catch (e) {}
+  }
+
+  if (deleteSuccess) {
+    showToast('Photo removed successfully.', 'success');
+    await loadAdminGallery();
+  } else {
+    showToast('Failed to delete photo.', 'error');
+  }
+}
+
+// 2. Tab Navigation
+function switchTab(tabId) {
+  document.querySelectorAll('.admin-nav-link').forEach(l => l.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+
+  const activeLink = document.querySelector(`.admin-nav-link[data-tab="${tabId}"]`);
+  const activeContent = document.getElementById(`tab-${tabId}`);
+
+  if (activeLink) activeLink.classList.add('active');
+  if (activeContent) activeContent.style.display = 'block';
+
+  // Automatically refresh active tab data
+  if (tabId === 'gallery') loadAdminGallery();
+  if (tabId === 'inquiries') loadAdminInquiries();
+  if (tabId === 'audit') loadAdminAuditLogs();
+}
+
+// 3. Gallery Loader
+async function loadAdminGallery() {
+  const container = document.getElementById('adminGalleryGrid');
+  if (!container) return;
+
+  const isLocalNodeHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  let loaded = false;
+
+  // 1. Direct Supabase Cloud Fetch (Fastest & Authoritative Live Source)
+  if (!isLocalNodeHost) {
+    try {
+      const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/gallery?select=*&order=created_at.desc`, {
+        headers: getSupabaseHeaders(false)
+      });
+      if (sbRes.ok) {
+        const sbData = await sbRes.json();
+        if (Array.isArray(sbData)) {
+          cachedGalleryItems = sbData;
+          loaded = true;
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase gallery load error:', e);
+    }
+  }
+
+  // 2. Try Node Express API (For localhost development)
+  if (!loaded) {
+    try {
+      const res = await fetch('/api/gallery', {
+        credentials: 'include',
+        headers: getAuthHeaders(false)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          cachedGalleryItems = data.data;
+          loaded = true;
+        }
+      }
+    } catch (err) {}
+  }
+
+  // 3. Direct Supabase fallback
+  if (!loaded) {
+    try {
+      const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/gallery?select=*&order=created_at.desc`, {
+        headers: getSupabaseHeaders(false)
+      });
+      if (sbRes.ok) {
+        const sbData = await sbRes.json();
+        if (Array.isArray(sbData)) {
+          cachedGalleryItems = sbData;
+          loaded = true;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 4. ONLY if network completely failed (offline), use embedded snapshot
+  if (!loaded && cachedGalleryItems.length === 0 && Array.isArray(window.__EMBEDDED_GALLERY__)) {
+    cachedGalleryItems = [...window.__EMBEDDED_GALLERY__];
+  }
+
+  const countEl = document.getElementById('totalPhotosCount');
+  if (countEl) countEl.innerText = cachedGalleryItems.length;
+
+  if (cachedGalleryItems.length === 0) {
+    container.innerHTML = `<div class="admin-card" style="grid-column: 1 / -1; text-align: center; color: #64748b; padding: 3rem;">No gallery photos found. Click "➕ Upload New Photo" above to add one.</div>`;
+    return;
+  }
+
+  container.innerHTML = cachedGalleryItems.map(item => `
+    <div class="admin-card" style="padding: 1.25rem; margin-bottom: 0; display: flex; flex-direction: column;">
+      <div style="height: 175px; overflow: hidden; border-radius: 10px; margin-bottom: 1rem; background: #e2e8f0; position: relative;">
+        <img src="${resolveImageUrl(item.image_url)}" alt="${escapeHtml(item.title)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/images/logo/vpsa-yoga-logo.png'" />
+        <span class="status-pill status-contacted" style="position: absolute; top: 0.65rem; right: 0.65rem; background: rgba(255, 255, 255, 0.92); font-size: 0.7rem; box-shadow: 0 2px 6px rgba(0,0,0,0.15); text-transform: uppercase;">${escapeHtml(item.category)}</span>
+      </div>
+      <h4 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 0.35rem; line-height: 1.3;">${escapeHtml(item.title)}</h4>
+      <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.25rem; flex-grow: 1; line-height: 1.5; min-height: 42px;">${escapeHtml(item.description || 'No description provided.')}</p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-top: auto;">
+        <button type="button" class="btn btn-sm btn-outline" data-action="edit" data-id="${item.id}" onclick="openEditModalById(event, ${item.id})">✏️ Edit</button>
+        <button type="button" class="btn btn-sm btn-outline" data-action="delete" data-id="${item.id}" onclick="deleteGalleryItem(event, ${item.id})" style="color: #ef4444; border-color: #fca5a5; background-color: #fff1f2;">🗑️ Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// 4. Inquiries Loader & Operations
+async function loadAdminInquiries() {
+  const tbody = document.getElementById('inquiriesTableBody');
+  if (!tbody) return;
+
+  const isLocalNodeHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  let loaded = false;
+
+  // Ensure authenticated Supabase session
+  if (!isLocalNodeHost) {
+    await ensureSupabaseAuthSession();
+  }
+
+  // 1. Direct Supabase Cloud Fetch (Fastest & Authoritative Live Source)
+  if (!isLocalNodeHost) {
+    try {
+      const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/inquiries?select=*&order=created_at.desc`, {
+        headers: getSupabaseHeaders(false)
+      });
+      if (sbRes.ok) {
+        const sbData = await sbRes.json();
+        if (Array.isArray(sbData)) {
+          cachedInquiries = sbData;
+          loaded = true;
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase inquiries load error:', e);
+    }
+  }
+
+  // 2. Try Node Express API (For localhost development)
+  if (!loaded) {
+    try {
+      const res = await fetch('/api/enquiries', {
+        credentials: 'include',
+        headers: getAuthHeaders(false)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          cachedInquiries = data.data;
+          loaded = true;
+        }
+      }
+    } catch (err) {}
+  }
+
+  // 3. Direct Supabase Fallback
+  if (!loaded) {
+    try {
+      const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/inquiries?select=*&order=created_at.desc`, {
+        headers: getSupabaseHeaders(false)
+      });
+      if (sbRes.ok) {
+        const sbData = await sbRes.json();
+        if (Array.isArray(sbData)) {
+          cachedInquiries = sbData;
+          loaded = true;
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase inquiries fallback error:', e);
+    }
+  }
+
+  // 4. ONLY if network completely failed (offline), use embedded fallback
+  if (!loaded && cachedInquiries.length === 0 && Array.isArray(window.__EMBEDDED_INQUIRIES__)) {
+    cachedInquiries = [...window.__EMBEDDED_INQUIRIES__];
+  }
+
+  const totalEl = document.getElementById('totalInquiriesCount');
+  if (totalEl) totalEl.innerText = cachedInquiries.length;
+  
+  const newCount = cachedInquiries.filter(i => i.status === 'new').length;
+  const newEl = document.getElementById('newInquiriesCount');
+  if (newEl) newEl.innerText = newCount;
+
+  if (cachedInquiries.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 3rem; font-size: 0.95rem;">No wholesale inquiries received yet.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = cachedInquiries.map(item => `
+    <tr>
+      <td>
+        <strong style="color: var(--primary);">#${item.id}</strong><br>
+        <small style="color: #64748b; font-size: 0.785rem;">${new Date(item.created_at).toLocaleDateString()}</small>
+      </td>
+      <td>
+        <strong style="color: #0f172a; font-size: 0.925rem;">${escapeHtml(item.full_name)}</strong><br>
+        <small style="color: #64748b;">${escapeHtml(item.company_name || 'Individual Buyer')}</small>
+      </td>
+      <td>
+        <a href="mailto:${escapeHtml(item.email)}" style="color: var(--primary); font-weight: 600; text-decoration: underline;">${escapeHtml(item.email)}</a><br>
+        <a href="tel:${escapeHtml(item.country_code || '')}${escapeHtml(item.mobile_number || '')}" style="color: #475569; font-size: 0.85rem;">${escapeHtml(item.country_code || '')} ${escapeHtml(item.mobile_number || '')}</a>
+      </td>
+      <td>
+        <span style="font-weight: 700; color: #0f172a;">${escapeHtml(item.product_variety || 'General Bulk')}</span><br>
+        <small style="color: #64748b;">Qty: <strong>${escapeHtml(item.quantity || 'N/A')}</strong> | Dest: <strong>${escapeHtml(item.destination || 'N/A')}</strong></small>
+      </td>
+      <td style="max-width: 240px; font-size: 0.85rem; color: #334155; line-height: 1.5;">
+        ${escapeHtml(item.message)}
+      </td>
+      <td>
+        <select class="form-control" style="padding: 0.35rem 0.6rem; font-size: 0.825rem; font-weight: 600; border-radius: 6px; cursor: pointer;" onchange="updateInquiryStatus(${item.id}, this.value)">
+          <option value="new" ${item.status === 'new' ? 'selected' : ''}>🟡 New</option>
+          <option value="contacted" ${item.status === 'contacted' ? 'selected' : ''}>🔵 Contacted</option>
+          <option value="in_review" ${item.status === 'in_review' ? 'selected' : ''}>🟣 In Review</option>
+          <option value="completed" ${item.status === 'completed' ? 'selected' : ''}>🟢 Completed</option>
+        </select>
+      </td>
+      <td style="text-align: center;">
+        <button type="button" class="btn btn-sm btn-outline" style="color: #ef4444; border-color: #fca5a5; padding: 0.35rem 0.65rem; background: #fff1f2;" onclick="deleteInquiry(${item.id})" title="Delete lead">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function updateInquiryStatus(id, status) {
+  // Update local in-memory cache immediately for instantaneous responsiveness
+  const item = cachedInquiries.find(x => Number(x.id) === Number(id));
+  if (item) {
+    item.status = status;
+  }
+
+  let updateSuccess = false;
+
+  // 1. Try Node API (on localhost)
+  try {
+    const res = await fetch(`/api/enquiries/${id}/status`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ status })
+    });
+    if (res.ok) {
+      updateSuccess = true;
+    }
+  } catch (err) {}
+
+  // 2. Direct Supabase Cloud Sync
+  try {
+    const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/inquiries?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: getSupabaseHeaders(true),
+      body: JSON.stringify({ status })
+    });
+    if (sbRes.ok) {
+      updateSuccess = true;
+    }
+  } catch (e) {}
+
+  showToast(`Inquiry #${id} status set to ${status}.`, 'success');
+  await loadAdminInquiries();
+}
+
+async function deleteInquiry(id) {
+  if (!confirm('Are you sure you want to delete this inquiry record?')) return;
+
+  // Remove from local memory cache immediately
+  cachedInquiries = cachedInquiries.filter(x => Number(x.id) !== Number(id));
+
+  // 1. Try Node API (on localhost)
+  try {
+    await fetch(`/api/enquiries/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: getAuthHeaders(false)
+    });
+  } catch (err) {}
+
+  // 2. Direct Supabase Cloud Sync
+  try {
+    await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/inquiries?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: getSupabaseHeaders(false)
+    });
+  } catch (e) {}
+
+  showToast('Inquiry deleted successfully.', 'success');
+  await loadAdminInquiries();
+}
+
+// 5. Operations Audit Logs
+async function loadAdminAuditLogs() {
+  const tbody = document.getElementById('auditLogsTableBody');
+  if (!tbody) return;
+
+  const isLocalNodeHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  let logs = [];
+  let loaded = false;
+
+  // Ensure authenticated Supabase session
+  if (!isLocalNodeHost) {
+    await ensureSupabaseAuthSession();
+  }
+
+  // Initialize from embedded data if available
+  if (Array.isArray(window.__EMBEDDED_AUDIT_LOGS__) && window.__EMBEDDED_AUDIT_LOGS__.length > 0) {
+    logs = [...window.__EMBEDDED_AUDIT_LOGS__];
+  }
+
+  // 1. Direct Supabase Cloud Fetch (Fastest & Guaranteed on Live Host)
+  if (!isLocalNodeHost) {
+    try {
+      const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/audit_logs?select=*&order=created_at.desc&limit=100`, {
+        headers: getSupabaseHeaders(false)
+      });
+      if (sbRes.ok) {
+        const sbData = await sbRes.json();
+        if (Array.isArray(sbData) && sbData.length > 0) {
+          logs = sbData;
+          loaded = true;
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase audit logs load error:', e);
+    }
+  }
+
+  // 2. Try Node API (for localhost development)
+  if (!loaded) {
+    try {
+      const res = await fetch('/api/audit-logs', {
+        credentials: 'include',
+        headers: getAuthHeaders(false)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          logs = data.data;
+          loaded = true;
+        }
+      }
+    } catch (err) {}
+  }
+
+  // 3. Direct Supabase Fallback
+  if (!loaded) {
+    try {
+      const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/audit_logs?select=*&order=created_at.desc&limit=100`, {
+        headers: getSupabaseHeaders(false)
+      });
+      if (sbRes.ok) {
+        const sbData = await sbRes.json();
+        if (Array.isArray(sbData)) {
+          logs = sbData;
+          loaded = true;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 4. Fallback to embedded logs only if offline / network failed
+  if (!loaded && logs.length === 0 && Array.isArray(window.__EMBEDDED_AUDIT_LOGS__)) {
+    logs = [...window.__EMBEDDED_AUDIT_LOGS__];
+  }
+
+  if (logs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 2rem;">No activity log records found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = logs.map(log => `
+    <tr>
+      <td><small style="color: #475569; font-weight: 500;">${new Date(log.created_at).toLocaleString()}</small></td>
+      <td><span class="status-pill ${log.severity === 'CRITICAL' ? 'status-new' : log.severity === 'WARN' ? 'status-contacted' : 'status-completed'}">${escapeHtml(log.event_type)}</span></td>
+      <td style="font-size: 0.875rem; color: #1e293b; max-width: 320px;">${escapeHtml(log.description)}</td>
+      <td><strong style="color: #0f172a; font-size: 0.85rem;">${escapeHtml(log.username || 'admin')}</strong></td>
+      <td><code style="font-family: monospace; color: #0284c7; background: #f0f9ff; padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.8rem;">${escapeHtml(log.ip_address || '127.0.0.1')}</code></td>
+    </tr>
+  `).join('');
+}
+
+// 6. Universal Two-Way Synchronizer for Admin Panel
+async function syncAllAdminData(showToastNotification = false) {
+  await Promise.all([
+    loadAdminGallery(),
+    loadAdminInquiries(),
+    loadAdminAuditLogs()
+  ]);
+  if (showToastNotification) {
+    showToast(`✓ Live DB Synchronized: ${cachedInquiries.length} Quotes, ${cachedGalleryItems.length} Photos!`, 'success');
+  }
+}
+
+// Export Inquiries as CSV
+function exportInquiriesCSV() {
+  if (!cachedInquiries || cachedInquiries.length === 0) {
+    showToast('No inquiries available to export.', 'error');
+    return;
+  }
+
+  const headers = ['ID', 'Date', 'Full Name', 'Company', 'Email', 'Mobile', 'Variety', 'Quantity', 'Destination', 'Status', 'Message'];
+  const rows = cachedInquiries.map(item => [
+    item.id,
+    new Date(item.created_at).toLocaleDateString(),
+    `"${(item.full_name || '').replace(/"/g, '""')}"`,
+    `"${(item.company_name || '').replace(/"/g, '""')}"`,
+    `"${(item.email || '').replace(/"/g, '""')}"`,
+    `"${(item.country_code || '') + ' ' + (item.mobile_number || '')}"`,
+    `"${(item.product_variety || '').replace(/"/g, '""')}"`,
+    `"${(item.quantity || '').replace(/"/g, '""')}"`,
+    `"${(item.destination || '').replace(/"/g, '""')}"`,
+    item.status || 'new',
+    `"${(item.message || '').replace(/"/g, '""')}"`
+  ]);
+
+  const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `VPSA_Banana_Wholesale_Leads_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast('Leads exported successfully as CSV!', 'success');
+}
+
+// Global exposure
+window.showToast = showToast;
+window.openUploadModal = openUploadModal;
+window.closeUploadModal = closeUploadModal;
+window.openEditModalById = openEditModalById;
+window.closeEditModal = closeEditModal;
+window.savePhotoEdit = savePhotoEdit;
+window.deleteGalleryItem = deleteGalleryItem;
+window.updateInquiryStatus = updateInquiryStatus;
+window.deleteInquiry = deleteInquiry;
+window.exportInquiriesCSV = exportInquiriesCSV;
+window.loadAdminInquiries = loadAdminInquiries;
+window.loadAdminAuditLogs = loadAdminAuditLogs;
+window.loadAdminGallery = loadAdminGallery;
+window.syncAllAdminData = syncAllAdminData;
+window.switchTab = switchTab;
+
+// Multi-step 2FA login state
+let currentTempToken = null;
+let currentBackupCodes = [];
+let isCloudAuthMode = false;
+
+function resetToStep1() {
+  currentTempToken = null;
+  isCloudAuthMode = false;
+  const step1 = document.getElementById('step1Credentials');
+  const step2Setup = document.getElementById('step2Setup2FA');
+  const step2Verify = document.getElementById('step2Verify2FA');
+  const backupBox = document.getElementById('backupCodesDisplay');
+  const loginErr = document.getElementById('loginError');
+  const loginSucc = document.getElementById('loginSuccess');
+
+  if (step1) step1.style.display = 'block';
+  if (step2Setup) step2Setup.style.display = 'none';
+  if (step2Verify) step2Verify.style.display = 'none';
+  if (backupBox) backupBox.style.display = 'none';
+  if (loginErr) loginErr.style.display = 'none';
+  if (loginSucc) loginSucc.style.display = 'none';
+
+  const loginBtn = document.getElementById('loginSubmitBtn');
+  if (loginBtn) {
+    loginBtn.disabled = false;
+    loginBtn.innerText = 'Next: Verify Identity →';
+  }
+  const setupBtn = document.getElementById('setup2faSubmitBtn');
+  if (setupBtn) {
+    setupBtn.disabled = false;
+    setupBtn.innerText = 'Verify & Activate Authenticator';
+  }
+  const verifyBtn = document.getElementById('verify2faSubmitBtn');
+  if (verifyBtn) {
+    verifyBtn.disabled = false;
+    verifyBtn.innerText = 'Confirm & Enter Dashboard';
+  }
+  const pwd = document.getElementById('adminPassword');
+  if (pwd) pwd.value = '';
+}
+window.resetToStep1 = resetToStep1;
+
+// RFC 6238 Standard Base32 Decoder & TOTP Generator (Works offline in all modern browsers)
+function base32ToBytes(base32) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = '';
+  const clean = base32.replace(/=+$/, '').toUpperCase();
+  for (let i = 0; i < clean.length; i++) {
+    const val = alphabet.indexOf(clean[i]);
+    if (val === -1) continue;
+    bits += val.toString(2).padStart(5, '0');
+  }
+  const bytes = [];
+  for (let i = 0; i + 8 <= bits.length; i += 8) {
+    bytes.push(parseInt(bits.substr(i, 8), 2));
+  }
+  return new Uint8Array(bytes);
+}
+
+async function computeTotp(secret, epochSeconds = Math.floor(Date.now() / 1000)) {
+  const secretBytes = base32ToBytes(secret);
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    secretBytes,
+    { name: 'HMAC', hash: 'SHA-1' },
+    false,
+    ['sign']
+  );
+  const timeStep = Math.floor(epochSeconds / 30);
+  const timeBuffer = new ArrayBuffer(8);
+  const timeView = new DataView(timeBuffer);
+  timeView.setBigUint64(0, BigInt(timeStep));
+
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, timeBuffer);
+  const hmac = new Uint8Array(signature);
+  const offset = hmac[hmac.length - 1] & 0x0f;
+  const code = (
+    ((hmac[offset] & 0x7f) << 24) |
+    ((hmac[offset + 1] & 0xff) << 16) |
+    ((hmac[offset + 2] & 0xff) << 8) |
+    (hmac[offset + 3] & 0xff)
+  ) % 1000000;
+  return code.toString().padStart(6, '0');
+}
+
+async function verifyClientTotp(secret, inputCode) {
+  const cleanInput = String(inputCode).trim().replace(/\s+/g, '');
+  const now = Math.floor(Date.now() / 1000);
+  // Check current, previous (-30s), and next (+30s) time windows
+  for (const offset of [0, -30, 30]) {
+    const code = await computeTotp(secret, now + offset);
+    if (code === cleanInput) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// 6. DOM Initialization
+function initAdmin() {
+  // Check if we are on the Admin Login page
+  const loginForm = document.getElementById('adminLoginForm');
+  if (loginForm) {
+    const errorMsg = document.getElementById('loginError');
+    const successMsg = document.getElementById('loginSuccess');
+    const step1 = document.getElementById('step1Credentials');
+    const step2Setup = document.getElementById('step2Setup2FA');
+    const step2Verify = document.getElementById('step2Verify2FA');
+    const backupDisplay = document.getElementById('backupCodesDisplay');
+
+    function showError(msg) {
+      if (errorMsg) {
+        errorMsg.textContent = msg;
+        errorMsg.style.display = 'block';
+      }
+      if (successMsg) successMsg.style.display = 'none';
+    }
+
+    function showSuccess(msg) {
+      if (successMsg) {
+        successMsg.textContent = msg;
+        successMsg.style.display = 'block';
+      }
+      if (errorMsg) errorMsg.style.display = 'none';
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('reason') === 'timeout') {
+      showError('🔒 Session expired due to 5 minutes of inactivity. Please log in again.');
+    }
+
+    // Step 1: Credential Verification
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('adminUsername').value.trim();
+      const password = document.getElementById('adminPassword').value;
+      const submitBtn = document.getElementById('loginSubmitBtn') || loginForm.querySelector('button[type="submit"]');
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Verifying credentials...';
+      }
+      if (errorMsg) errorMsg.style.display = 'none';
+
+      let serverResponded = false;
+
+      // 1. Try Node Backend API
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (res.status === 200) {
+          const data = await res.json();
+          if (data && data.success) {
+            serverResponded = true;
+            if (data.require_2fa) {
+              currentTempToken = data.temp_token;
+              if (step1) step1.style.display = 'none';
+
+              if (data.setup_required) {
+                const qrImg = document.getElementById('qrCodeImg');
+                if (qrImg && data.qr_code) qrImg.src = data.qr_code;
+
+                const manualSecret = document.getElementById('manualSecretBox');
+                if (manualSecret && data.secret) manualSecret.innerText = data.secret;
+
+                if (step2Setup) step2Setup.style.display = 'block';
+                const codeInput = document.getElementById('setupTotpCode');
+                if (codeInput) {
+                  codeInput.value = '';
+                  codeInput.focus();
+                }
+              } else {
+                if (step2Verify) step2Verify.style.display = 'block';
+                const verifyInput = document.getElementById('verifyTotpCode');
+                if (verifyInput) {
+                  verifyInput.value = '';
+                  verifyInput.focus();
+                }
+              }
+              return;
+            } else if (data.token) {
+              sessionStorage.setItem('vpsa_token', data.token);
+              sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+              window.location.href = '/admin/dashboard';
+              return;
+            }
+          }
+        } else if (res.status === 401 || res.status === 400) {
+          const data = await res.json();
+          showError(data.error || 'Invalid admin username or password.');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Next: Verify Identity →';
+          }
+          return;
+        }
+      } catch (err) {}
+
+      // 2. Cloud Fallback via Supabase Auth (when Node server is not active)
+      if (!serverResponded) {
+        try {
+          const supaEmail = username.includes('@') 
+            ? username 
+            : (username.toLowerCase() === 'admin' ? 'megalan@vpsayogafresh.com' : username + '@vpsayogafresh.com');
+
+          const res = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/auth/v1/token?grant_type=password`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_ADMIN_CONFIG.anonKey,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              email: supaEmail,
+              password: password
+            })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.access_token) {
+            currentTempToken = data.access_token;
+
+            // Advance to Step 2: 2FA Verification
+            if (step1) step1.style.display = 'none';
+            if (step2Verify) step2Verify.style.display = 'block';
+
+            const verifyInput = document.getElementById('verifyTotpCode');
+            if (verifyInput) {
+              verifyInput.value = '';
+              verifyInput.focus();
+            }
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Next: Verify Identity →';
+            }
+            return;
+          } else {
+            showError(data.error_description || data.msg || 'Invalid admin username or password.');
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Next: Verify Identity →';
+            }
+            return;
+          }
+        } catch (cloudErr) {
+          showError('Authentication service unreachable. Please try again.');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Next: Verify Identity →';
+          }
+          return;
+        }
+      }
+    });
+
+    // Step 2B: Standard 2FA Verification Form Submission
+    const verifyForm = document.getElementById('verify2faForm');
+    if (verifyForm) {
+      verifyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const code = document.getElementById('verifyTotpCode').value.trim();
+        const submitBtn = document.getElementById('verify2faSubmitBtn');
+
+        if (!code) {
+          showError('Please enter your 6-digit authenticator code or emergency backup code.');
+          return;
+        }
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerText = 'Verifying security code...';
+        }
+        if (errorMsg) errorMsg.style.display = 'none';
+
+        let verified = false;
+
+        // 1. Try Node Backend API
+        try {
+          const res = await fetch('/api/auth/2fa/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ temp_token: currentTempToken, code })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.success) {
+              if (data.token) {
+                sessionStorage.setItem('vpsa_token', data.token);
+                sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+              }
+              verified = true;
+            }
+          }
+        } catch (err) {}
+
+        // 2. Supabase Cloud MFA Verification (when live on GitHub Pages)
+        if (!verified && currentTempToken) {
+          try {
+            const res = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/rpc/verify_admin_mfa`, {
+              method: 'POST',
+              headers: {
+                'apikey': SUPABASE_ADMIN_CONFIG.anonKey,
+                'Authorization': `Bearer ${currentTempToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ p_code: code })
+            });
+
+            if (res.ok) {
+              const isValid = await res.json();
+              if (isValid === true || (isValid && isValid.valid === true)) {
+                sessionStorage.setItem('vpsa_supabase_token', currentTempToken);
+                sessionStorage.setItem('vpsa_token', currentTempToken);
+                sessionStorage.setItem('vpsa_admin_user', 'admin');
+                sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+                verified = true;
+              }
+            }
+          } catch (cloudErr) {}
+        }
+
+        if (verified) {
+          showSuccess('Two-factor verification successful! Entering dashboard...');
+          setTimeout(() => {
+            window.location.href = '/admin-dashboard.html';
+          }, 350);
+          return;
+        } else {
+          showError('Invalid 6-digit authenticator code or emergency backup code.');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Confirm & Enter Dashboard';
+          }
+          return;
+        }
+      });
+    }
+
+    // Toggle Manual Secret Key Box
+    const toggleSecretBtn = document.getElementById('toggleSecretKeyBtn');
+    const manualSecretBox = document.getElementById('manualSecretBox');
+    if (toggleSecretBtn && manualSecretBox) {
+      toggleSecretBtn.addEventListener('click', () => {
+        const isHidden = manualSecretBox.style.display === 'none' || !manualSecretBox.style.display;
+        manualSecretBox.style.display = isHidden ? 'block' : 'none';
+        toggleSecretBtn.innerText = isHidden ? 'Hide text key' : "Can't scan QR code? Click to view text key";
+      });
+    }
+
+    // Re-scan QR code / Pair New Device button
+    const showQrSetupBtn = document.getElementById('showQrSetupBtn');
+    if (showQrSetupBtn) {
+      showQrSetupBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (step2Verify) step2Verify.style.display = 'none';
+        if (step2Setup) step2Setup.style.display = 'block';
+
+        const codeInput = document.getElementById('setupTotpCode');
+        if (codeInput) {
+          codeInput.value = '';
+          codeInput.focus();
+        }
+      });
+    }
+
+    // Step 2A: Setup 2FA Form Submission
+    const setupForm = document.getElementById('setup2faForm');
+    if (setupForm) {
+      setupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const code = document.getElementById('setupTotpCode').value.trim();
+        const submitBtn = document.getElementById('setup2faSubmitBtn');
+
+        if (!code) {
+          showError('Please enter the 6-digit code from Microsoft Authenticator.');
+          return;
+        }
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerText = 'Activating Authenticator...';
+        }
+        if (errorMsg) errorMsg.style.display = 'none';
+
+        try {
+          const res = await fetch('/api/auth/2fa/confirm-setup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ temp_token: currentTempToken, code })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            if (data.token) {
+              sessionStorage.setItem('vpsa_token', data.token);
+              sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+            }
+
+            currentBackupCodes = data.backup_codes || [];
+            if (step2Setup) step2Setup.style.display = 'none';
+
+            const codesList = document.getElementById('backupCodesList');
+            if (codesList && currentBackupCodes.length > 0) {
+              codesList.innerHTML = currentBackupCodes.map(c => `
+                <div style="background: #ffffff; border: 1px solid #cbd5e1; padding: 0.45rem 0.6rem; border-radius: 6px; letter-spacing: 1px; user-select: all;">${escapeHtml(c)}</div>
+              `).join('');
+            }
+
+            if (backupDisplay) backupDisplay.style.display = 'block';
+            showSuccess('Microsoft Authenticator connected successfully!');
+            return;
+          } else {
+            showError(data.error || 'Invalid code.');
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Verify & Activate Authenticator';
+            }
+          }
+        } catch (err) {
+          showError('Setup verification error.');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Verify & Activate Authenticator';
+          }
+        }
+      });
+    }
+
+    const copyCodesBtn = document.getElementById('copyBackupCodesBtn');
+    if (copyCodesBtn) {
+      copyCodesBtn.addEventListener('click', async () => {
+        if (currentBackupCodes.length === 0) return;
+        const text = 'VPSA YOGA - Admin Emergency Recovery Codes:\n' + currentBackupCodes.join('\n');
+        try {
+          await navigator.clipboard.writeText(text);
+          copyCodesBtn.innerText = '✓ Copied to Clipboard!';
+          copyCodesBtn.classList.add('btn-primary');
+          setTimeout(() => {
+            copyCodesBtn.innerText = '📋 Copy Backup Codes';
+            copyCodesBtn.classList.remove('btn-primary');
+          }, 3000);
+        } catch (e) {
+          prompt('Copy your backup codes below:', text);
+        }
+      });
+    }
+
+    const proceedBtn = document.getElementById('proceedToDashboardBtn');
+    if (proceedBtn) {
+      proceedBtn.addEventListener('click', () => {
+        window.location.href = '/admin-dashboard.html';
+      });
+    }
+
+    return;
+  }
+
+  // Dashboard Page logic
+  if (document.getElementById('adminDashboard')) {
+    initSessionTimeout();
+
+    // Verify session
+    const token = sessionStorage.getItem('vpsa_token');
+    if (!token) {
+      // Check if active on server
+      fetch('/api/auth/me', { credentials: 'include', headers: getAuthHeaders(false) })
+        .then(res => {
+          if (!res.ok) {
+            window.location.href = '/admin-login.html';
+          }
+        })
+        .catch(() => {
+          window.location.href = '/admin-login.html';
+        });
+    }
+
+    // Navigation Tabs
+    const navLinks = document.querySelectorAll('.admin-nav-link[data-tab]');
+    navLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetTab = link.getAttribute('data-tab');
+        switchTab(targetTab);
+      });
+    });
+
+    // Logout button
+    const logoutBtn = document.getElementById('adminLogoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async () => {
+        try {
+          await fetch('/api/auth/logout', { 
+            method: 'POST',
+            credentials: 'include',
+            headers: getAuthHeaders(false)
+          });
+        } catch (e) {}
+        sessionStorage.removeItem('vpsa_token');
+        sessionStorage.removeItem('vpsa_cloud_key');
+        sessionStorage.removeItem('vpsa_last_activity');
+        sessionStorage.removeItem('vpsa_admin_user');
+        window.location.href = '/admin-login.html';
+      });
+    }
+
+    // Explicit Upload Button Listener
+    const uploadBtn = document.getElementById('openUploadModalBtn');
+    if (uploadBtn) {
+      uploadBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openUploadModal();
+      });
+    }
+
+    // Grid Event Delegation for Edit and Delete
+    const galleryGrid = document.getElementById('adminGalleryGrid');
+    if (galleryGrid) {
+      galleryGrid.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('[data-action="edit"]');
+        if (editBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const id = editBtn.getAttribute('data-id');
+          openEditModalById(e, id);
+          return;
+        }
+
+        const deleteBtn = e.target.closest('[data-action="delete"]');
+        if (deleteBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const id = deleteBtn.getAttribute('data-id');
+          deleteGalleryItem(e, id);
+          return;
+        }
+      });
+    }
+
+    // Custom File Dropzone & Chosen File Indicator
+    const fileInput = document.getElementById('uploadPhotoImage');
+    const fileDropZone = document.getElementById('fileDropZone');
+    const chosenNameEl = document.getElementById('fileChosenName');
+
+    if (fileInput && chosenNameEl) {
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files && fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          const sizeKb = (file.size / 1024).toFixed(1);
+          const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+          const displaySize = file.size > 1024 * 1024 ? `${sizeMb} MB` : `${sizeKb} KB`;
+
+          chosenNameEl.innerHTML = `✓ <strong>${escapeHtml(file.name)}</strong> (${displaySize})`;
+          chosenNameEl.style.display = 'inline-flex';
+        } else {
+          chosenNameEl.style.display = 'none';
+          chosenNameEl.innerHTML = '';
+        }
+      });
+    }
+
+    if (fileDropZone && fileInput) {
+      ['dragenter', 'dragover'].forEach(eventName => {
+        fileDropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          fileDropZone.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        fileDropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          fileDropZone.classList.remove('dragover');
+        });
+      });
+    }
+
+    // Image Upload Form Submission
+    const uploadForm = document.getElementById('uploadGalleryForm');
+    if (uploadForm) {
+      uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const fileInput = document.getElementById('uploadPhotoImage');
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+          showToast('Please choose an image file (JPG, PNG, WebP).', 'error');
+          return;
+        }
+
+        const title = (document.getElementById('uploadPhotoTitle').value || '').trim() || 'Harvest & Logistics Highlight';
+        const category = document.getElementById('uploadPhotoCategory').value || 'farms';
+        const description = (document.getElementById('uploadPhotoDesc').value || '').trim();
+
+        const submitBtn = document.getElementById('uploadSubmitBtn') || uploadForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerText = 'Optimizing & uploading photo...';
+        }
+
+        let uploadSuccess = false;
+
+        // 1. Try Node backend API
+        try {
+          const formData = new FormData(uploadForm);
+          const res = await fetch('/api/gallery', {
+            method: 'POST',
+            credentials: 'include',
+            headers: getAuthHeaders(false),
+            body: formData
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.success) {
+              uploadSuccess = true;
+            }
+          }
+        } catch (err) {}
+
+        // 2. Direct Supabase Cloud Upload Fallback
+        if (!uploadSuccess) {
+          try {
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            await new Promise((resolve, reject) => {
+              reader.onload = resolve;
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+
+            const base64Data = reader.result;
+            const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/gallery`, {
+              method: 'POST',
+              headers: getSupabaseHeaders(true),
+              body: JSON.stringify({
+                title,
+                category,
+                description: description || null,
+                image_url: base64Data,
+                file_size: file.size
+              })
+            });
+
+            if (sbRes.ok) {
+              uploadSuccess = true;
+            }
+          } catch (e) {
+            console.error('Supabase direct upload error:', e);
+          }
+        }
+
+        if (uploadSuccess) {
+          showToast('Image uploaded and published successfully!', 'success');
+          uploadForm.reset();
+          if (chosenNameEl) {
+            chosenNameEl.style.display = 'none';
+            chosenNameEl.innerHTML = '';
+          }
+          closeUploadModal();
+          await loadAdminGallery();
+        } else {
+          showToast('Failed to upload image.', 'error');
+        }
+
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Upload & Publish Photo';
+        }
+      });
+    }
+
+    // Edit Form Submission
+    const editForm = document.getElementById('editPhotoForm');
+    if (editForm) {
+      editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        await savePhotoEdit();
+      });
+    }
+
+    // Close modals on clicking overlay backdrop
+    const uploadModal = document.getElementById('uploadPhotoModal');
+    if (uploadModal) {
+      uploadModal.addEventListener('click', (e) => {
+        if (e.target === uploadModal) closeUploadModal();
+      });
+    }
+
+    const editModal = document.getElementById('editPhotoModal');
+    if (editModal) {
+      editModal.addEventListener('click', (e) => {
+        if (e.target === editModal) closeEditModal();
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeUploadModal();
+        closeEditModal();
+      }
+    });
+
+    // Initial data loads & start automatic background sync (every 25 seconds)
+    syncAllAdminData(false);
+    setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        syncAllAdminData(false);
+      }
+    }, 25000);
+  }
+}
+
+// Self-executing initialization (works in all lifecycle phases)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAdmin);
+} else {
+  initAdmin();
+}
+
+window.initAdmin = initAdmin;
+
+</script>
 </body>
 </html>

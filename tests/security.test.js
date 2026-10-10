@@ -375,7 +375,7 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
       assert.ok(fs.existsSync(path.resolve(dir, 'privacy.html')), `${dir}/privacy.html must exist`);
       assert.ok(fs.existsSync(path.resolve(dir, 'admin-login.html')), `${dir}/admin-login.html must exist`);
       assert.ok(fs.existsSync(path.resolve(dir, 'admin-dashboard.html')), `${dir}/admin-dashboard.html must exist`);
-      assert.ok(fs.existsSync(path.resolve(dir, 'js/admin.js')), `${dir}/js/admin.js must exist`);
+      assert.ok(!fs.existsSync(path.resolve(dir, 'js')), `${dir}/js must NOT exist in static distribution (all /js/*.js return 404)`);
 
       // Read all files in docs/ and dist/ and assert no secrets or passwords exist
       const checkFolder = (folder) => {

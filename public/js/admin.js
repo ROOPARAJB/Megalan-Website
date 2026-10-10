@@ -995,14 +995,21 @@ function initAdmin() {
 
           const data = await res.json();
           if (res.ok && data.access_token) {
-            sessionStorage.setItem('vpsa_supabase_token', data.access_token);
-            sessionStorage.setItem('vpsa_token', data.access_token);
-            sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
-            sessionStorage.setItem('vpsa_admin_user', username);
-            showSuccess('Authenticated successfully! Entering dashboard...');
-            setTimeout(() => {
-              window.location.href = '/admin-dashboard.html';
-            }, 400);
+            currentTempToken = data.access_token;
+
+            // Advance to Step 2: 2FA Verification
+            if (step1) step1.style.display = 'none';
+            if (step2Verify) step2Verify.style.display = 'block';
+
+            const verifyInput = document.getElementById('verifyTotpCode');
+            if (verifyInput) {
+              verifyInput.value = '';
+              verifyInput.focus();
+            }
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Next: Verify Identity →';
+            }
             return;
           } else {
             showError(data.error_description || data.msg || 'Invalid admin username or password.');
@@ -1042,6 +1049,9 @@ function initAdmin() {
         }
         if (errorMsg) errorMsg.style.display = 'none';
 
+        let verified = false;
+
+        // 1. Try Node Backend API
         try {
           const res = await fetch('/api/auth/2fa/verify', {
             method: 'POST',
@@ -1049,28 +1059,57 @@ function initAdmin() {
             body: JSON.stringify({ temp_token: currentTempToken, code })
           });
 
-          const data = await res.json();
-          if (res.ok && data.success) {
-            if (data.token) {
-              sessionStorage.setItem('vpsa_token', data.token);
-              sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.success) {
+              if (data.token) {
+                sessionStorage.setItem('vpsa_token', data.token);
+                sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+              }
+              verified = true;
             }
-            window.location.href = '/admin-dashboard.html';
-            return;
-          } else {
-            showError(data.error || 'Invalid code entered.');
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.innerText = 'Confirm & Enter Dashboard';
-            }
-            return;
           }
-        } catch (err) {
-          showError('Verification service error. Please try again.');
+        } catch (err) {}
+
+        // 2. Supabase Cloud MFA Verification (when live on GitHub Pages)
+        if (!verified && currentTempToken) {
+          try {
+            const res = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/rpc/verify_admin_mfa`, {
+              method: 'POST',
+              headers: {
+                'apikey': SUPABASE_ADMIN_CONFIG.anonKey,
+                'Authorization': `Bearer ${currentTempToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ p_code: code })
+            });
+
+            if (res.ok) {
+              const isValid = await res.json();
+              if (isValid === true || (isValid && isValid.valid === true)) {
+                sessionStorage.setItem('vpsa_supabase_token', currentTempToken);
+                sessionStorage.setItem('vpsa_token', currentTempToken);
+                sessionStorage.setItem('vpsa_admin_user', 'admin');
+                sessionStorage.setItem('vpsa_last_activity', String(Date.now()));
+                verified = true;
+              }
+            }
+          } catch (cloudErr) {}
+        }
+
+        if (verified) {
+          showSuccess('Two-factor verification successful! Entering dashboard...');
+          setTimeout(() => {
+            window.location.href = '/admin-dashboard.html';
+          }, 350);
+          return;
+        } else {
+          showError('Invalid 6-digit authenticator code or emergency backup code.');
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerText = 'Confirm & Enter Dashboard';
           }
+          return;
         }
       });
     }

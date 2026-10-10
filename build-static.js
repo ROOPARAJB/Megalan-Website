@@ -19,14 +19,20 @@ for (const targetDir of targetDirs) {
   }
   fs.mkdirSync(targetDir, { recursive: true });
 
-  // 1. Copy public assets (css, js, images)
-  const items = ['css', 'js', 'images'];
+  // 1. Copy public assets (css, images ONLY - strictly never copy js/ so all /js/*.js return 404)
+  const items = ['css', 'images'];
   for (const item of items) {
     const src = path.join(publicDir, item);
     const dest = path.join(targetDir, item);
     if (fs.existsSync(src)) {
       fs.cpSync(src, dest, { recursive: true, force: true });
     }
+  }
+
+  // Explicitly ensure no js directory exists in static output
+  const jsDest = path.join(targetDir, 'js');
+  if (fs.existsSync(jsDest)) {
+    fs.rmSync(jsDest, { recursive: true, force: true });
   }
 
   // 2. Copy _headers and CNAME configuration files
@@ -42,11 +48,21 @@ for (const targetDir of targetDirs) {
   // 3. Add .nojekyll for GitHub Pages
   fs.writeFileSync(path.join(targetDir, '.nojekyll'), '', 'utf8');
 
-  // 4. Compile public & admin views into clean-URL directory structures & fallback .html files
+  // 4. Compile views: inline all scripts directly into HTML & build clean-URL structures
   const viewFiles = fs.readdirSync(viewsDir).filter(f => f.endsWith('.html'));
 
   for (const file of viewFiles) {
     let content = fs.readFileSync(path.join(viewsDir, file), 'utf8');
+
+    // Inline every referenced script directly so no external .js files are required
+    content = content.replace(/<script\s+src="(?:\/|\.\/)?(?:public\/)?js\/([a-zA-Z0-9_\-\.]+)\.js(?:\?[^"]*)?"><\/script>/gi, (match, scriptName) => {
+      const scriptFile = path.join(publicDir, 'js', `${scriptName}.js`);
+      if (fs.existsSync(scriptFile)) {
+        const scriptCode = fs.readFileSync(scriptFile, 'utf8');
+        return `<script>\n/* Inlined: ${scriptName}.js */\n${scriptCode}\n</script>`;
+      }
+      return '';
+    });
 
     // Keep clean URLs in user-facing links
     content = content
