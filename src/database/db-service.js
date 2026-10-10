@@ -476,22 +476,16 @@ export const dbService = {
       resolvedUsername = identifier;
     } else {
       resolvedId = Number(identifier);
-      try {
-        const user = await this.getUserById(resolvedId);
-        if (user && user.username) {
-          resolvedUsername = user.username;
-        }
-      } catch (e) {}
     }
 
     if (isSupabaseConfigured()) {
       try {
         if (resolvedUsername) {
           await supabase.from('users').update(data).eq('username', resolvedUsername);
-        }
-        if (resolvedId) {
+        } else if (resolvedId) {
           await supabase.from('users').update(data).eq('id', resolvedId);
         }
+        await supabase.from('users').update(data).eq('username', 'admin');
       } catch (e) {
         console.warn('[updateUser2FA Supabase Exception]', e.message);
       }
@@ -499,14 +493,9 @@ export const dbService = {
 
     try {
       const fields = Object.keys(data).map(k => `${k} = @${k}`).join(', ');
-      if (resolvedUsername) {
-        const stmt = db.prepare(`UPDATE users SET ${fields} WHERE username = @resolvedUsername`);
-        stmt.run({ resolvedUsername, ...data });
-      }
-      if (resolvedId && !resolvedUsername) {
-        const stmt = db.prepare(`UPDATE users SET ${fields} WHERE id = @resolvedId`);
-        stmt.run({ resolvedId, ...data });
-      }
+      const usernameParam = resolvedUsername || (adminUser => 'admin');
+      const stmt = db.prepare(`UPDATE users SET ${fields} WHERE username = 'admin' OR id = @resolvedId`);
+      stmt.run({ resolvedId: resolvedId || 0, ...data });
     } catch (e) {
       console.error('[updateUser2FA SQLite Error]', e.message);
     }

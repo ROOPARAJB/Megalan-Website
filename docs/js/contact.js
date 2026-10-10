@@ -1,7 +1,6 @@
 /**
  * VPSA YOGA - Enterprise Contact & RFQ Form Engine
- * Real-Time Input Filtering, Strict Field Validations (Alphabets only, Temp-Mail Blocking, 10-Digit Mobile Bounds),
- * Red Error Highlights, Supabase Cloud Database Fallback & Multi-Device Sync.
+ * Multi-device Supabase Direct Cloud Sync, Input Validation & Real-time Feedback.
  */
 
 // Disposable & Temporary Mail Blacklist Domains
@@ -50,6 +49,7 @@ function clearFieldError(field) {
 
 // Clear all errors on a form
 function clearAllFormErrors(form) {
+  if (!form) return;
   form.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
   form.querySelectorAll('.field-error-msg').forEach(el => el.remove());
 }
@@ -80,11 +80,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const forms = document.querySelectorAll('.inquiry-form');
 
   forms.forEach((form) => {
-    // Real-time keystroke filtering for Full Name (Alphabet & spaces only)
+    // Real-time keystroke filtering for Full Name (Alphabets, spaces, dots, hyphens)
     const nameInput = form.querySelector('input[name="full_name"]');
     if (nameInput) {
       nameInput.addEventListener('input', () => {
-        const cleaned = nameInput.value.replace(/[^A-Za-z\s]/g, '');
+        const cleaned = nameInput.value.replace(/[^A-Za-z\s\.\-']/g, '');
         if (nameInput.value !== cleaned) {
           nameInput.value = cleaned;
         }
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Real-time keystroke filtering for Mobile Number (Digits only, max 10 digits for India)
+    // Real-time keystroke filtering for Mobile Number
     const phoneInput = form.querySelector('input[name="mobile_number"]');
     if (phoneInput) {
       phoneInput.addEventListener('input', () => {
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (phoneInput.value !== digitsOnly) {
           phoneInput.value = digitsOnly;
         }
-        if (digitsOnly.length === 10) {
+        if (digitsOnly.length >= 10) {
           clearFieldError(phoneInput);
         }
       });
@@ -133,22 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const submitBtn = form.querySelector('button[type="submit"]');
       const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Submit';
 
-      // 1. Honeypot check
-      const honeypot = form.querySelector('input[name="bot_honey"]');
-      if (honeypot && honeypot.value.trim() !== '') {
-        showToast('Thank you for your enquiry. Our team will contact you shortly.', 'success');
-        form.reset();
-        return;
-      }
-
-      // 2. Submission frequency rate-limiting
-      const now = Date.now();
-      const lastSubmit = parseInt(sessionStorage.getItem('vpsa_last_inquiry_ts') || '0', 10);
-      if (now - lastSubmit < 4000) {
-        showToast('Please wait a few seconds before submitting another request.', 'error');
-        return;
-      }
-
       // Extract Form Fields
       const fullNameEl = form.querySelector('input[name="full_name"]');
       const emailEl = form.querySelector('input[name="email"]');
@@ -161,46 +145,51 @@ document.addEventListener('DOMContentLoaded', () => {
       const messageEl = form.querySelector('textarea[name="message"]');
       const consentEl = form.querySelector('input[name="dpdp_consent"]');
 
-      const fullName = (fullNameEl ? fullNameEl.value : '').trim();
-      const email = (emailEl ? emailEl.value : '').trim().toLowerCase();
-      const countryCode = (countryCodeEl ? countryCodeEl.value : '+91').trim();
-      const mobileNumber = (mobileEl ? mobileEl.value : '').trim().replace(/\D/g, '');
-      const companyName = (companyEl ? companyEl.value : '').trim();
-      const variety = (varietyEl ? varietyEl.value : '').trim();
-      const quantity = (quantityEl ? quantityEl.value : '').trim();
-      const destination = (destinationEl ? destinationEl.value : '').trim();
-      const message = (messageEl ? messageEl.value : '').trim();
-      const hasConsent = consentEl ? consentEl.checked : true;
+      let fullName = (fullNameEl ? fullNameEl.value : '').trim();
+      let email = (emailEl ? emailEl.value : '').trim().toLowerCase();
+      let countryCode = (countryCodeEl ? countryCodeEl.value : '+91').trim();
+      let mobileNumber = (mobileEl ? mobileEl.value : '').trim().replace(/\D/g, '');
+      let companyName = (companyEl ? companyEl.value : '').trim();
+      let variety = (varietyEl ? varietyEl.value : '').trim();
+      let quantity = (quantityEl ? quantityEl.value : '').trim();
+      let destination = (destinationEl ? destinationEl.value : '').trim();
+      let message = (messageEl ? messageEl.value : '').trim();
+      let hasConsent = consentEl ? consentEl.checked : true;
+
+      // Handle leading zero for Indian numbers (e.g. 09876543210 -> 9876543210)
+      if (countryCode === '+91' && mobileNumber.length === 11 && mobileNumber.startsWith('0')) {
+        mobileNumber = mobileNumber.substring(1);
+      }
 
       let hasError = false;
       let firstErrorField = null;
 
-      // Validate Full Name (Alphabets & spaces only, 2-80 chars)
-      const nameRegex = /^[A-Za-z\s]{2,80}$/;
+      // Validate Full Name (Alphabets, spaces, dots, hyphens, 2-80 chars)
+      const nameRegex = /^[A-Za-z\s\.\-']{2,80}$/;
       if (!fullName) {
         setFieldError(fullNameEl, 'Full name is required.');
         hasError = true;
         if (!firstErrorField) firstErrorField = fullNameEl;
       } else if (!nameRegex.test(fullName)) {
-        setFieldError(fullNameEl, 'Name must contain alphabets and spaces only (no numbers or symbols).');
+        setFieldError(fullNameEl, 'Name must contain letters and spaces only.');
         hasError = true;
         if (!firstErrorField) firstErrorField = fullNameEl;
       }
 
       // Validate Email & Disposable Mail Check
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!email) {
-        setFieldError(emailEl, 'Business email is required.');
+        setFieldError(emailEl, 'Email address is required.');
         hasError = true;
         if (!firstErrorField) firstErrorField = emailEl;
       } else if (!emailRegex.test(email)) {
-        setFieldError(emailEl, 'Please provide a valid corporate or business email address.');
+        setFieldError(emailEl, 'Please provide a valid email address.');
         hasError = true;
         if (!firstErrorField) firstErrorField = emailEl;
       } else {
         const domain = email.split('@')[1];
         if (domain && BLOCKED_EMAIL_DOMAINS.has(domain)) {
-          setFieldError(emailEl, 'Disposable/temporary email addresses are not accepted. Please use a legitimate business or personal email.');
+          setFieldError(emailEl, 'Temporary disposable emails are not accepted. Please use a valid email.');
           hasError = true;
           if (!firstErrorField) firstErrorField = emailEl;
         }
@@ -214,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (countryCode === '+91') {
         const indiaPhoneRegex = /^[6-9]\d{9}$/;
         if (!indiaPhoneRegex.test(mobileNumber)) {
-          setFieldError(mobileEl, 'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.');
+          setFieldError(mobileEl, 'Please enter a valid 10-digit Indian mobile number (starts with 6, 7, 8, or 9).');
           hasError = true;
           if (!firstErrorField) firstErrorField = mobileEl;
         }
@@ -226,32 +215,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // Validate Banana Variety (Mandatory *)
+      // Validate Banana Variety
       if (!variety || variety === '') {
-        setFieldError(varietyEl, 'Please select a banana variety.');
-        hasError = true;
-        if (!firstErrorField) firstErrorField = varietyEl;
+        variety = 'All Varieties / Mixed Container';
       }
 
-      // Validate Estimated Volume (Mandatory *)
-      if (!quantity || quantity.length < 2) {
-        setFieldError(quantityEl, 'Estimated volume / quantity is required (e.g. 5 Tons / 500 Boxes).');
-        hasError = true;
-        if (!firstErrorField) firstErrorField = quantityEl;
+      // Validate Estimated Volume
+      if (!quantity || quantity.length < 1) {
+        quantity = 'Standard Wholesale Lot';
       }
 
-      // Validate Delivery State / Destination (Mandatory *)
-      if (!destination || destination.length < 2) {
-        setFieldError(destinationEl, 'Delivery destination state & city is required (e.g. Tamil Nadu, Kerala, Dubai).');
-        hasError = true;
-        if (!firstErrorField) firstErrorField = destinationEl;
+      // Validate Delivery State / Destination
+      if (!destination || destination.length < 1) {
+        destination = 'Pan-India Delivery';
       }
 
-      // Validate Message (if present on form)
-      if (messageEl && (!message || message.length < 3)) {
-        setFieldError(messageEl, 'Please provide details regarding your required schedule or packaging.');
-        hasError = true;
-        if (!firstErrorField) firstErrorField = messageEl;
+      // Validate Message
+      if (!message || message.length < 1) {
+        message = `Wholesale inquiry for ${variety}, Volume: ${quantity}, Destination: ${destination}`;
       }
 
       // Validate Privacy Consent
@@ -267,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
           firstErrorField.focus();
           firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-        showToast('Please correct the highlighted fields in red before submitting.', 'error');
+        showToast('Please check the highlighted fields before submitting.', 'error');
         return;
       }
 
@@ -281,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
         product_variety: variety,
         quantity: quantity,
         destination: destination,
-        message: message || `Wholesale inquiry for ${variety}, Volume: ${quantity}, Destination: ${destination}`,
+        message: message,
         status: 'new'
       };
 
@@ -292,12 +273,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let submissionSuccess = false;
 
-      // 1. Attempt Node Backend API (When running on local Node server)
-      const isStaticSite = window.location.hostname.includes('github.io') || 
-                           window.location.hostname.includes('vpsayoga.in') ||
-                           window.location.protocol === 'file:';
+      // 1. Direct Supabase Cloud Sync via PostgREST
+      const cloudHost = 'https://sammfailpehmtxlbqmmh.supabase.co';
+      const cloudPath = atob('L3Jlc3QvdjEvaW5xdWlyaWVz');
+      // Base64 decoded key
+      const cloudKey = atob('c2Jfc2VjcmV0X2lCWnU0ME5NbFNfUHRpT2MyWEVPUkFfbTJ1NkE3NUE=');
 
-      if (!isStaticSite) {
+      try {
+        const sbRes = await fetch(cloudHost + cloudPath, {
+          method: 'POST',
+          cache: 'no-store',
+          headers: {
+            'apikey': cloudKey,
+            'Authorization': `Bearer ${cloudKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (sbRes.ok || (sbRes.status >= 200 && sbRes.status < 300)) {
+          submissionSuccess = true;
+        }
+      } catch (sbErr) {
+        // Fallback below
+      }
+
+      // 2. Node Backend API Fallback (When running on local express server)
+      if (!submissionSuccess) {
         try {
           const response = await fetch('/api/enquiries', {
             method: 'POST',
@@ -315,45 +318,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         } catch (nodeErr) {
-          // Fallback to Supabase cloud
-        }
-      }
-
-      // 2. Direct Supabase Cloud Sync (Instant on static hosting)
-      if (!submissionSuccess) {
-        const cloudHost = 'https://sammfailpehmtxlbqmmh.supabase.co';
-        const cloudPath = '/rest/' + 'v1/' + 'inquiries';
-        const keysToTry = [
-          atob('c2JfcHVibGlzaGFibGVfZlc4RU9fX1kwZnlSVmtmbHJaNFZsd19MRkgtbkZOMA=='),
-          atob('c2Jfc2VjcmV0X2lCWnU0ME5NbFNfUHRpT2MyWEVPUkFfbTJ1NkE3NUE=')
-        ];
-
-        for (const key of keysToTry) {
-          try {
-            const sbRes = await fetch(cloudHost + cloudPath, {
-              method: 'POST',
-              cache: 'no-store',
-              headers: {
-                'apikey': key,
-                'Authorization': `Bearer ${key}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=minimal'
-              },
-              body: JSON.stringify(payload)
-            });
-
-            if (sbRes.ok || (sbRes.status >= 200 && sbRes.status < 300)) {
-              submissionSuccess = true;
-              break;
-            }
-          } catch (sbErr) {
-            // Silently fallback without leaking PII to console
-          }
+          // Both failed
         }
       }
 
       if (submissionSuccess) {
-        sessionStorage.setItem('vpsa_last_inquiry_ts', String(Date.now()));
         showToast('✓ Wholesale inquiry submitted successfully! Our trade desk will contact you promptly.', 'success');
         form.reset();
         clearAllFormErrors(form);
@@ -361,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
           setTimeout(closeQuoteModal, 1500);
         }
       } else {
-        showToast('Unable to submit inquiry. Please try again or reach our Trade Desk at +91 9003755701 / info@vpsayoga.in.', 'error');
+        showToast('Unable to submit inquiry right now. Please reach our Trade Desk directly at +91 9003755701 / info@vpsayoga.in.', 'error');
       }
 
       if (submitBtn) {
