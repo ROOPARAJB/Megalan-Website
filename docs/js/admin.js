@@ -337,6 +337,11 @@ function switchTab(tabId) {
 
   if (activeLink) activeLink.classList.add('active');
   if (activeContent) activeContent.style.display = 'block';
+
+  // Automatically refresh active tab data
+  if (tabId === 'gallery') loadAdminGallery();
+  if (tabId === 'inquiries') loadAdminInquiries();
+  if (tabId === 'audit') loadAdminAuditLogs();
 }
 
 // 3. Gallery Loader

@@ -66,16 +66,20 @@ for (const targetDir of targetDirs) {
     if (baseName !== 'index' && baseName !== '404') {
       if (baseName === 'admin-login') {
         const adminLoginDir = path.join(targetDir, 'admin', 'login');
-        if (!fs.existsSync(adminLoginDir)) {
-          fs.mkdirSync(adminLoginDir, { recursive: true });
-        }
+        fs.mkdirSync(adminLoginDir, { recursive: true });
         fs.writeFileSync(path.join(adminLoginDir, 'index.html'), content, 'utf8');
+
+        const directLoginDir = path.join(targetDir, 'admin-login');
+        fs.mkdirSync(directLoginDir, { recursive: true });
+        fs.writeFileSync(path.join(directLoginDir, 'index.html'), content, 'utf8');
       } else if (baseName === 'admin-dashboard') {
         const adminDashDir = path.join(targetDir, 'admin', 'dashboard');
-        if (!fs.existsSync(adminDashDir)) {
-          fs.mkdirSync(adminDashDir, { recursive: true });
-        }
+        fs.mkdirSync(adminDashDir, { recursive: true });
         fs.writeFileSync(path.join(adminDashDir, 'index.html'), content, 'utf8');
+
+        const directDashDir = path.join(targetDir, 'admin-dashboard');
+        fs.mkdirSync(directDashDir, { recursive: true });
+        fs.writeFileSync(path.join(directDashDir, 'index.html'), content, 'utf8');
       } else {
         const subDir = path.join(targetDir, baseName);
         if (!fs.existsSync(subDir)) {
