@@ -83,6 +83,36 @@ async function handleFormSubmit(e, form) {
   const submitBtn = form.querySelector('button[type="submit"]');
   const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Submit';
 
+  // 1. Honeypot Bot Defense (OWASP A04) - silent fake success if filled
+  const honeyEl = form.querySelector('input[name="bot_honey"]');
+  if (honeyEl && honeyEl.value.trim() !== '') {
+    safeShowToast('✓ Wholesale inquiry submitted successfully! Our trade desk will contact you promptly.', 'success');
+    form.reset();
+    clearAllFormErrors(form);
+    if (typeof closeQuoteModal === 'function') {
+      setTimeout(closeQuoteModal, 1500);
+    }
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnText;
+    }
+    form.dataset.submitting = 'false';
+    return false;
+  }
+
+  // 2. Client-side Rate Limiting (~6 seconds between submissions)
+  const lastSubTs = sessionStorage.getItem('vpsa_last_inquiry_ts');
+  const now = Date.now();
+  if (lastSubTs && (now - Number(lastSubTs)) < 6000) {
+    form.dataset.submitting = 'false';
+    safeShowToast('Please wait a few seconds before submitting another inquiry.', 'error');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnText;
+    }
+    return false;
+  }
+
   // Extract Form Fields
   const fullNameEl = form.querySelector('input[name="full_name"]');
   const emailEl = form.querySelector('input[name="email"]');
@@ -104,7 +134,7 @@ async function handleFormSubmit(e, form) {
   let quantity = (quantityEl ? quantityEl.value : '').trim();
   let destination = (destinationEl ? destinationEl.value : '').trim();
   let message = (messageEl ? messageEl.value : '').trim();
-  let hasConsent = consentEl ? consentEl.checked : true;
+  let hasConsent = Boolean(consentEl && consentEl.checked);
 
   // Phone Normalization
   let mobileNumber = rawPhone.replace(/\D/g, '');
@@ -120,17 +150,17 @@ async function handleFormSubmit(e, form) {
   let hasError = false;
   let firstErrorField = null;
 
-  // Validate Full Name
-  if (!fullName || fullName.length < 2) {
-    setFieldError(fullNameEl, 'Full name is required (minimum 2 characters).');
+  // Validate Full Name (2 to 100 characters)
+  if (!fullName || fullName.length < 2 || fullName.length > 100) {
+    setFieldError(fullNameEl, 'Full name is required (between 2 and 100 characters).');
     hasError = true;
     if (!firstErrorField) firstErrorField = fullNameEl;
   }
 
-  // Validate Email
+  // Validate Email (<= 100 characters, valid format, disposable domain block)
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!email) {
-    setFieldError(emailEl, 'Email address is required.');
+  if (!email || email.length > 100) {
+    setFieldError(emailEl, 'Valid email address is required (up to 100 characters).');
     hasError = true;
     if (!firstErrorField) firstErrorField = emailEl;
   } else if (!emailRegex.test(email)) {
@@ -146,9 +176,9 @@ async function handleFormSubmit(e, form) {
     }
   }
 
-  // Validate Mobile Number
-  if (!mobileNumber || mobileNumber.length < 7) {
-    setFieldError(mobileEl, 'Valid contact phone number is required.');
+  // Validate Mobile Number (7 to 15 digits)
+  if (!mobileNumber || mobileNumber.length < 7 || mobileNumber.length > 15) {
+    setFieldError(mobileEl, 'Valid contact phone number is required (7 to 15 digits).');
     hasError = true;
     if (!firstErrorField) firstErrorField = mobileEl;
   }
@@ -168,14 +198,23 @@ async function handleFormSubmit(e, form) {
     destination = 'Pan-India Delivery';
   }
 
-  // Validate Message Fallback
+  // Validate Message Fallback & Length (5 to 2000 characters)
   if (!message || message.length < 1) {
     message = `Wholesale inquiry for ${variety}, Volume: ${quantity}, Destination: ${destination}`;
   }
+  if (message.length < 5 || message.length > 2000) {
+    if (messageEl) {
+      setFieldError(messageEl, 'Message must be between 5 and 2000 characters.');
+    }
+    hasError = true;
+    if (!firstErrorField && messageEl) firstErrorField = messageEl;
+  }
 
-  // Validate Privacy Consent
-  if (!hasConsent && consentEl) {
-    setFieldError(consentEl, 'Please accept the privacy consent checkbox to proceed.');
+  // Validate Mandatory Privacy Consent (Freely Given, DPDP Act 2023)
+  if (!hasConsent) {
+    if (consentEl) {
+      setFieldError(consentEl, 'Please accept the privacy consent checkbox to proceed.');
+    }
     hasError = true;
     if (!firstErrorField) firstErrorField = consentEl;
   }
@@ -191,18 +230,21 @@ async function handleFormSubmit(e, form) {
     return false;
   }
 
-  // Construct Clean Payload (Strictly matching Supabase 'inquiries' table schema)
+  // Construct Clean Payload with Bound Slicing and Stripping to Null
   const payload = {
-    full_name: fullName,
-    email: email,
-    country_code: countryCode,
-    mobile_number: mobileNumber,
-    company_name: companyName || null,
-    product_variety: variety,
-    quantity: quantity,
-    destination: destination,
-    message: message,
-    status: 'new'
+    full_name: fullName.slice(0, 100),
+    email: email.slice(0, 100),
+    country_code: (countryCode || '+91').slice(0, 10),
+    mobile_number: mobileNumber.slice(0, 20),
+    company_name: companyName ? companyName.slice(0, 100) : null,
+    product_variety: variety.slice(0, 50),
+    quantity: quantity.slice(0, 50),
+    destination: destination.slice(0, 100),
+    message: message.slice(0, 2000),
+    status: 'new',
+    dpdp_consent: true,
+    consent_at: new Date().toISOString(),
+    consent_text_version: 'dpdp-v1'
   };
 
   if (submitBtn) {
@@ -212,55 +254,84 @@ async function handleFormSubmit(e, form) {
 
   let submissionSuccess = false;
 
-  // 1. Direct Supabase Cloud Sync via PostgREST (Public Anon Client)
-  const cloudHost = 'https://sammfailpehmtxlbqmmh.supabase.co';
-  const cloudPath = '/rest/v1/inquiries';
-  const cloudKey = 'sb_publishable_fW8EO__Y0fyRVkflrZ4Vlw_LFH-nVN0';
-
+  // 1. Attempt Node Backend API First (/api/enquiries)
   try {
-    const sbRes = await fetch(cloudHost + cloudPath, {
+    const response = await fetch('/api/enquiries', {
       method: 'POST',
-      cache: 'no-store',
       headers: {
-        'apikey': cloudKey,
-        'Authorization': `Bearer ${cloudKey}`,
         'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
+        'Accept': 'application/json'
       },
       body: JSON.stringify(payload)
     });
 
-    if (sbRes.ok || (sbRes.status >= 200 && sbRes.status < 300)) {
-      submissionSuccess = true;
+    if (response.ok) {
+      const resJson = await response.json();
+      if (resJson && resJson.success) {
+        submissionSuccess = true;
+      }
     }
-  } catch (sbErr) {
-    // Attempt local API fallback if available
+  } catch (nodeErr) {
+    // Cloud fallback below
   }
 
-  // 2. Node Backend API Fallback
+  // 2. Direct Supabase Cloud Sync via PostgREST (Public Anon Client Fallback)
   if (!submissionSuccess) {
+    const cloudHost = 'https://sammfailpehmtxlbqmmh.supabase.co';
+    const cloudPath = '/rest/v1/inquiries';
+    const cloudKey = 'sb_publishable_fW8EO__Y0fyRVkflrZ4Vlw_LFH-nVN0';
+
     try {
-      const response = await fetch('/api/enquiries', {
+      const sbRes = await fetch(cloudHost + cloudPath, {
         method: 'POST',
+        cache: 'no-store',
         headers: {
+          'apikey': cloudKey,
+          'Authorization': `Bearer ${cloudKey}`,
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Prefer': 'return=minimal'
         },
-        body: JSON.stringify({ ...payload, dpdp_consent: true })
+        body: JSON.stringify(payload)
       });
 
-      if (response.ok) {
-        const resJson = await response.json();
-        if (resJson && resJson.success) {
+      if (sbRes.ok || (sbRes.status >= 200 && sbRes.status < 300)) {
+        submissionSuccess = true;
+      } else if (sbRes.status === 400) {
+        // Resilient fallback: in case new schema columns (consent_at, dpdp_consent) are not yet in Supabase cache
+        const basePayload = {
+          full_name: payload.full_name,
+          email: payload.email,
+          country_code: payload.country_code,
+          mobile_number: payload.mobile_number,
+          company_name: payload.company_name,
+          product_variety: payload.product_variety,
+          quantity: payload.quantity,
+          destination: payload.destination,
+          message: payload.message,
+          status: 'new'
+        };
+        const retryRes = await fetch(cloudHost + cloudPath, {
+          method: 'POST',
+          cache: 'no-store',
+          headers: {
+            'apikey': cloudKey,
+            'Authorization': `Bearer ${cloudKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify(basePayload)
+        });
+        if (retryRes.ok || (retryRes.status >= 200 && retryRes.status < 300)) {
           submissionSuccess = true;
         }
       }
-    } catch (nodeErr) {
+    } catch (sbErr) {
       // Offline fallback
     }
   }
 
   if (submissionSuccess) {
+    sessionStorage.setItem('vpsa_last_inquiry_ts', String(Date.now()));
     safeShowToast('✓ Wholesale inquiry submitted successfully! Our trade desk will contact you promptly.', 'success');
     form.reset();
     clearAllFormErrors(form);

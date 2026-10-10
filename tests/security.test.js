@@ -500,6 +500,53 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
     assert.ok(adminById);
     assert.strictEqual(adminById.username, 'admin');
   });
+
+  // 15. C1 & C4 Client Guards, Honeypot & Freely Given DPDP Consent Check
+  test('[C1 & C4 Form Integrity] Contact and quote forms must enforce honeypot, rate-limit, and unchecked consent', async () => {
+    const fs = (await import('fs')).default;
+    const path = (await import('path')).default;
+
+    const contactJs = fs.readFileSync(path.resolve('./public/js/contact.js'), 'utf8');
+    assert.ok(contactJs.includes('bot_honey'), 'contact.js must guard against honeypot triggers');
+    assert.ok(contactJs.includes('vpsa_last_inquiry_ts'), 'contact.js must enforce 6-second rate limiting');
+    assert.ok(contactJs.includes('Boolean(consentEl && consentEl.checked)'), 'contact.js must evaluate actual checked state');
+
+    const contactHtml = fs.readFileSync(path.resolve('./views/contact.html'), 'utf8');
+    assert.ok(contactHtml.includes('name="bot_honey"'), 'contact.html must include honeypot field');
+    assert.ok(!contactHtml.includes('name="dpdp_consent" checked'), 'contact.html must not pre-check DPDP consent');
+
+    const productsHtml = fs.readFileSync(path.resolve('./views/products.html'), 'utf8');
+    assert.ok(productsHtml.includes('name="bot_honey"'), 'products.html modal must include honeypot field');
+    assert.ok(!productsHtml.includes('name="dpdp_consent" checked'), 'products.html modal must not pre-check DPDP consent');
+  });
+
+  // 16. C3 In-Page Clickjacking Defense Check
+  test('[C3 Clickjacking Defense] All public HTML views must declare X-Frame-Options DENY meta tag', async () => {
+    const fs = (await import('fs')).default;
+    const path = (await import('path')).default;
+
+    const publicViews = ['index.html', 'about.html', 'products.html', 'gallery.html', 'contact.html', 'privacy.html', '404.html'];
+    for (const view of publicViews) {
+      const content = fs.readFileSync(path.resolve('./views', view), 'utf8');
+      assert.ok(
+        content.includes('<meta http-equiv="X-Frame-Options" content="DENY">'),
+        `${view} must contain <meta http-equiv="X-Frame-Options" content="DENY">`
+      );
+    }
+  });
+
+  // 17. C4 Privacy Policy Consent Statement Mirroring Check
+  test('[C4 Privacy Mirroring] privacy.html must mirror exact DPDP consent declaration and audit metadata', async () => {
+    const fs = (await import('fs')).default;
+    const path = (await import('path')).default;
+
+    const privacyHtml = fs.readFileSync(path.resolve('./views/privacy.html'), 'utf8');
+    const exactConsent = 'I consent to VPSA YOGA collecting and using my contact details solely for processing wholesale quotations and managing order logistics in accordance with the Privacy Policy.';
+    assert.ok(privacyHtml.includes(exactConsent), 'privacy.html must contain exact quotation form consent sentence');
+    assert.ok(privacyHtml.includes('dpdp-v1'), 'privacy.html must document consent version identifier');
+    assert.ok(privacyHtml.includes('consent_at'), 'privacy.html must document consent timestamp field');
+  });
 });
+
 
 

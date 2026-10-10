@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https: blob: https://translate.google.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://translate.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; script-src 'self' 'unsafe-inline' https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com; connect-src 'self' https://sammfailpehmtxlbqmmh.supabase.co https://*.supabase.co https://translate.googleapis.com https://translate.google.com https://translate-pa.googleapis.com; frame-src 'self' https://translate.google.com https://translate.googleapis.com;">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Contact &amp; Wholesale RFQ | VPSA YOGA</title>
@@ -197,6 +198,11 @@
           <p class="hero-form-desc">Fill out your wholesale requirements below. We provide fast quotes with transparent pricing.</p>
 
           <form class="inquiry-form" id="contactRfqForm" novalidate>
+            <!-- Honeypot Field (OWASP A04 Bot Defense - hidden from humans) -->
+            <div style="display:none!important;position:absolute!important;left:-9999px!important;" aria-hidden="true">
+              <input type="text" name="bot_honey" tabindex="-1" autocomplete="off">
+            </div>
+
             <!-- RFQ Form Fields -->
 
             <div class="form-row">
@@ -265,7 +271,7 @@
 
             <div class="form-group" style="margin-bottom: 1.5rem;">
               <label style="display: flex; gap: 0.65rem; align-items: flex-start; font-size: 0.825rem; color: #475569; cursor: pointer;">
-                <input type="checkbox" name="dpdp_consent" checked style="margin-top: 3px; accent-color: var(--primary);">
+                <input type="checkbox" name="dpdp_consent" required style="margin-top: 3px; accent-color: var(--primary);">
                 <span>I consent to VPSA YOGA collecting and using my contact details solely for processing wholesale quotations and managing order logistics in accordance with the <a href="/privacy" target="_blank" style="color: var(--primary); text-decoration: underline;">Privacy Policy</a>.</span>
               </label>
             </div>
