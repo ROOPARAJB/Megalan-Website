@@ -360,31 +360,47 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
     assert.ok(!contactJs.includes('wa.me?text='), 'Auto-redirect with full PII must be removed');
   });
 
-  // 11. Static Build & Admin Portal Integrity Test
-  test('[Static Build Integrity] docs/ and dist/ must include operational public & admin pages without demo secrets', async () => {
+  // 11. Static Build & Admin Portal Defense Test (W1 & Data Defense)
+  test('[Static Build Integrity] docs/ and dist/ must strictly exclude admin pages, admin JS, and customer data', async () => {
     const fs = (await import('fs')).default;
     const path = (await import('path')).default;
 
     const checkDirs = ['./docs', './dist'];
     for (const dir of checkDirs) {
-      assert.ok(fs.existsSync(path.resolve(dir, 'admin-login.html')), `${dir}/admin-login.html must exist for live admin access`);
-      assert.ok(fs.existsSync(path.resolve(dir, 'admin-dashboard.html')), `${dir}/admin-dashboard.html must exist for live admin access`);
-      assert.ok(fs.existsSync(path.resolve(dir, 'js/admin.js')), `${dir}/js/admin.js must exist for live admin operations`);
       assert.ok(fs.existsSync(path.resolve(dir, 'index.html')), `${dir}/index.html must exist`);
+      assert.ok(fs.existsSync(path.resolve(dir, 'about.html')), `${dir}/about.html must exist`);
+      assert.ok(fs.existsSync(path.resolve(dir, 'products.html')), `${dir}/products.html must exist`);
+      assert.ok(fs.existsSync(path.resolve(dir, 'gallery.html')), `${dir}/gallery.html must exist`);
+      assert.ok(fs.existsSync(path.resolve(dir, 'contact.html')), `${dir}/contact.html must exist`);
+      assert.ok(fs.existsSync(path.resolve(dir, 'privacy.html')), `${dir}/privacy.html must exist`);
 
-      // Read all files in docs/ and dist/ and assert no demo secrets exist
-      const files = fs.readdirSync(path.resolve(dir));
-      for (const file of files) {
-        if (file.endsWith('.html') || file.endsWith('.js')) {
-          const content = fs.readFileSync(path.resolve(dir, file), 'utf8');
-          assert.ok(!content.includes('DEMO_SECRET'), `${file} must not contain DEMO_SECRET`);
-          assert.ok(!content.includes('demo-session-token'), `${file} must not contain demo-session-token`);
-          assert.ok(!content.includes('JBSWY3DPEHPK3PXP'), `${file} must not contain JBSWY3DPEHPK3PXP`);
-          assert.ok(!content.includes('STATIC_SAMPLE_'), `${file} must not contain STATIC_SAMPLE_`);
-          assert.ok(!content.includes('3SG6BVQA'), `${file} must not contain 3SG6BVQA`);
-          assert.ok(!content.includes('VPSA-2026-ADMIN'), `${file} must not contain VPSA-2026-ADMIN`);
+      // Admin portal and internal scripts must be strictly purged from static public distributions
+      assert.ok(!fs.existsSync(path.resolve(dir, 'admin-login.html')), `${dir}/admin-login.html must be purged to protect admin portal`);
+      assert.ok(!fs.existsSync(path.resolve(dir, 'admin-dashboard.html')), `${dir}/admin-dashboard.html must be purged to protect admin data`);
+      assert.ok(!fs.existsSync(path.resolve(dir, 'js/admin.js')), `${dir}/js/admin.js must be purged to prevent admin logic and data exposure`);
+      assert.ok(!fs.existsSync(path.resolve(dir, 'admin')), `${dir}/admin directory must be purged`);
+      assert.ok(!fs.existsSync(path.resolve(dir, 'admin-login')), `${dir}/admin-login directory must be purged`);
+      assert.ok(!fs.existsSync(path.resolve(dir, 'admin-dashboard')), `${dir}/admin-dashboard directory must be purged`);
+
+      // Read all files in docs/ and dist/ and assert no secrets or embedded inquiries exist
+      const checkFolder = (folder) => {
+        const entries = fs.readdirSync(folder, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(folder, entry.name);
+          if (entry.isDirectory()) {
+            checkFolder(fullPath);
+          } else if (entry.name.endsWith('.html') || entry.name.endsWith('.js')) {
+            const content = fs.readFileSync(fullPath, 'utf8');
+            assert.ok(!content.includes('DEMO_SECRET'), `${entry.name} must not contain DEMO_SECRET`);
+            assert.ok(!content.includes('demo-session-token'), `${entry.name} must not contain demo-session-token`);
+            assert.ok(!content.includes('JBSWY3DPEHPK3PXP'), `${entry.name} must not contain JBSWY3DPEHPK3PXP`);
+            assert.ok(!content.includes('__EMBEDDED_INQUIRIES__'), `${entry.name} must not contain __EMBEDDED_INQUIRIES__`);
+            assert.ok(!content.includes('__EMBEDDED_AUDIT_LOGS__'), `${entry.name} must not contain __EMBEDDED_AUDIT_LOGS__`);
+            assert.ok(!content.includes('sb_secret_'), `${entry.name} must not contain sb_secret_`);
+          }
         }
-      }
+      };
+      checkFolder(path.resolve(dir));
     }
   });
 
