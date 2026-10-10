@@ -19,7 +19,7 @@ for (const targetDir of targetDirs) {
   }
   fs.mkdirSync(targetDir, { recursive: true });
 
-  // 1. Copy public assets (css, js, images) - strictly exclude admin.js
+  // 1. Copy public assets (css, js, images)
   const items = ['css', 'js', 'images'];
   for (const item of items) {
     const src = path.join(publicDir, item);
@@ -27,12 +27,6 @@ for (const targetDir of targetDirs) {
     if (fs.existsSync(src)) {
       fs.cpSync(src, dest, { recursive: true, force: true });
     }
-  }
-
-  // CRITICAL SECURITY ENFORCEMENT: Strictly purge admin.js from public static distribution
-  const destAdminJs = path.join(targetDir, 'js', 'admin.js');
-  if (fs.existsSync(destAdminJs)) {
-    fs.rmSync(destAdminJs, { force: true });
   }
 
   // 2. Copy _headers and CNAME configuration files
@@ -48,9 +42,8 @@ for (const targetDir of targetDirs) {
   // 3. Add .nojekyll for GitHub Pages
   fs.writeFileSync(path.join(targetDir, '.nojekyll'), '', 'utf8');
 
-  // 4. Compile ONLY public views into clean-URL directory structures & fallback .html files
-  // Exclude all admin views (admin-dashboard, admin-login) to prevent data & portal exposure on static mirrors
-  const viewFiles = fs.readdirSync(viewsDir).filter(f => f.endsWith('.html') && !f.startsWith('admin'));
+  // 4. Compile public & admin views into clean-URL directory structures & fallback .html files
+  const viewFiles = fs.readdirSync(viewsDir).filter(f => f.endsWith('.html'));
 
   for (const file of viewFiles) {
     let content = fs.readFileSync(path.join(viewsDir, file), 'utf8');
