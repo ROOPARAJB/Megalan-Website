@@ -8,7 +8,7 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Banana Varieties &amp; Wholesale Supply | VPSA YOGA</title>
   <meta name="description" content="Explore our premium South Indian banana varieties: Red Banana, Poovan, Nendran, Yelakki, Karpuravalli, Rasthali, Robusta Cavendish, and Monthan. Direct sourcing from trusted farmers all over south india, cold chain 13-14°C wholesale supply.">
-  <link rel="stylesheet" href="/css/styles.css?v=13.0">
+  <link rel="stylesheet" href="/css/styles.css?v=14.0">
   <link rel="icon" type="image/png" href="/images/logo/vpsa-yoga-logo.png">
   <script>
     if (window.top !== window.self) {
@@ -403,44 +403,44 @@
       <h3 class="hero-form-title" id="modalVarietyTitle">Wholesale Quote Request</h3>
       <p class="hero-form-desc">Get direct farm wholesale pricing and cold-chain freight rates.</p>
 
-      <form class="inquiry-form" id="modalQuoteForm" onsubmit="return handleFormSubmit(event, this);">
+      <form class="inquiry-form" id="modalQuoteForm" novalidate onsubmit="return handleFormSubmit(event, this);">
         <input type="hidden" name="product_variety" id="modalSelectedVariety">
 
         <div class="form-group">
           <label class="form-label">Full Name <span class="required">*</span></label>
-          <input type="text" name="full_name" class="form-control" placeholder="Your Name" maxlength="100" required>
+          <input type="text" name="full_name" class="form-control" placeholder="Your Name" maxlength="100">
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Email <span class="required">*</span></label>
-            <input type="email" name="email" class="form-control" placeholder="Email" maxlength="100" required>
+            <input type="email" name="email" class="form-control" placeholder="Email" maxlength="100">
           </div>
           <div class="form-group">
             <label class="form-label">Phone <span class="required">*</span></label>
-            <input type="tel" name="mobile_number" class="form-control" placeholder="Phone number" pattern="[0-9\s\-]{7,15}" maxlength="15" required>
+            <input type="tel" name="mobile_number" class="form-control" placeholder="Phone number" maxlength="20">
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Estimated Quantity <span class="required">*</span></label>
-            <input type="text" name="quantity" class="form-control" placeholder="e.g. 5 Metric Tons" maxlength="50" required>
+            <input type="text" name="quantity" class="form-control" placeholder="e.g. 5 Metric Tons" maxlength="50">
           </div>
           <div class="form-group">
             <label class="form-label">Destination City &amp; State <span class="required">*</span></label>
-            <input type="text" name="destination" class="form-control" placeholder="e.g. Bengaluru / Kochi / Dubai" maxlength="100" required>
+            <input type="text" name="destination" class="form-control" placeholder="e.g. Bengaluru / Kochi / Dubai" maxlength="100">
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Message / Delivery Schedule <span class="required">*</span></label>
-          <textarea name="message" class="form-control" rows="2" placeholder="Specify your frequency, packaging preference, etc." maxlength="2000" required></textarea>
+          <label class="form-label">Message / Delivery Schedule</label>
+          <textarea name="message" class="form-control" rows="2" placeholder="Specify your frequency, packaging preference, etc." maxlength="2000"></textarea>
         </div>
 
         <div class="form-group" style="margin-bottom: 1.25rem;">
           <label style="display: flex; gap: 0.65rem; align-items: flex-start; font-size: 0.8rem; color: #475569; cursor: pointer;">
-            <input type="checkbox" name="dpdp_consent" required style="margin-top: 3px; accent-color: var(--primary);">
+            <input type="checkbox" name="dpdp_consent" checked style="margin-top: 3px; accent-color: var(--primary);">
             <span>I consent to VPSA YOGA collecting and using my contact details solely for processing wholesale quotations and managing order logistics in accordance with the <a href="/privacy" target="_blank" style="color: var(--primary); text-decoration: underline;">Privacy Policy</a>.</span>
           </label>
         </div>
@@ -504,8 +504,8 @@
     </div>
   </footer>
 
-  <script src="/js/main.js?v=13.0"></script>
-  <script src="/js/contact.js?v=13.0"></script>
+  <script src="/js/main.js?v=14.0"></script>
+  <script src="/js/contact.js?v=14.0"></script>
   <script>
     function openQuoteModal(varietyName) {
       const modal = document.getElementById('quoteModal');
