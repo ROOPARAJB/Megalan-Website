@@ -232,6 +232,13 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
         code: backupCodeToUse
       });
     assert.strictEqual(reuseVerifyRes.status, 401, 'Used backup code must be invalidated');
+
+    // Restore persistent admin 2FA secret for live production use
+    await dbService.updateUser2FA('admin', {
+      two_factor_enabled: 1,
+      two_factor_secret: 'BM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD',
+      two_factor_temp_secret: null
+    });
   });
 
   // 7. Input Validation & Schema Enforcement & DPDP Persistence (RET-09)

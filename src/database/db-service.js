@@ -298,7 +298,7 @@ export const dbService = {
         if (!error && Array.isArray(data)) {
           results = data.map(item => ({
             ...item,
-            dpdp_consent: item.dpdp_consent !== undefined ? item.dpdp_consent : 1,
+            dpdp_consent: (item.dpdp_consent === true || item.dpdp_consent === 1 || item.dpdp_consent === 'true' || item.dpdp_consent === '1') ? 1 : 0,
             dpdp_consent_timestamp: item.dpdp_consent_timestamp || item.created_at
           }));
         }

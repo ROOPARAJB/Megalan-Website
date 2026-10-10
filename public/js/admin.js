@@ -783,6 +783,7 @@ function resetToStep1() {
   const step1 = document.getElementById('step1Credentials');
   const step2Setup = document.getElementById('step2Setup2FA');
   const step2Verify = document.getElementById('step2Verify2FA');
+  const resetPass = document.getElementById('resetPasswordSection');
   const backupBox = document.getElementById('backupCodesDisplay');
   const loginErr = document.getElementById('loginError');
   const loginSucc = document.getElementById('loginSuccess');
@@ -790,6 +791,7 @@ function resetToStep1() {
   if (step1) step1.style.display = 'block';
   if (step2Setup) step2Setup.style.display = 'none';
   if (step2Verify) step2Verify.style.display = 'none';
+  if (resetPass) resetPass.style.display = 'none';
   if (backupBox) backupBox.style.display = 'none';
   if (loginErr) loginErr.style.display = 'none';
   if (loginSucc) loginSucc.style.display = 'none';
@@ -1090,6 +1092,70 @@ function initAdmin() {
         if (step2Verify) step2Verify.style.display = 'block';
         const verifyInput = document.getElementById('verifyTotpCode');
         if (verifyInput) verifyInput.focus();
+      });
+    }
+
+    // Forgot Password Button Click
+    const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+    const resetPassSection = document.getElementById('resetPasswordSection');
+    if (forgotPasswordBtn) {
+      forgotPasswordBtn.addEventListener('click', () => {
+        if (step1) step1.style.display = 'none';
+        if (step2Setup) step2Setup.style.display = 'none';
+        if (step2Verify) step2Verify.style.display = 'none';
+        if (resetPassSection) resetPassSection.style.display = 'block';
+        if (errorMsg) errorMsg.style.display = 'none';
+        if (successMsg) successMsg.style.display = 'none';
+      });
+    }
+
+    // Reset Password Form Submission
+    const resetPassForm = document.getElementById('resetPasswordForm');
+    if (resetPassForm) {
+      resetPassForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('resetEmail')?.value?.trim();
+        const submitBtn = document.getElementById('resetPasswordSubmitBtn');
+
+        if (!email) {
+          showError('Please enter your administrator email address.');
+          return;
+        }
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerText = 'Sending instructions...';
+        }
+
+        try {
+          // Send password recovery request via Supabase Auth
+          const res = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/auth/v1/recover`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_ADMIN_CONFIG.anonKey,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+          });
+
+          if (res.ok || res.status === 200) {
+            showSuccess(`Password reset email sent to ${email}. Please check your inbox.`);
+          } else {
+            const data = await res.json().catch(() => ({}));
+            if (data.msg && data.msg.includes('rate limit')) {
+              showError('Rate limit reached: Please wait 60 seconds before requesting another reset email.');
+            } else {
+              showSuccess(`If ${email} is registered, password reset instructions have been dispatched.`);
+            }
+          }
+        } catch (err) {
+          showError('Unable to connect to password recovery service. Please try again.');
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Send Password Reset Link';
+          }
+        }
       });
     }
 

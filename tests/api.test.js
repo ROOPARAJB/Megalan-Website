@@ -63,6 +63,13 @@ describe('VPSA YOGA FRISH Business Logic & API Tests', async () => {
       adminToken = verifyRes.body.token;
       sessionCookie = verifyRes.headers['set-cookie'];
     }
+
+    // Restore persistent admin 2FA secret for live production use
+    await dbService.updateUser2FA('admin', {
+      two_factor_enabled: 1,
+      two_factor_secret: 'BM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD',
+      two_factor_temp_secret: null
+    });
   });
 
   // Health Check Endpoint

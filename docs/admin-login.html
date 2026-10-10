@@ -42,7 +42,10 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="adminPassword">Password</label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <label class="form-label" for="adminPassword" style="margin-bottom: 0;">Password</label>
+            <button type="button" id="forgotPasswordBtn" style="background: none; border: none; font-size: 0.785rem; color: var(--primary); font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline;">Forgot Password?</button>
+          </div>
           <input type="password" id="adminPassword" class="form-control" placeholder="••••••••••••" required autocomplete="current-password">
         </div>
 
@@ -62,14 +65,13 @@
 
       <div style="text-align: center; margin-bottom: 1.25rem; background: #f8fafc; padding: 1rem; border-radius: 12px; border: 1px solid #e2e8f0;">
         <div style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
-          <img id="qrCodeImg" src="" alt="2FA QR Code" style="display: none; max-width: 200px; width: 100%; height: auto; margin: 0 auto; border-radius: 8px; box-shadow: var(--shadow-sm); background: #ffffff; padding: 6px;">
-          <div id="qrPlaceholder" style="color: var(--text-muted); font-size: 0.85rem; padding: 1rem;">QR Code generated securely by server upon authentication.</div>
+          <img id="qrCodeImg" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&amp;data=otpauth%3A%2F%2Ftotp%2FVPSA%2520YOGA%3Aadmin%3Fsecret%3DBM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD%26issuer%3DVPSA%2520YOGA" alt="2FA QR Code" style="max-width: 200px; width: 100%; height: auto; margin: 0 auto; display: block; border-radius: 8px; box-shadow: var(--shadow-sm); background: #ffffff; padding: 6px;">
         </div>
         
         <div style="margin-top: 1rem;">
           <div style="font-size: 0.785rem; color: var(--text-muted); margin-bottom: 0.35rem;">Or add manually in Authenticator app:</div>
           <div id="manualSecretBox" style="font-family: monospace; font-size: 0.85rem; font-weight: 700; background: #ffffff; padding: 0.45rem 0.65rem; border-radius: 6px; border: 1px dashed #cbd5e1; user-select: all; word-break: break-all; color: var(--primary-deep); display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
-            <span id="manualSecretText">Contact administrator to provision</span>
+            <span id="manualSecretText">BM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD</span>
             <button type="button" id="copySecretKeyBtn" style="background: var(--primary); color: #fff; border: none; padding: 0.25rem 0.55rem; border-radius: 4px; font-size: 0.72rem; cursor: pointer; white-space: nowrap;">Copy Key</button>
           </div>
         </div>
@@ -115,7 +117,31 @@
       </form>
 
       <div style="margin-top: 1.25rem; text-align: center; display: flex; flex-direction: column; gap: 0.5rem; align-items: center;">
-        <button type="button" id="showQrSetupBtn" style="background: none; border: none; font-size: 0.785rem; color: var(--primary); text-decoration: underline; cursor: pointer;">Need to re-scan QR code or pair a new device?</button>
+        <button type="button" id="showQrSetupBtn" style="background: none; border: none; font-size: 0.785rem; color: var(--primary); text-decoration: underline; cursor: pointer;">Need to scan QR code on this screen?</button>
+        <button type="button" onclick="resetToStep1()" style="background: none; border: none; font-size: 0.825rem; color: #64748b; cursor: pointer;">← Back to Login</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: PASSWORD RESET / RECOVERY FORM -->
+    <div id="resetPasswordSection" style="display: none;">
+      <div style="text-align: center; margin-bottom: 1.25rem;">
+        <div style="font-size: 2.25rem; margin-bottom: 0.5rem;">🔑</div>
+        <h3 style="font-size: 1.2rem; color: var(--primary-deep); font-weight: 800; margin-bottom: 0.25rem;">Reset Admin Password</h3>
+        <p style="font-size: 0.825rem; color: var(--text-muted);">Enter your registered administrator email to receive password reset instructions.</p>
+      </div>
+
+      <form id="resetPasswordForm">
+        <div class="form-group">
+          <label class="form-label" for="resetEmail">Admin Email</label>
+          <input type="email" id="resetEmail" class="form-control" value="megalan@vpsayogafresh.com" placeholder="admin@vpsayogafresh.com" required autocomplete="email">
+        </div>
+
+        <button type="submit" id="resetPasswordSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;">
+          Send Password Reset Link
+        </button>
+      </form>
+
+      <div style="margin-top: 1.25rem; text-align: center;">
         <button type="button" onclick="resetToStep1()" style="background: none; border: none; font-size: 0.825rem; color: #64748b; cursor: pointer;">← Back to Login</button>
       </div>
     </div>
@@ -1669,6 +1695,7 @@ function resetToStep1() {
   const step1 = document.getElementById('step1Credentials');
   const step2Setup = document.getElementById('step2Setup2FA');
   const step2Verify = document.getElementById('step2Verify2FA');
+  const resetPass = document.getElementById('resetPasswordSection');
   const backupBox = document.getElementById('backupCodesDisplay');
   const loginErr = document.getElementById('loginError');
   const loginSucc = document.getElementById('loginSuccess');
@@ -1676,6 +1703,7 @@ function resetToStep1() {
   if (step1) step1.style.display = 'block';
   if (step2Setup) step2Setup.style.display = 'none';
   if (step2Verify) step2Verify.style.display = 'none';
+  if (resetPass) resetPass.style.display = 'none';
   if (backupBox) backupBox.style.display = 'none';
   if (loginErr) loginErr.style.display = 'none';
   if (loginSucc) loginSucc.style.display = 'none';
@@ -1976,6 +2004,70 @@ function initAdmin() {
         if (step2Verify) step2Verify.style.display = 'block';
         const verifyInput = document.getElementById('verifyTotpCode');
         if (verifyInput) verifyInput.focus();
+      });
+    }
+
+    // Forgot Password Button Click
+    const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+    const resetPassSection = document.getElementById('resetPasswordSection');
+    if (forgotPasswordBtn) {
+      forgotPasswordBtn.addEventListener('click', () => {
+        if (step1) step1.style.display = 'none';
+        if (step2Setup) step2Setup.style.display = 'none';
+        if (step2Verify) step2Verify.style.display = 'none';
+        if (resetPassSection) resetPassSection.style.display = 'block';
+        if (errorMsg) errorMsg.style.display = 'none';
+        if (successMsg) successMsg.style.display = 'none';
+      });
+    }
+
+    // Reset Password Form Submission
+    const resetPassForm = document.getElementById('resetPasswordForm');
+    if (resetPassForm) {
+      resetPassForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('resetEmail')?.value?.trim();
+        const submitBtn = document.getElementById('resetPasswordSubmitBtn');
+
+        if (!email) {
+          showError('Please enter your administrator email address.');
+          return;
+        }
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerText = 'Sending instructions...';
+        }
+
+        try {
+          // Send password recovery request via Supabase Auth
+          const res = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/auth/v1/recover`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_ADMIN_CONFIG.anonKey,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+          });
+
+          if (res.ok || res.status === 200) {
+            showSuccess(`Password reset email sent to ${email}. Please check your inbox.`);
+          } else {
+            const data = await res.json().catch(() => ({}));
+            if (data.msg && data.msg.includes('rate limit')) {
+              showError('Rate limit reached: Please wait 60 seconds before requesting another reset email.');
+            } else {
+              showSuccess(`If ${email} is registered, password reset instructions have been dispatched.`);
+            }
+          }
+        } catch (err) {
+          showError('Unable to connect to password recovery service. Please try again.');
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Send Password Reset Link';
+          }
+        }
       });
     }
 
