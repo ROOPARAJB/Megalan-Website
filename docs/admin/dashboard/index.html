@@ -278,7 +278,23 @@
     </div>
   </div>
 
-  <script src="/js/main.js?v=12.0"></script>
-  <script src="/js/admin.js?v=12.0"></script>
+  <script src="/js/main.js?v=20.0"></script>
+  <script src="/js/admin.js?v=20.0"></script>
+  <script>
+    (function() {
+      function forceLoadAdminData() {
+        if (typeof window.loadAdminGallery === 'function') window.loadAdminGallery();
+        if (typeof window.loadAdminInquiries === 'function') window.loadAdminInquiries();
+        if (typeof window.loadAdminAuditLogs === 'function') window.loadAdminAuditLogs();
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', forceLoadAdminData);
+      } else {
+        forceLoadAdminData();
+      }
+      setTimeout(forceLoadAdminData, 300);
+      setTimeout(forceLoadAdminData, 1200);
+    })();
+  </script>
 </body>
 </html>
