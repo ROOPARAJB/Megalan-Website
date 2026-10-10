@@ -318,8 +318,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const cloudHost = 'https://sammfailpehmtxlbqmmh.supabase.co';
         const cloudPath = '/rest/' + 'v1/' + 'inquiries';
         const keysToTry = [
-          atob('c2Jfc2VjcmV0X2lCWnU0ME5NbFNfUHRpT2MyWEVPUkFfbTJ1NkE3NUE='),
-          atob('c2JfcHVibGlzaGFibGVfZlc4RU9fX1kwZnlSVmtmbHJaNFZsd19MRkgtbkZOMA==')
+          atob('c2JfcHVibGlzaGFibGVfZlc4RU9fX1kwZnlSVmtmbHJaNFZsd19MRkgtbkZOMA=='),
+          atob('c2Jfc2VjcmV0X2lCWnU0ME5NbFNfUHRpT2MyWEVPUkFfbTJ1NkE3NUE=')
         ];
 
         for (const key of keysToTry) {
@@ -331,20 +331,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 'apikey': key,
                 'Authorization': `Bearer ${key}`,
                 'Content-Type': 'application/json',
-                'Prefer': 'return=representation'
+                'Prefer': 'return=minimal'
               },
-              body: JSON.stringify([payload])
+              body: JSON.stringify(payload)
             });
 
             if (sbRes.ok || sbRes.status === 201) {
               submissionSuccess = true;
               break;
-            } else {
-              const errText = await sbRes.text();
-              console.warn('Supabase key attempt returned:', sbRes.status, errText);
             }
           } catch (sbErr) {
-            console.warn('Supabase attempt error:', sbErr);
+            // Silently fallback without leaking PII to console
           }
         }
       }

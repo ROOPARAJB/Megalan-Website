@@ -132,14 +132,14 @@ for (const f of files) {
   }
 
   // Update styles version
-  content = content.replace(/styles\.css(\?v=[\d\.]+)?/g, 'styles.css?v=10.0');
+  content = content.replace(/styles\.css(\?v=[\d\.]+)?/g, 'styles.css?v=11.0');
 
   // Ensure contact.js and main.js are present at bottom
   if (!content.includes('contact.js')) {
-    content = content.replace(/<script src="\/js\/main\.js[^"]*"><\/script>/, '<script src="/js/main.js?v=10.0"></script>\n  <script src="/js/contact.js?v=10.0"></script>');
+    content = content.replace(/<script src="\/js\/main\.js[^"]*"><\/script>/, '<script src="/js/main.js?v=11.0"></script>\n  <script src="/js/contact.js?v=11.0"></script>');
   } else {
-    content = content.replace(/main\.js(\?v=[\d\.]+)?/g, 'main.js?v=10.0');
-    content = content.replace(/contact\.js(\?v=[\d\.]+)?/g, 'contact.js?v=10.0');
+    content = content.replace(/main\.js(\?v=[\d\.]+)?/g, 'main.js?v=11.0');
+    content = content.replace(/contact\.js(\?v=[\d\.]+)?/g, 'contact.js?v=11.0');
   }
 
   fs.writeFileSync(f, content, 'utf8');
