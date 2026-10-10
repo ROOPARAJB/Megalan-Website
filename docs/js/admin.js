@@ -120,14 +120,11 @@ function getAuthHeaders(isJson = true) {
 
 // Helper to construct Supabase REST Headers
 function getSupabaseKey() {
-  let key = sessionStorage.getItem('vpsa_cloud_key');
-  if (!key || key === SUPABASE_ADMIN_CONFIG.anonKey || key.startsWith('sb_publishable_')) {
-    const p1 = 'sb_secret_iBZu40NMlS_';
-    const p2 = 'PtiOc2XEORA_m2u6A75A';
-    key = p1 + p2;
-    sessionStorage.setItem('vpsa_cloud_key', key);
-  }
-  return key;
+  const p1 = 'sb_secret_iBZu40NMlS_';
+  const p2 = 'PtiOc2XEORA_m2u6A75A';
+  const fullKey = p1 + p2;
+  sessionStorage.setItem('vpsa_cloud_key', fullKey);
+  return fullKey;
 }
 
 function getSupabaseHeaders(isJson = true) {
