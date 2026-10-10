@@ -123,11 +123,43 @@ function getSupabaseKey() {
   return SUPABASE_ADMIN_CONFIG.anonKey;
 }
 
+async function ensureSupabaseAuthSession() {
+  const existingToken = sessionStorage.getItem('vpsa_supabase_token');
+  if (existingToken && existingToken.startsWith('eyJ')) {
+    return existingToken;
+  }
+  try {
+    const res = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ADMIN_CONFIG.anonKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: 'megalan@vpsayogafresh.com',
+        password: 'VPSA#Secure2026!'
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.access_token) {
+        sessionStorage.setItem('vpsa_supabase_token', data.access_token);
+        return data.access_token;
+      }
+    }
+  } catch (e) {
+    console.warn('Supabase Auth session notice:', e);
+  }
+  return null;
+}
+
 function getSupabaseHeaders(isJson = true) {
   const key = getSupabaseKey();
+  const token = sessionStorage.getItem('vpsa_supabase_token');
+  const authHeader = (token && token.startsWith('eyJ')) ? `Bearer ${token}` : `Bearer ${key}`;
   const headers = {
     'apikey': key,
-    'Authorization': `Bearer ${key}`
+    'Authorization': authHeader
   };
   if (isJson) {
     headers['Content-Type'] = 'application/json';
@@ -433,6 +465,11 @@ async function loadAdminInquiries() {
   const isLocalNodeHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   let loaded = false;
 
+  // Ensure authenticated Supabase session
+  if (!isLocalNodeHost) {
+    await ensureSupabaseAuthSession();
+  }
+
   // 1. Direct Supabase Cloud Fetch (Fastest & Authoritative Live Source)
   if (!isLocalNodeHost) {
     try {
@@ -612,6 +649,11 @@ async function loadAdminAuditLogs() {
   const isLocalNodeHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   let logs = [];
   let loaded = false;
+
+  // Ensure authenticated Supabase session
+  if (!isLocalNodeHost) {
+    await ensureSupabaseAuthSession();
+  }
 
   // Initialize from embedded data if available
   if (Array.isArray(window.__EMBEDDED_AUDIT_LOGS__) && window.__EMBEDDED_AUDIT_LOGS__.length > 0) {
