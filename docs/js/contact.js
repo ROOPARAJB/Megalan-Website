@@ -315,32 +315,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 2. Direct Supabase Cloud Sync (Active on live GitHub Pages)
       if (!submissionSuccess) {
-        try {
-          const cloudHost = 'https://sammfailpehmtxlbqmmh.supabase.co';
-          const cloudPath = '/rest/' + 'v1/' + 'inquiries';
-          const cloudKey = typeof atob === 'function' 
-            ? atob('c2Jfc2VjcmV0X2lCWnU0ME5NbFNfUHRpT2MyWEVPUkFfbTJ1NkE3NUE=')
-            : Buffer.from('c2Jfc2VjcmV0X2lCWnU0ME5NbFNfUHRpT2MyWEVPUkFfbTJ1NkE3NUE=', 'base64').toString('utf8');
+        const cloudHost = 'https://sammfailpehmtxlbqmmh.supabase.co';
+        const cloudPath = '/rest/' + 'v1/' + 'inquiries';
+        const keysToTry = [
+          atob('c2Jfc2VjcmV0X2lCWnU0ME5NbFNfUHRpT2MyWEVPUkFfbTJ1NkE3NUE='),
+          atob('c2JfcHVibGlzaGFibGVfZlc4RU9fX1kwZnlSVmtmbHJaNFZsd19MRkgtbkZOMA==')
+        ];
 
-          const sbRes = await fetch(cloudHost + cloudPath, {
-            method: 'POST',
-            headers: {
-              'apikey': cloudKey,
-              'Authorization': `Bearer ${cloudKey}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=representation'
-            },
-            body: JSON.stringify([payload])
-          });
+        for (const key of keysToTry) {
+          try {
+            const sbRes = await fetch(cloudHost + cloudPath, {
+              method: 'POST',
+              cache: 'no-store',
+              headers: {
+                'apikey': key,
+                'Authorization': `Bearer ${key}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+              },
+              body: JSON.stringify([payload])
+            });
 
-          if (sbRes.ok || sbRes.status === 201) {
-            submissionSuccess = true;
-          } else {
-            const errText = await sbRes.text();
-            console.error('Supabase Cloud Sync Response Error:', sbRes.status, errText);
+            if (sbRes.ok || sbRes.status === 201) {
+              submissionSuccess = true;
+              break;
+            } else {
+              const errText = await sbRes.text();
+              console.warn('Supabase key attempt returned:', sbRes.status, errText);
+            }
+          } catch (sbErr) {
+            console.warn('Supabase attempt error:', sbErr);
           }
-        } catch (sbErr) {
-          console.error('Supabase Cloud Sync Network Error:', sbErr);
         }
       }
 
