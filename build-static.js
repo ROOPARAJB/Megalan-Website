@@ -35,14 +35,13 @@ for (const targetDir of targetDirs) {
     fs.rmSync(jsDest, { recursive: true, force: true });
   }
 
-  // 2. Copy _headers and CNAME configuration files
-  const headersSrc = path.join(publicDir, '_headers');
-  if (fs.existsSync(headersSrc)) {
-    fs.copyFileSync(headersSrc, path.join(targetDir, '_headers'));
-  }
-  const cnameSrc = path.join(publicDir, 'CNAME');
-  if (fs.existsSync(cnameSrc)) {
-    fs.copyFileSync(cnameSrc, path.join(targetDir, 'CNAME'));
+  // 2. Copy _headers, CNAME, robots.txt, and sitemap.xml configuration files
+  const rootConfigFiles = ['_headers', 'CNAME', 'robots.txt', 'sitemap.xml'];
+  for (const configFile of rootConfigFiles) {
+    const configSrc = path.join(publicDir, configFile);
+    if (fs.existsSync(configSrc)) {
+      fs.copyFileSync(configSrc, path.join(targetDir, configFile));
+    }
   }
 
   // 3. Add .nojekyll for GitHub Pages

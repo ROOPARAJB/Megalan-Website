@@ -382,6 +382,8 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
       assert.ok(fs.existsSync(path.resolve(dir, 'privacy.html')), `${dir}/privacy.html must exist`);
       assert.ok(fs.existsSync(path.resolve(dir, 'admin-login.html')), `${dir}/admin-login.html must exist`);
       assert.ok(fs.existsSync(path.resolve(dir, 'admin-dashboard.html')), `${dir}/admin-dashboard.html must exist`);
+      assert.ok(fs.existsSync(path.resolve(dir, 'robots.txt')), `${dir}/robots.txt must exist`);
+      assert.ok(fs.existsSync(path.resolve(dir, 'sitemap.xml')), `${dir}/sitemap.xml must exist`);
       assert.ok(!fs.existsSync(path.resolve(dir, 'js')), `${dir}/js must NOT exist in static distribution (all /js/*.js return 404)`);
 
       // Read all files in docs/ and dist/ and assert no secrets or passwords exist
@@ -400,6 +402,8 @@ describe('OWASP Top 10 & Security Architecture Automated Tests', async () => {
             assert.ok(!content.includes('VPSA#Secure2026!'), `${entry.name} must not contain VPSA#Secure2026!`);
             assert.ok(!content.includes('V43MDMV3AHZFX4XEM7YJVR57HZ2OGXMC'), `${entry.name} must not contain hardcoded TOTP secret`);
             assert.ok(!content.includes('PtiOc2XE'), `${entry.name} must not contain secret fragments`);
+            assert.ok(!content.includes('api.qrserver.com'), `${entry.name} must not contain third-party QR code leak URL`);
+            assert.ok(!content.includes('BM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD'), `${entry.name} must not contain hardcoded fallback TOTP seed`);
           }
         }
       };

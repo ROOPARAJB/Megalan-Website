@@ -285,9 +285,9 @@ BEGIN
     WHERE role = 'admin' OR username = 'admin'
     LIMIT 1;
 
-    -- Default fallback secret if user record does not exist
-    IF v_secret IS NULL THEN
-        v_secret := 'BM6P52QVLSCQU63M5ZQ6SMGXRQV5LCUD';
+    -- Fail closed: Require configured secret on admin user record (B1/G1 remediation)
+    IF v_secret IS NULL OR trim(v_secret) = '' THEN
+        RETURN FALSE;
     END IF;
 
     -- Check if code matches emergency backup code
@@ -349,7 +349,13 @@ $$;
 -- ==============================================================================
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 
--- Public (anon) is restricted to INSERT ONLY on inquiries (zero read leak)
+-- Revoke all default public/anon permissions on sensitive tables (B2/G3 & P2 remediation)
+REVOKE ALL ON TABLE public.users FROM anon, public;
+REVOKE ALL ON TABLE public.audit_logs FROM anon, public;
+REVOKE ALL ON TABLE public.inquiries FROM anon, public;
+REVOKE ALL ON TABLE public.gallery FROM anon, public;
+
+-- Public (anon) is strictly restricted to INSERT ONLY on inquiries (zero read leak)
 GRANT INSERT ON TABLE public.inquiries TO anon;
 
 -- Authenticated Admin gets full access

@@ -11,12 +11,15 @@ import { requireAuthApi, getJwtSecret } from '../../middleware/auth.js';
 const router = express.Router();
 const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'vpsa_session_token';
 
-// Helper to generate 4 emergency backup codes
+// In-memory tracker for consecutive failed 2FA attempts (OWASP A07 & G5 brute-force defense)
+const failed2FaAttempts = new Map();
+
+// Helper to generate 4 high-entropy emergency backup codes (G7 remediation: cryptographic randomness)
 function generateBackupCodes() {
   const codes = [];
   for (let i = 0; i < 4; i++) {
-    const part1 = crypto.randomInt(1000, 9999);
-    const part2 = crypto.randomInt(1000, 9999);
+    const part1 = crypto.randomBytes(3).toString('hex').toUpperCase();
+    const part2 = crypto.randomBytes(3).toString('hex').toUpperCase();
     codes.push(`VPSA-${part1}-${part2}`);
   }
   return codes;
@@ -257,6 +260,16 @@ router.post('/2fa/verify', authRateLimiter, async (req, res) => {
       });
     }
 
+    // Check if account is locked due to repeated bad 2FA attempts (G5 lockout)
+    const userLock = failed2FaAttempts.get(user.id);
+    if (userLock && userLock.lockedUntil > Date.now()) {
+      const remainingMin = Math.ceil((userLock.lockedUntil - Date.now()) / 60000);
+      return res.status(429).json({
+        success: false,
+        error: `Account locked due to consecutive failed 2FA verification attempts. Please wait ${remainingMin} minute(s).`
+      });
+    }
+
     const cleanInput = String(code).trim().replace(/\s+/g, '');
     let isAuthorized = false;
     let usedBackupCode = false;
@@ -302,12 +315,33 @@ router.post('/2fa/verify', authRateLimiter, async (req, res) => {
     }
 
     if (!isAuthorized) {
-      logSecurityEvent('FAILED_2FA_VERIFICATION', `Invalid 2FA verification code entered for user '${user.username}'`, user.id, req, 'WARN');
+      const attempts = (userLock?.count || 0) + 1;
+      if (attempts >= 5) {
+        failed2FaAttempts.set(user.id, {
+          count: attempts,
+          lockedUntil: Date.now() + 15 * 60 * 1000 // 15-minute lockout
+        });
+        logSecurityEvent('2FA_ACCOUNT_LOCKED', `Admin '${user.username}' locked for 15 minutes after 5 consecutive bad 2FA codes.`, user.id, req, 'CRITICAL');
+        return res.status(429).json({
+          success: false,
+          error: 'Too many invalid 2FA verification attempts. Account locked for 15 minutes.'
+        });
+      } else {
+        failed2FaAttempts.set(user.id, {
+          count: attempts,
+          lockedUntil: 0
+        });
+      }
+
+      logSecurityEvent('FAILED_2FA_VERIFICATION', `Invalid 2FA verification code entered for user '${user.username}' (attempt ${attempts}/5)`, user.id, req, 'WARN');
       return res.status(401).json({
         success: false,
         error: 'Invalid authenticator code. Please check Microsoft Authenticator and try again.'
       });
     }
+
+    // Reset failed counter upon successful verification
+    failed2FaAttempts.delete(user.id);
 
     // Update last login
     await dbService.updateUserLogin(user.id);
@@ -535,6 +569,19 @@ router.post('/change-password', requireAuthApi, async (req, res) => {
   return res.json({
     success: true,
     message: 'Password changed successfully.'
+  });
+});
+
+// POST /api/auth/forgot-password (G5 Uniform Response - Eliminates Email Enumeration Oracle)
+router.post('/forgot-password', authRateLimiter, async (req, res) => {
+  const { email } = req.body;
+  if (email) {
+    logSecurityEvent('PASSWORD_RESET_REQUESTED', `Password recovery requested for: ${String(email).trim().slice(0, 50)}`, null, req, 'INFO');
+  }
+  // Uniform response regardless of whether email exists or not
+  return res.json({
+    success: true,
+    message: 'If this email is registered as an administrator, password recovery instructions have been dispatched.'
   });
 });
 

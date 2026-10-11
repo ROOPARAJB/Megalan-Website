@@ -42,7 +42,7 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow non-browser requests (e.g. curl, test suites, internal microservices)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
     return callback(null, false);

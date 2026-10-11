@@ -131,14 +131,17 @@ async function ensureSupabaseAuthSession() {
   return null;
 }
 
-function getSupabaseHeaders(isJson = true) {
+function getSupabaseHeaders(isJson = true, requireAuth = false) {
   const key = getSupabaseKey();
-  const token = sessionStorage.getItem('vpsa_supabase_token');
-  const authHeader = (token && token.startsWith('eyJ')) ? `Bearer ${token}` : `Bearer ${key}`;
+  const token = sessionStorage.getItem('vpsa_supabase_token') || sessionStorage.getItem('vpsa_token');
   const headers = {
-    'apikey': key,
-    'Authorization': authHeader
+    'apikey': key
   };
+  if (token && token.startsWith('eyJ')) {
+    headers['Authorization'] = `Bearer ${token}`;
+  } else if (requireAuth) {
+    throw new Error('Unauthorized: Administrator authentication token required.');
+  }
   if (isJson) {
     headers['Content-Type'] = 'application/json';
     headers['Prefer'] = 'return=representation';
@@ -264,7 +267,7 @@ async function savePhotoEdit() {
     try {
       const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/gallery?id=eq.${id}`, {
         method: 'PATCH',
-        headers: getSupabaseHeaders(true),
+        headers: getSupabaseHeaders(true, true),
         body: JSON.stringify({
           title,
           description: description || null,
@@ -321,7 +324,7 @@ async function deleteGalleryItem(event, id) {
     try {
       const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/gallery?id=eq.${id}`, {
         method: 'DELETE',
-        headers: getSupabaseHeaders(false)
+        headers: getSupabaseHeaders(false, true)
       });
       if (sbRes.ok) {
         deleteSuccess = true;
@@ -595,7 +598,7 @@ async function updateInquiryStatus(id, status) {
   try {
     const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/inquiries?id=eq.${id}`, {
       method: 'PATCH',
-      headers: getSupabaseHeaders(true),
+      headers: getSupabaseHeaders(true, true),
       body: JSON.stringify({ status })
     });
     if (sbRes.ok) {
@@ -626,7 +629,7 @@ async function deleteInquiry(id) {
   try {
     await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/inquiries?id=eq.${id}`, {
       method: 'DELETE',
-      headers: getSupabaseHeaders(false)
+      headers: getSupabaseHeaders(false, true)
     });
   } catch (e) {}
 
@@ -1010,7 +1013,7 @@ function initAdmin() {
                 const qrImg = document.getElementById('qrCodeImg');
                 if (qrImg && data.qr_code) qrImg.src = data.qr_code;
 
-                const manualSecret = document.getElementById('manualSecretBox');
+                const manualSecret = document.getElementById('manualSecretText') || document.getElementById('manualSecretBox');
                 if (manualSecret && data.secret) manualSecret.innerText = data.secret;
 
                 if (step2Setup) step2Setup.style.display = 'block';
@@ -1115,6 +1118,14 @@ function initAdmin() {
           return;
         }
 
+        // Check if locked out due to repeated failed attempts (G5 remediation)
+        const lockUntil = Number(sessionStorage.getItem('vpsa_2fa_lock_until') || 0);
+        if (lockUntil > Date.now()) {
+          const waitSecs = Math.ceil((lockUntil - Date.now()) / 1000);
+          showError(`Verification locked due to too many failed attempts. Please wait ${waitSecs} seconds.`);
+          return;
+        }
+
         if (submitBtn) {
           submitBtn.disabled = true;
           submitBtn.innerText = 'Verifying security code...';
@@ -1170,13 +1181,23 @@ function initAdmin() {
         }
 
         if (verified) {
+          sessionStorage.removeItem('vpsa_failed_2fa_count');
+          sessionStorage.removeItem('vpsa_2fa_lock_until');
           showSuccess('Two-factor verification successful! Entering dashboard...');
           setTimeout(() => {
             window.location.href = '/admin-dashboard.html';
           }, 350);
           return;
         } else {
-          showError('Invalid 6-digit authenticator code or emergency backup code.');
+          const failedCount = Number(sessionStorage.getItem('vpsa_failed_2fa_count') || 0) + 1;
+          sessionStorage.setItem('vpsa_failed_2fa_count', String(failedCount));
+          if (failedCount >= 5) {
+            const lockTime = Date.now() + 5 * 60 * 1000;
+            sessionStorage.setItem('vpsa_2fa_lock_until', String(lockTime));
+            showError('Too many failed 2FA verification attempts. Account verification locked for 5 minutes.');
+          } else {
+            showError(`Invalid 6-digit authenticator code or emergency backup code. (Attempt ${failedCount} of 5)`);
+          }
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerText = 'Confirm & Enter Dashboard';
@@ -1247,6 +1268,13 @@ function initAdmin() {
           return;
         }
 
+        const lastReset = Number(sessionStorage.getItem('vpsa_last_reset_request') || 0);
+        if (Date.now() - lastReset < 60000) {
+          const waitSec = Math.ceil((60000 - (Date.now() - lastReset)) / 1000);
+          showError(`Please wait ${waitSec} seconds before requesting another reset email.`);
+          return;
+        }
+
         if (submitBtn) {
           submitBtn.disabled = true;
           submitBtn.innerText = 'Sending instructions...';
@@ -1254,7 +1282,7 @@ function initAdmin() {
 
         try {
           // Send password recovery request via Supabase Auth
-          const res = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/auth/v1/recover`, {
+          await fetch(`${SUPABASE_ADMIN_CONFIG.url}/auth/v1/recover`, {
             method: 'POST',
             headers: {
               'apikey': SUPABASE_ADMIN_CONFIG.anonKey,
@@ -1263,18 +1291,10 @@ function initAdmin() {
             body: JSON.stringify({ email })
           });
 
-          if (res.ok || res.status === 200) {
-            showSuccess(`Password reset email sent to ${email}. Please check your inbox.`);
-          } else {
-            const data = await res.json().catch(() => ({}));
-            if (data.msg && data.msg.includes('rate limit')) {
-              showError('Rate limit reached: Please wait 60 seconds before requesting another reset email.');
-            } else {
-              showSuccess(`If ${email} is registered, password reset instructions have been dispatched.`);
-            }
-          }
+          sessionStorage.setItem('vpsa_last_reset_request', String(Date.now()));
+          showSuccess('If this email address is registered as an administrator, password recovery instructions have been dispatched.');
         } catch (err) {
-          showError('Unable to connect to password recovery service. Please try again.');
+          showSuccess('If this email address is registered as an administrator, password recovery instructions have been dispatched.');
         } finally {
           if (submitBtn) {
             submitBtn.disabled = false;
@@ -1418,6 +1438,13 @@ function initAdmin() {
   if (document.getElementById('adminDashboard')) {
     initSessionTimeout();
 
+    // Render operator identity dynamically from authenticated session (B3/G8 defense)
+    const adminUserDisplay = document.getElementById('adminUserDisplay');
+    if (adminUserDisplay) {
+      const user = sessionStorage.getItem('vpsa_admin_user') || 'Authorized';
+      adminUserDisplay.innerText = user;
+    }
+
     // Verify session
     const token = sessionStorage.getItem('vpsa_token');
     if (!token) {
@@ -1426,6 +1453,12 @@ function initAdmin() {
         .then(res => {
           if (!res.ok) {
             window.location.href = '/admin-login.html';
+          } else {
+            return res.json().then(data => {
+              if (data?.user?.username && adminUserDisplay) {
+                adminUserDisplay.innerText = data.user.username;
+              }
+            });
           }
         })
         .catch(() => {
@@ -1658,7 +1691,7 @@ function initAdmin() {
             const base64Data = reader.result;
             const sbRes = await fetch(`${SUPABASE_ADMIN_CONFIG.url}/rest/v1/gallery`, {
               method: 'POST',
-              headers: getSupabaseHeaders(true),
+              headers: getSupabaseHeaders(true, true),
               body: JSON.stringify({
                 title,
                 category,
