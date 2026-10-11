@@ -18,6 +18,6 @@ VPSA YOGA (also known as *VPSA YOGA Banana Traders*) is a premier wholesale agri
 
 ## 🌐 Official Platform
 
-- **Website:** [https://rooparajb.github.io/Megalan-Website/](https://rooparajb.github.io/Megalan-Website/)
+- **Website:** [https://vpsayoga.in/]
 - **Headquarters:** Tamil Nadu, India
 - **Inquiries:** info@vpsayoga.com
