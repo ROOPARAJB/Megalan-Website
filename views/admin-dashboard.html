@@ -162,7 +162,7 @@
                   <th>Variety &amp; Volume</th>
                   <th>Message / Requirements</th>
                   <th style="width: 140px;">Status</th>
-                  <th style="width: 80px; text-align: center;">Action</th>
+                  <th style="width: 105px; text-align: center;">Actions</th>
                 </tr>
               </thead>
               <tbody id="inquiriesTableBody">
@@ -239,14 +239,76 @@
           <label class="form-label" for="uploadPhotoImage">Select Image File (Max 5MB: JPG, PNG, WebP) <span class="required">*</span></label>
           <div class="custom-file-upload" id="fileDropZone">
             <input type="file" name="image" id="uploadPhotoImage" class="custom-file-input" accept="image/jpeg,image/png,image/webp" required>
-            <div class="file-upload-visual">
-              <div class="file-upload-icon">📷</div>
-              <div class="file-upload-prompt">
-                <span class="file-upload-btn-label">📁 Choose Photo</span> or drag &amp; drop here
+            
+            <!-- Default Empty & Dragging State (Matching reference design) -->
+            <div class="file-upload-visual" id="fileUploadVisual">
+              <!-- Illustrated Top Target Badge & Curved Dotted Arrow -->
+              <div class="drop-target-guide">
+                <div class="drop-target-pill" id="dropTargetPill">
+                  <span class="drop-pulse-dot"></span>
+                  <span id="dropPillText">Direct to Hub</span>
+                </div>
+                
+                <svg class="drop-arrow-svg" viewBox="0 0 100 40" fill="none" aria-hidden="true">
+                  <path class="drop-arrow-path" d="M 50,2 Q 78,14 74,32" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="3,3"/>
+                  <polygon points="70,28 76,35 79,26" fill="currentColor"/>
+                </svg>
               </div>
-              <div class="file-upload-hint">Supports high-res JPG, PNG, WebP (Up to 5MB)</div>
-              <div id="fileChosenName" class="file-chosen-name" style="display: none;"></div>
+
+              <!-- Illustrated Drop Tray / Box Icon with animated slot -->
+              <div class="drop-tray-illustration">
+                <svg class="tray-svg" width="68" height="48" viewBox="0 0 68 48" fill="none" aria-hidden="true">
+                  <!-- Tray Back & Base -->
+                  <path d="M10 24 L20 12 H48 L58 24 L52 42 H16 L10 24 Z" fill="#ecfdf5" stroke="#059669" stroke-width="2" stroke-linejoin="round"/>
+                  <!-- Tray Front Lip -->
+                  <path d="M12 28 H24 L28 34 H40 L44 28 H56 L52 42 H16 L12 28 Z" fill="#d1fae5" stroke="#059669" stroke-width="2" stroke-linejoin="round"/>
+                  <!-- Slot Glow & Arc -->
+                  <circle cx="34" cy="24" r="7" stroke="#10b981" stroke-width="2" stroke-dasharray="2,2"/>
+                  <!-- Animated Floating Down Arrow -->
+                  <g class="tray-down-arrow">
+                    <line x1="34" y1="8" x2="34" y2="22" stroke="#047857" stroke-width="2.5" stroke-linecap="round"/>
+                    <polyline points="29,18 34,23 39,18" stroke="#047857" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </g>
+                </svg>
+              </div>
+
+              <!-- Main Prompt -->
+              <div class="file-upload-prompt" id="fileUploadPrompt">
+                <span class="file-upload-highlight">Click to browse</span> or <span class="drag-text">drag &amp; drop here</span>
+              </div>
+              
+              <!-- Floating Format Pills -->
+              <div class="file-format-tags">
+                <span class="format-tag">JPG</span>
+                <span class="format-tag">PNG</span>
+                <span class="format-tag">WEBP</span>
+                <span class="format-tag tag-limit">MAX 5MB</span>
+              </div>
             </div>
+
+            <!-- Selected File / Live Thumbnail Preview State (Animated on Select) -->
+            <div id="fileChosenPreview" class="file-chosen-preview" style="display: none;">
+              <div class="file-preview-thumb-box">
+                <img id="filePreviewImg" src="" alt="Selected Preview" class="file-preview-img">
+              </div>
+              <div class="file-preview-details">
+                <div class="file-preview-header">
+                  <span class="file-preview-title" id="filePreviewName">photo.jpg</span>
+                  <button type="button" class="file-preview-remove-btn" id="fileRemoveBtn" title="Remove image">&times;</button>
+                </div>
+                <div class="file-preview-meta">
+                  <span id="filePreviewSize">2.1 MB</span> &bull; 
+                  <span class="file-preview-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="display: inline-block; vertical-align: -1px; margin-right: 2px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Ready to publish
+                  </span>
+                </div>
+                <div class="file-preview-action">✨ Click or drop another image to replace</div>
+              </div>
+            </div>
+
+            <!-- Legacy fallback compatibility -->
+            <div id="fileChosenName" class="file-chosen-name" style="display: none;"></div>
           </div>
         </div>
 
@@ -289,6 +351,20 @@
       </form>
     </div>
   </div>
+
+  <!-- INQUIRY DETAILS MODAL -->
+  <div id="inquiryDetailModal" class="lightbox-modal" style="display: none; z-index: 999999;">
+    <div class="hero-form-card" style="max-width: 640px; width: 100%; position: relative; margin: 1.5rem; z-index: 1000000; background: #ffffff; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+      <button type="button" onclick="closeInquiryDetailModal()" style="position: absolute; top: 1.25rem; right: 1.25rem; background: none; border: none; font-size: 1.75rem; color: #64748b; cursor: pointer; line-height: 1;" aria-label="Close dialog">&times;</button>
+      <h3 class="hero-form-title" id="detailModalTitle" style="font-size: 1.35rem; color: var(--primary-dark);">Wholesale Lead Details</h3>
+      <p class="hero-form-desc" style="margin-bottom: 1.25rem;">Complete submission record, order specifications and DPDP compliance trail.</p>
+
+      <div id="inquiryDetailBody" style="font-size: 0.9rem;">
+        <!-- Populated dynamically by admin.js -->
+      </div>
+    </div>
+  </div>
+
 
   <script src="/js/main.js?v=22.0"></script>
   <script src="/js/admin.js?v=22.0"></script>

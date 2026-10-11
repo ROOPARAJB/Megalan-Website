@@ -170,6 +170,13 @@ function openUploadModal() {
     chosenEl.innerHTML = '';
   }
 
+  const previewBox = document.getElementById('fileChosenPreview');
+  const visualPrompt = document.getElementById('fileUploadVisual');
+  const previewImg = document.getElementById('filePreviewImg');
+  if (previewBox) previewBox.style.display = 'none';
+  if (visualPrompt) visualPrompt.style.display = 'flex';
+  if (previewImg) previewImg.src = '';
+
   modal.style.cssText = 'display: flex !important; opacity: 1 !important; pointer-events: auto !important; position: fixed !important; inset: 0 !important; z-index: 999999 !important; background-color: rgba(15, 23, 42, 0.85) !important; align-items: center !important; justify-content: center !important; padding: 1.5rem !important;';
   modal.classList.add('active');
 
@@ -518,11 +525,18 @@ async function loadAdminInquiries() {
     return;
   }
 
-  tbody.innerHTML = cachedInquiries.map(item => `
+  tbody.innerHTML = cachedInquiries.map(item => {
+    const consentTs = item.consent_at || item.dpdp_consent_timestamp || item.created_at;
+    const consentBadge = item.dpdp_consent !== false
+      ? `<span style="background: #ecfdf5; color: #047857; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 3px; font-weight: 600; border: 1px solid #a7f3d0;" title="DPDP Act 2023 Consent Granted at: ${new Date(consentTs).toLocaleString()}">🛡️ DPDP Verified</span>`
+      : `<span style="background: #fef2f2; color: #b91c1c; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 3px; font-weight: 600; border: 1px solid #fecaca;">⚠️ Unverified</span>`;
+
+    return `
     <tr>
       <td>
         <strong style="color: var(--primary);">#${item.id}</strong><br>
-        <small style="color: #64748b; font-size: 0.785rem;">${new Date(item.created_at).toLocaleDateString()}</small>
+        <small style="color: #64748b; font-size: 0.785rem;">${new Date(item.created_at).toLocaleDateString()}</small><br>
+        ${consentBadge}
       </td>
       <td>
         <strong style="color: #0f172a; font-size: 0.925rem;">${escapeHtml(item.full_name)}</strong><br>
@@ -534,7 +548,7 @@ async function loadAdminInquiries() {
       </td>
       <td>
         <span style="font-weight: 700; color: #0f172a;">${escapeHtml(item.product_variety || 'General Bulk')}</span><br>
-        <small style="color: #64748b;">Qty: <strong>${escapeHtml(item.quantity || 'N/A')}</strong> | Dest: <strong>${escapeHtml(item.destination || 'N/A')}</strong></small>
+        <small style="color: #64748b;">Qty: <strong>${escapeHtml(item.quantity || 'N/A')}</strong><br>Dest: <strong>${escapeHtml(item.destination || 'N/A')}</strong></small>
       </td>
       <td style="max-width: 240px; font-size: 0.85rem; color: #334155; line-height: 1.5;">
         ${escapeHtml(item.message)}
@@ -547,11 +561,12 @@ async function loadAdminInquiries() {
           <option value="completed" ${item.status === 'completed' ? 'selected' : ''}>🟢 Completed</option>
         </select>
       </td>
-      <td style="text-align: center;">
-        <button type="button" class="btn btn-sm btn-outline" style="color: #ef4444; border-color: #fca5a5; padding: 0.35rem 0.65rem; background: #fff1f2;" onclick="deleteInquiry(${item.id})" title="Delete lead">🗑️</button>
+      <td style="text-align: center; white-space: nowrap;">
+        <button type="button" class="btn btn-sm btn-outline" style="padding: 0.35rem 0.55rem; margin-right: 4px;" onclick="viewInquiryDetails(${item.id})" title="View Complete Lead Details">👁️</button>
+        <button type="button" class="btn btn-sm btn-outline" style="color: #ef4444; border-color: #fca5a5; padding: 0.35rem 0.55rem; background: #fff1f2;" onclick="deleteInquiry(${item.id})" title="Delete lead">🗑️</button>
       </td>
     </tr>
-  `).join('');
+  `}).join('');
 }
 
 async function updateInquiryStatus(id, status) {
@@ -722,6 +737,111 @@ async function syncAllAdminData(showToastNotification = false) {
   }
 }
 
+// 6. View Complete Inquiry Details Modal
+function viewInquiryDetails(id) {
+  const item = cachedInquiries.find(x => Number(x.id) === Number(id));
+  if (!item) {
+    showToast('Inquiry details not found.', 'error');
+    return;
+  }
+
+  const modal = document.getElementById('inquiryDetailModal');
+  const body = document.getElementById('inquiryDetailBody');
+  const title = document.getElementById('detailModalTitle');
+  if (!modal || !body) return;
+
+  if (title) title.innerText = `Wholesale Inquiry #${item.id} Details`;
+
+  const consentTs = item.consent_at || item.dpdp_consent_timestamp || item.created_at;
+  const consentFormatted = consentTs ? new Date(consentTs).toLocaleString() : 'Recorded with Submission';
+  const createdFormatted = item.created_at ? new Date(item.created_at).toLocaleString() : 'N/A';
+
+  body.innerHTML = `
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+        <strong style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.35rem;">Client Information</strong>
+        <div style="font-weight: 700; color: #0f172a; font-size: 1.05rem;">${escapeHtml(item.full_name)}</div>
+        <div style="color: #475569; font-size: 0.85rem; margin-top: 2px;">Company / Trade: <strong>${escapeHtml(item.company_name || 'Individual / Retailer')}</strong></div>
+      </div>
+
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+        <strong style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.35rem;">Contact Channels</strong>
+        <div>Email: <a href="mailto:${escapeHtml(item.email)}" style="color: var(--primary); font-weight: 600; text-decoration: underline;">${escapeHtml(item.email)}</a></div>
+        <div style="margin-top: 3px;">Mobile: <a href="tel:${escapeHtml(item.country_code || '')}${escapeHtml(item.mobile_number || '')}" style="color: #0284c7; font-weight: 600;">${escapeHtml(item.country_code || '')} ${escapeHtml(item.mobile_number || '')}</a></div>
+      </div>
+    </div>
+
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+      <strong style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.5rem;">Requirement &amp; Logistics Specifications</strong>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;">
+        <div>
+          <span style="color: #64748b; font-size: 0.8rem;">Banana Variety:</span><br>
+          <strong style="color: #0f172a;">${escapeHtml(item.product_variety || 'General Bulk / Mixed')}</strong>
+        </div>
+        <div>
+          <span style="color: #64748b; font-size: 0.8rem;">Estimated Volume:</span><br>
+          <strong style="color: #0f172a;">${escapeHtml(item.quantity || 'Standard Lot')}</strong>
+        </div>
+        <div>
+          <span style="color: #64748b; font-size: 0.8rem;">Delivery Destination:</span><br>
+          <strong style="color: #0f172a;">${escapeHtml(item.destination || 'Pan-India')}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+      <strong style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.35rem;">Customer Message / Special Requirements</strong>
+      <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.75rem; font-size: 0.875rem; color: #1e293b; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(item.message || 'No additional message.')}</div>
+    </div>
+
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+      <strong style="color: #166534; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.5rem;">Compliance &amp; Data Protection Audit (DPDP Act 2023)</strong>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; font-size: 0.825rem;">
+        <div>
+          <span style="color: #15803d;">Consent Status:</span><br>
+          <strong style="color: #166534;">${item.dpdp_consent !== false ? '✓ Freely Given &amp; Verified' : '⚠️ Unverified'}</strong>
+        </div>
+        <div>
+          <span style="color: #15803d;">Consent Timestamp (consent_at):</span><br>
+          <strong style="color: #166534;">${consentFormatted}</strong>
+        </div>
+        <div>
+          <span style="color: #15803d;">Consent Policy Version:</span><br>
+          <code style="background: #dcfce7; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${escapeHtml(item.consent_text_version || 'dpdp-v1')}</code>
+        </div>
+        <div>
+          <span style="color: #15803d;">Submission Timestamp:</span><br>
+          <strong style="color: #166534;">${createdFormatted}</strong>
+        </div>
+        <div>
+          <span style="color: #15803d;">Client IP Address:</span><br>
+          <code style="background: #dcfce7; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${escapeHtml(item.ip_address || '127.0.0.1')}</code>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 0.5rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 0.85rem; font-weight: 600; color: #475569;">Update Status:</span>
+        <select class="form-control" style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.85rem; font-weight: 600;" onchange="updateInquiryStatus(${item.id}, this.value); closeInquiryDetailModal();">
+          <option value="new" ${item.status === 'new' ? 'selected' : ''}>🟡 New</option>
+          <option value="contacted" ${item.status === 'contacted' ? 'selected' : ''}>🔵 Contacted</option>
+          <option value="in_review" ${item.status === 'in_review' ? 'selected' : ''}>🟣 In Review</option>
+          <option value="completed" ${item.status === 'completed' ? 'selected' : ''}>🟢 Completed</option>
+        </select>
+      </div>
+      <button type="button" class="btn btn-outline" onclick="closeInquiryDetailModal()">Close</button>
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+}
+
+function closeInquiryDetailModal() {
+  const modal = document.getElementById('inquiryDetailModal');
+  if (modal) modal.style.display = 'none';
+}
+
 // Export Inquiries as CSV
 function exportInquiriesCSV() {
   if (!cachedInquiries || cachedInquiries.length === 0) {
@@ -729,7 +849,7 @@ function exportInquiriesCSV() {
     return;
   }
 
-  const headers = ['ID', 'Date', 'Full Name', 'Company', 'Email', 'Mobile', 'Variety', 'Quantity', 'Destination', 'Status', 'Message'];
+  const headers = ['ID', 'Date', 'Full Name', 'Company', 'Email', 'Mobile', 'Variety', 'Quantity', 'Destination', 'Status', 'Message', 'DPDP Consent', 'Consent Timestamp', 'Consent Version'];
   const rows = cachedInquiries.map(item => [
     item.id,
     new Date(item.created_at).toLocaleDateString(),
@@ -741,7 +861,10 @@ function exportInquiriesCSV() {
     `"${(item.quantity || '').replace(/"/g, '""')}"`,
     `"${(item.destination || '').replace(/"/g, '""')}"`,
     item.status || 'new',
-    `"${(item.message || '').replace(/"/g, '""')}"`
+    `"${(item.message || '').replace(/"/g, '""')}"`,
+    item.dpdp_consent !== false ? 'Granted' : 'Pending',
+    `"${item.consent_at || item.dpdp_consent_timestamp || ''}"`,
+    `"${item.consent_text_version || 'dpdp-v1'}"`
   ]);
 
   const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
@@ -771,6 +894,8 @@ window.loadAdminAuditLogs = loadAdminAuditLogs;
 window.loadAdminGallery = loadAdminGallery;
 window.syncAllAdminData = syncAllAdminData;
 window.switchTab = switchTab;
+window.viewInquiryDetails = viewInquiryDetails;
+window.closeInquiryDetailModal = closeInquiryDetailModal;
 
 // Multi-step 2FA login state
 let currentTempToken = null;
@@ -1375,21 +1500,64 @@ function initAdmin() {
     const fileDropZone = document.getElementById('fileDropZone');
     const chosenNameEl = document.getElementById('fileChosenName');
 
-    if (fileInput && chosenNameEl) {
+    if (fileInput) {
       fileInput.addEventListener('change', () => {
+        const previewBox = document.getElementById('fileChosenPreview');
+        const visualPrompt = document.getElementById('fileUploadVisual');
+        const previewImg = document.getElementById('filePreviewImg');
+        const previewName = document.getElementById('filePreviewName');
+        const previewSize = document.getElementById('filePreviewSize');
+
         if (fileInput.files && fileInput.files.length > 0) {
           const file = fileInput.files[0];
           const sizeKb = (file.size / 1024).toFixed(1);
           const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
           const displaySize = file.size > 1024 * 1024 ? `${sizeMb} MB` : `${sizeKb} KB`;
 
-          chosenNameEl.innerHTML = `✓ <strong>${escapeHtml(file.name)}</strong> (${displaySize})`;
-          chosenNameEl.style.display = 'inline-flex';
+          if (previewName) previewName.innerText = file.name;
+          if (previewSize) previewSize.innerText = displaySize;
+
+          if (file.type && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              if (previewImg) previewImg.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+          }
+
+          if (visualPrompt) visualPrompt.style.display = 'none';
+          if (previewBox) previewBox.style.display = 'flex';
+
+          if (chosenNameEl) {
+            chosenNameEl.innerHTML = `✓ <strong>${escapeHtml(file.name)}</strong> (${displaySize})`;
+            chosenNameEl.style.display = 'inline-flex';
+          }
+
+          const submitBtn = document.getElementById('uploadSubmitBtn');
+          if (submitBtn) {
+            submitBtn.style.animation = 'none';
+            setTimeout(() => { submitBtn.style.animation = 'btnAttention 0.6s ease'; }, 20);
+          }
         } else {
-          chosenNameEl.style.display = 'none';
-          chosenNameEl.innerHTML = '';
+          if (visualPrompt) visualPrompt.style.display = 'flex';
+          if (previewBox) previewBox.style.display = 'none';
+          if (previewImg) previewImg.src = '';
+          if (chosenNameEl) {
+            chosenNameEl.style.display = 'none';
+            chosenNameEl.innerHTML = '';
+          }
         }
       });
+
+      const removeBtn = document.getElementById('fileRemoveBtn');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          fileInput.value = '';
+          fileInput.dispatchEvent(new Event('change'));
+        });
+      }
     }
 
     if (fileDropZone && fileInput) {
@@ -1398,15 +1566,38 @@ function initAdmin() {
           e.preventDefault();
           e.stopPropagation();
           fileDropZone.classList.add('dragover');
+          const pillText = document.getElementById('dropPillText');
+          const promptEl = document.getElementById('fileUploadPrompt');
+          if (pillText) pillText.innerText = '🎯 Release to drop!';
+          if (promptEl) promptEl.innerHTML = '<span style="color: #047857; font-weight: 800;">Release to drop photo!</span>';
         });
       });
 
-      ['dragleave', 'drop'].forEach(eventName => {
+      ['dragleave'].forEach(eventName => {
         fileDropZone.addEventListener(eventName, (e) => {
           e.preventDefault();
           e.stopPropagation();
           fileDropZone.classList.remove('dragover');
+          const pillText = document.getElementById('dropPillText');
+          const promptEl = document.getElementById('fileUploadPrompt');
+          if (pillText) pillText.innerText = 'Direct to Hub';
+          if (promptEl) promptEl.innerHTML = '<span class="file-upload-highlight">Click to browse</span> or <span class="drag-text">drag &amp; drop here</span>';
         });
+      });
+
+      fileDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fileDropZone.classList.remove('dragover');
+        const pillText = document.getElementById('dropPillText');
+        const promptEl = document.getElementById('fileUploadPrompt');
+        if (pillText) pillText.innerText = 'Direct to Hub';
+        if (promptEl) promptEl.innerHTML = '<span class="file-upload-highlight">Click to browse</span> or <span class="drag-text">drag &amp; drop here</span>';
+
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          fileInput.files = e.dataTransfer.files;
+          fileInput.dispatchEvent(new Event('change'));
+        }
       });
     }
 
@@ -1488,6 +1679,12 @@ function initAdmin() {
         if (uploadSuccess) {
           showToast('Image uploaded and published successfully!', 'success');
           uploadForm.reset();
+          const previewBox = document.getElementById('fileChosenPreview');
+          const visualPrompt = document.getElementById('fileUploadVisual');
+          const previewImg = document.getElementById('filePreviewImg');
+          if (previewBox) previewBox.style.display = 'none';
+          if (visualPrompt) visualPrompt.style.display = 'flex';
+          if (previewImg) previewImg.src = '';
           if (chosenNameEl) {
             chosenNameEl.style.display = 'none';
             chosenNameEl.innerHTML = '';
