@@ -1,5 +1,5 @@
 # Build Output
-dist/
+# dist/ is tracked for static deployments (Cloudflare Pages, etc.)
 build/
 
 # Dependencies
