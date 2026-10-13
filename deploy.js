@@ -20,7 +20,7 @@ try {
   // Create temporary git repository inside dist/
   execSync('git init', { cwd: distDir, stdio: 'pipe' });
   execSync('git add -A', { cwd: distDir, stdio: 'pipe' });
-  execSync('git commit -m "Deploy to GitHub Pages [skip ci]"', { cwd: distDir, stdio: 'pipe' });
+  execSync('git commit -m "deploy: update static production build"', { cwd: distDir, stdio: 'pipe' });
   execSync('git branch -M gh-pages', { cwd: distDir, stdio: 'pipe' });
 
   for (const remote of remotes) {
