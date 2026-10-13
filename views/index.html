@@ -9,6 +9,8 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>VPSA YOGA | Fresh Banana Wholesale &amp; Cold-Chain Logistics</title>
   <meta name="description" content="Leading South India wholesale banana supplier and cold-chain logistics operator. 20+ years family expertise supplying farm-fresh Red banana, Robusta, Nendran, Yelakki, Poovan, Karpuravalli, Rasthali & Monthan.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="/css/styles.css?v=14.0">
   <link rel="icon" type="image/png" href="/images/logo/vpsa-yoga-logo.png">
   <script>
@@ -22,7 +24,7 @@
   <!-- Top Notification Bar -->
   <div class="top-bar">
     <div class="container top-bar-content">
-      <div>Wholesale &amp; Cold-Chain Banana Supply Across South India &amp; Global Export</div>
+      <div data-i18n="top_quality">Wholesale &amp; Cold-Chain Banana Supply Across South India &amp; Global Export</div>
       <div class="top-bar-links">
         <a href="https://whatsapp.com/channel/0029Vb7kw5cLNSZzMtTqSy0N" target="_blank" rel="noopener noreferrer" class="top-bar-link">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: -3px; display: inline-block;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -51,130 +53,34 @@
 
       <nav>
         <ul class="nav-menu" id="navMenu">
-          <li><a href="/" class="nav-link active">Home</a></li>
-          <li><a href="/about" class="nav-link">About Us</a></li>
-          <li><a href="/products" class="nav-link">Banana Varieties</a></li>
-          <li><a href="/gallery" class="nav-link">Live Gallery</a></li>
-          <li><a href="/contact" class="nav-link">Contact Us</a></li>
-          <li class="mobile-nav-cta-item"><a href="/contact" class="btn btn-primary btn-sm" style="width:100%; justify-content:center; margin-top:0.5rem;">Get Wholesale Quote</a></li>
+          <li><a href="/" class="nav-link active" data-i18n="nav_home">Home</a></li>
+          <li><a href="/about" class="nav-link" data-i18n="nav_about">About Us</a></li>
+          <li><a href="/products" class="nav-link" data-i18n="nav_products">Banana Varieties</a></li>
+          <li><a href="/gallery" class="nav-link" data-i18n="nav_gallery">Live Gallery</a></li>
+          <li><a href="/contact" class="nav-link" data-i18n="nav_contact">Contact Us</a></li>
+          <li class="mobile-nav-cta-item"><a href="/contact" class="btn btn-primary btn-sm" style="width:100%; justify-content:center; margin-top:0.5rem;" data-i18n="nav_cta">Get Wholesale Quote</a></li>
+          <li class="mobile-lang-item">
+            <button type="button" class="mobile-lang-btn" id="mobileLangTrigger">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-languages"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+              <span id="mobileLangLabel">Language: English</span>
+            </button>
+          </li>
         </ul>
       </nav>
 
       <div class="nav-actions">
-                                <!-- Custom Language Picker with Crisp SVG Flags -->
-        <div class="custom-lang-picker" id="customLangPicker">
-          <button class="lang-picker-btn" id="langPickerTrigger" type="button" aria-label="Language Selector">
-            <span class="lang-flag-current" id="currentLangFlag">
-              <svg class="lang-flag-svg" viewBox="0 0 60 30" aria-hidden="true"><clipPath id="uk_c_top"><path d="M0 0v30h60V0z"/></clipPath><clipPath id="uk_d_top"><path d="M30 15h30v15zM30 15v15H0zM30 15H0V0zM30 15V0h30z"/></clipPath><g clip-path="url(#uk_c_top)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" clip-path="url(#uk_d_top)" stroke="#C8102E" stroke-width="4"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#C8102E" stroke-width="6"/></g></svg>
-            </span>
-            <span class="lang-current-name" id="currentLangLabel">English</span>
-            <span class="lang-arrow">▾</span>
-          </button>
-          <div class="lang-picker-dropdown" id="langPickerDropdown">
-            <div class="lang-category-label">Indian Languages</div>
-            <button type="button" class="lang-btn-item active" data-lang="en" data-name="English" data-flag="gb">
-              <svg class="lang-flag-svg" viewBox="0 0 60 30" aria-hidden="true"><clipPath id="uk_c_opt"><path d="M0 0v30h60V0z"/></clipPath><clipPath id="uk_d_opt"><path d="M30 15h30v15zM30 15v15H0zM30 15H0V0zM30 15V0h30z"/></clipPath><g clip-path="url(#uk_c_opt)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" clip-path="url(#uk_d_opt)" stroke="#C8102E" stroke-width="4"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#C8102E" stroke-width="6"/></g></svg>
-              <span>English</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="ta" data-name="தமிழ்" data-flag="in">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="4.8" fill="none" stroke="#000088" stroke-width="0.9"/><circle cx="30" cy="20" r="1.1" fill="#000088"/></svg>
-              <span>தமிழ் (Tamil)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="hi" data-name="हिंदी" data-flag="in">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="4.8" fill="none" stroke="#000088" stroke-width="0.9"/><circle cx="30" cy="20" r="1.1" fill="#000088"/></svg>
-              <span>हिंदी (Hindi)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="ml" data-name="മലയാളം" data-flag="in">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="4.8" fill="none" stroke="#000088" stroke-width="0.9"/><circle cx="30" cy="20" r="1.1" fill="#000088"/></svg>
-              <span>മലയാളം (Malayalam)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="te" data-name="తెలుగు" data-flag="in">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="4.8" fill="none" stroke="#000088" stroke-width="0.9"/><circle cx="30" cy="20" r="1.1" fill="#000088"/></svg>
-              <span>తెలుగు (Telugu)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="kn" data-name="ಕನ್ನಡ" data-flag="in">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="4.8" fill="none" stroke="#000088" stroke-width="0.9"/><circle cx="30" cy="20" r="1.1" fill="#000088"/></svg>
-              <span>ಕನ್ನಡ (Kannada)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="mr" data-name="मराठी" data-flag="in">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="4.8" fill="none" stroke="#000088" stroke-width="0.9"/><circle cx="30" cy="20" r="1.1" fill="#000088"/></svg>
-              <span>मराठी (Marathi)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="bn" data-name="বাংলা" data-flag="in">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="4.8" fill="none" stroke="#000088" stroke-width="0.9"/><circle cx="30" cy="20" r="1.1" fill="#000088"/></svg>
-              <span>বাংলা (Bengali)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="gu" data-name="ગુજરાતી" data-flag="in">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="4.8" fill="none" stroke="#000088" stroke-width="0.9"/><circle cx="30" cy="20" r="1.1" fill="#000088"/></svg>
-              <span>ગુજરાતી (Gujarati)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="pa" data-name="ਪੰਜਾਬੀ" data-flag="in">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="4.8" fill="none" stroke="#000088" stroke-width="0.9"/><circle cx="30" cy="20" r="1.1" fill="#000088"/></svg>
-              <span>ਪੰਜਾਬੀ (Punjabi)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="ur" data-name="اردو" data-flag="in">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FF9933"/><rect y="13.33" width="60" height="13.34" fill="#FFFFFF"/><rect y="26.67" width="60" height="13.33" fill="#138808"/><circle cx="30" cy="20" r="4.8" fill="none" stroke="#000088" stroke-width="0.9"/><circle cx="30" cy="20" r="1.1" fill="#000088"/></svg>
-              <span>اردو (Urdu)</span>
-            </button>
-            
-            <div class="lang-category-label" style="margin-top: 0.5rem;">International</div>
-            <button type="button" class="lang-btn-item" data-lang="ar" data-name="العربية" data-flag="ae">
-              <svg class="lang-flag-svg" viewBox="0 0 60 30" aria-hidden="true"><rect width="60" height="10" fill="#00732f"/><rect y="10" width="60" height="10" fill="#ffffff"/><rect y="20" width="60" height="10" fill="#000000"/><rect width="18" height="30" fill="#ff0000"/></svg>
-              <span>العربية (Arabic)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="es" data-name="Español" data-flag="es">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="10" fill="#AA151B"/><rect y="10" width="60" height="20" fill="#F1BF00"/><rect y="30" width="60" height="10" fill="#AA151B"/></svg>
-              <span>Español (Spanish)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="fr" data-name="Français" data-flag="fr">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="20" height="40" fill="#002654"/><rect x="20" width="20" height="40" fill="#FFFFFF"/><rect x="40" width="20" height="40" fill="#CE1126"/></svg>
-              <span>Français (French)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="de" data-name="Deutsch" data-flag="de">
-              <svg class="lang-flag-svg" viewBox="0 0 60 36" aria-hidden="true"><rect width="60" height="12" fill="#000000"/><rect y="12" width="60" height="12" fill="#DD0000"/><rect y="24" width="60" height="12" fill="#FFCC00"/></svg>
-              <span>Deutsch (German)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="zh-CN" data-name="简体中文" data-flag="cn">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#DE2910"/><polygon points="10,6 12,12 8,8 12,8 8,12" fill="#FFDE00"/></svg>
-              <span>简体中文 (Chinese)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="ja" data-name="日本語" data-flag="jp">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#FFFFFF"/><circle cx="30" cy="20" r="11" fill="#BC002D"/></svg>
-              <span>日本語 (Japanese)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="ru" data-name="Русский" data-flag="ru">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="13.33" fill="#FFFFFF"/><rect y="13.33" width="60" height="13.34" fill="#0039A6"/><rect y="26.67" width="60" height="13.33" fill="#D52B1E"/></svg>
-              <span>Русский (Russian)</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="pt" data-name="Português" data-flag="pt">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="24" height="40" fill="#006600"/><rect x="24" width="36" height="40" fill="#FF0000"/><circle cx="24" cy="20" r="7" fill="#FFFF00"/></svg>
-              <span>Português</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="it" data-name="Italiano" data-flag="it">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="20" height="40" fill="#009246"/><rect x="20" width="20" height="40" fill="#FFFFFF"/><rect x="40" width="20" height="40" fill="#CE2B37"/></svg>
-              <span>Italiano</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="ms" data-name="Bahasa Melayu" data-flag="my">
-              <svg class="lang-flag-svg" viewBox="0 0 60 30" aria-hidden="true"><rect width="60" height="30" fill="#CC0000"/><rect y="4.28" width="60" height="4.28" fill="#FFFFFF"/><rect y="12.84" width="60" height="4.28" fill="#FFFFFF"/><rect y="21.4" width="60" height="4.28" fill="#FFFFFF"/><rect width="30" height="16" fill="#000066"/><circle cx="15" cy="8" r="5" fill="#FFCC00"/></svg>
-              <span>Bahasa Melayu</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="id" data-name="Bahasa Indonesia" data-flag="id">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="20" fill="#FF0000"/><rect y="20" width="60" height="20" fill="#FFFFFF"/></svg>
-              <span>Bahasa Indonesia</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="vi" data-name="Tiếng Việt" data-flag="vn">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#DA251D"/><polygon points="30,10 33,21 21,14 39,14 27,21" fill="#FFFF00"/></svg>
-              <span>Tiếng Việt</span>
-            </button>
-            <button type="button" class="lang-btn-item" data-lang="th" data-name="ไทย" data-flag="th">
-              <svg class="lang-flag-svg" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="6.67" fill="#A51931"/><rect y="6.67" width="60" height="6.67" fill="#F4F5F8"/><rect y="13.34" width="60" height="13.32" fill="#2D2A4A"/><rect y="26.66" width="60" height="6.67" fill="#F4F5F8"/><rect y="33.33" width="60" height="6.67" fill="#A51931"/></svg>
-              <span>ไทย (Thai)</span>
-            </button>
-          </div>
-        </div>
+        <!-- GitMastery-Style Quick Language Selector Trigger -->
+        <button class="lang-modal-trigger" id="langModalTrigger" type="button" aria-haspopup="dialog" aria-expanded="false" title="Change Language" aria-label="Change Language">
+          <span class="lang-trigger-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-languages"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+          </span>
+          <span class="lang-trigger-flag" id="currentLangFlag"></span>
+          <span class="lang-trigger-name" id="currentLangLabel">English</span>
+          <span class="lang-trigger-caret">▾</span>
+        </button>
 
-        <div id="google_translate_element"></div>
-        <a href="/contact" class="btn btn-primary btn-sm nav-desktop-cta">Get Wholesale Quote</a>
+        <div id="google_translate_element" style="display:none;"></div>
+        <a href="/contact" class="btn btn-primary btn-sm nav-desktop-cta" data-i18n="nav_cta">Get Wholesale Quote</a>
 
         <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle menu">☰</button>
       </div>
@@ -190,32 +96,32 @@
 
     <div class="container hero-grid" style="grid-template-columns: 1fr; max-width: 960px; text-align: center; margin: 0 auto;">
       <div class="hero-content" style="align-items: center;">
-        <div class="hero-badge">South India's Premier Banana Trading &amp; Logistics Hub</div>
+        <div class="hero-badge" data-i18n="hero_badge">South India's Premier Banana Trading &amp; Logistics Hub</div>
         <h1 class="hero-title" style="font-size: clamp(2.4rem, 5vw, 3.8rem); line-height: 1.15; margin: 1.25rem 0;">
-          <span>FRESH BANANA,</span><br>
-          <span class="highlight">DELIVERED RELIABLE AND ON TIME</span>
+          <span data-i18n="hero_title_1">FRESH BANANA,</span><br>
+          <span class="highlight" data-i18n="hero_title_2">DELIVERED RELIABLE AND ON TIME</span>
         </h1>
-        <p class="hero-subtitle" style="max-width: 760px; margin: 0 auto 2.25rem; font-size: 1.15rem; line-height: 1.8;">
+        <p class="hero-subtitle" style="max-width: 760px; margin: 0 auto 2.25rem; font-size: 1.15rem; line-height: 1.8;" data-i18n="hero_subtitle">
           Direct sourcing from trusted farmers all over south india. Supplying premium quality bananas to wholesalers, retailers, and distributors worldwide with dedicated 13-14°C cold-chain logistics.
         </p>
 
         <div class="hero-actions" style="justify-content: center; margin-bottom: 3.5rem;">
-          <a href="/products" class="btn btn-accent btn-lg">Explore Banana Varieties</a>
-          <a href="/contact" class="btn btn-outline-white btn-lg">Contact Our Desk →</a>
+          <a href="/products" class="btn btn-accent btn-lg" data-i18n="hero_cta_explore">Explore Banana Varieties</a>
+          <a href="/contact" class="btn btn-outline-white btn-lg" data-i18n="hero_cta_contact">Contact Our Desk →</a>
         </div>
 
         <div class="hero-stats" style="width: 100%; max-width: 820px; margin: 0 auto;">
           <div class="hero-stat-item">
-            <div class="hero-stat-number">20+</div>
-            <div class="hero-stat-label">Years Family Expertise</div>
+            <div class="hero-stat-number" data-i18n="hero_stat_1_num">20+</div>
+            <div class="hero-stat-label" data-i18n="hero_stat_1_lbl">Years Family Expertise</div>
           </div>
           <div class="hero-stat-item">
-            <div class="hero-stat-number">13-14°C</div>
-            <div class="hero-stat-label">Reefer Cold Chain</div>
+            <div class="hero-stat-number" data-i18n="hero_stat_2_num">13-14°C</div>
+            <div class="hero-stat-label" data-i18n="hero_stat_2_lbl">Reefer Cold Chain</div>
           </div>
           <div class="hero-stat-item">
-            <div class="hero-stat-number">Pan-India</div>
-            <div class="hero-stat-label">&amp; Export Network</div>
+            <div class="hero-stat-number" data-i18n="hero_stat_3_num">Pan-India</div>
+            <div class="hero-stat-label" data-i18n="hero_stat_3_lbl">&amp; Export Network</div>
           </div>
         </div>
       </div>
@@ -227,24 +133,24 @@
     <div class="container">
       <div class="section-header">
         <span class="section-tag">Fresh Banana Varieties</span>
-        <h2 class="section-title">Our Premium Banana Varieties</h2>
-        <p class="section-desc">Hand-picked, scientifically graded, and cold-chain transported banana varieties sourced directly from trusted farmers all over south india. Click any variety to view full specifications &amp; health profile.</p>
+        <h2 class="section-title" data-i18n="products_title">Our Premium Banana Varieties</h2>
+        <p class="section-desc" data-i18n="products_sub">Hand-picked, scientifically graded, and cold-chain transported banana varieties sourced directly from trusted farmers all over south india. Click any variety to view full specifications &amp; health profile.</p>
       </div>
 
       <div class="products-grid">
         <!-- Red Banana -->
         <div class="product-card" data-variety="red-banana" title="Click to view Red Banana details">
           <div class="product-img-wrapper">
-            <img src="/images/products/red-banana.jpg" alt="Red Banana" class="product-img">
-            <span class="product-badge">Superfruit</span>
+            <img src="/images/products/red-banana.jpg" alt="Red Banana" class="product-img" loading="lazy" decoding="async">
+            <span class="product-badge" data-i18n="v_red_badge">Superfruit</span>
           </div>
           <div class="product-body">
-            <h3 class="product-title">Red Banana (செவ்வாழை)</h3>
-            <div class="product-tagline">High Potassium &amp; Beta-Carotene</div>
-            <p class="product-benefits">Rich in potassium, magnesium, vitamin B6, and higher levels of vitamin C and beta-carotene than yellow bananas.</p>
+            <h3 class="product-title" data-i18n="v_red_name">Red Banana (செவ்வாழை)</h3>
+            <div class="product-tagline" data-i18n="v_red_tag">High Potassium &amp; Beta-Carotene</div>
+            <p class="product-benefits" data-i18n="v_red_desc">Rich in potassium, magnesium, vitamin B6, and higher levels of vitamin C and beta-carotene than yellow bananas.</p>
             <div class="product-spec-list">
-              <div class="product-spec-item"><span class="product-spec-label">Shelf Life:</span><span class="product-spec-val">6-8 Days @ 13-14°C</span></div>
-              <div class="product-spec-item"><span class="product-spec-label">Ideal Temp:</span><span class="product-spec-val">13.5°C</span></div>
+              <div class="product-spec-item"><span class="product-spec-label" data-i18n="lbl_shelf_life">Shelf Life:</span><span class="product-spec-val" data-i18n="v_red_shelf">6-8 Days @ 13-14°C</span></div>
+              <div class="product-spec-item"><span class="product-spec-label" data-i18n="lbl_ideal_temp">Ideal Temp:</span><span class="product-spec-val" data-i18n="v_red_temp">13.5°C</span></div>
             </div>
           </div>
         </div>
@@ -252,16 +158,16 @@
         <!-- Poovan Banana -->
         <div class="product-card" data-variety="poovan-banana" title="Click to view Poovan Banana details">
           <div class="product-img-wrapper">
-            <img src="/images/products/poovan-banana.jpg" alt="Poovan Banana" class="product-img">
-            <span class="product-badge">Digestive Health</span>
+            <img src="/images/products/poovan-banana.jpg" alt="Poovan Banana" class="product-img" loading="lazy" decoding="async">
+            <span class="product-badge" data-i18n="v_poovan_badge">Digestive Health</span>
           </div>
           <div class="product-body">
-            <h3 class="product-title">Poovan Banana (பூவன்)</h3>
-            <div class="product-tagline">Gentle on Stomach &amp; High Fiber</div>
-            <p class="product-benefits">Rich in dietary fiber, making it gentle on the stomach and exceptionally easy to digest.</p>
+            <h3 class="product-title" data-i18n="v_poovan_name">Poovan Banana (பூவன்)</h3>
+            <div class="product-tagline" data-i18n="v_poovan_tag">Gentle on Stomach &amp; High Fiber</div>
+            <p class="product-benefits" data-i18n="v_poovan_desc">Rich in dietary fiber, making it gentle on the stomach and exceptionally easy to digest.</p>
             <div class="product-spec-list">
-              <div class="product-spec-item"><span class="product-spec-label">Shelf Life:</span><span class="product-spec-val">7-10 Days @ 13-14°C</span></div>
-              <div class="product-spec-item"><span class="product-spec-label">Ideal Temp:</span><span class="product-spec-val">13.5°C</span></div>
+              <div class="product-spec-item"><span class="product-spec-label" data-i18n="lbl_shelf_life">Shelf Life:</span><span class="product-spec-val" data-i18n="v_poovan_shelf">7-10 Days @ 13-14°C</span></div>
+              <div class="product-spec-item"><span class="product-spec-label" data-i18n="lbl_ideal_temp">Ideal Temp:</span><span class="product-spec-val" data-i18n="v_poovan_temp">13.5°C</span></div>
             </div>
           </div>
         </div>
@@ -269,16 +175,16 @@
         <!-- Nendran Banana -->
         <div class="product-card" data-variety="nendran-banana" title="Click to view Nendran Banana details">
           <div class="product-img-wrapper">
-            <img src="/images/products/nendran-banana.jpg" alt="Nendran Banana" class="product-img">
-            <span class="product-badge">Specialty</span>
+            <img src="/images/products/nendran-banana.jpg" alt="Nendran Banana" class="product-img" loading="lazy" decoding="async">
+            <span class="product-badge" data-i18n="v_nendran_badge">Specialty</span>
           </div>
           <div class="product-body">
-            <h3 class="product-title">Nendran Banana (நேந்திரன்)</h3>
-            <div class="product-tagline">Resistant Starch &amp; Heart Health</div>
-            <p class="product-benefits">High in resistant starch, dietary fiber, potassium, and Vitamin B6, beneficial for gut and heart health.</p>
+            <h3 class="product-title" data-i18n="v_nendran_name">Nendran Banana (நேந்திரன்)</h3>
+            <div class="product-tagline" data-i18n="v_nendran_tag">Resistant Starch &amp; Heart Health</div>
+            <p class="product-benefits" data-i18n="v_nendran_desc">High in resistant starch, dietary fiber, potassium, and Vitamin B6, beneficial for gut and heart health.</p>
             <div class="product-spec-list">
-              <div class="product-spec-item"><span class="product-spec-label">Shelf Life:</span><span class="product-spec-val">8-12 Days @ 13-14°C</span></div>
-              <div class="product-spec-item"><span class="product-spec-label">Ideal Temp:</span><span class="product-spec-val">13.5°C</span></div>
+              <div class="product-spec-item"><span class="product-spec-label" data-i18n="lbl_shelf_life">Shelf Life:</span><span class="product-spec-val" data-i18n="v_nendran_shelf">8-12 Days @ 13-14°C</span></div>
+              <div class="product-spec-item"><span class="product-spec-label" data-i18n="lbl_ideal_temp">Ideal Temp:</span><span class="product-spec-val" data-i18n="v_nendran_temp">13.5°C</span></div>
             </div>
           </div>
         </div>
@@ -286,23 +192,23 @@
         <!-- Robusta Banana -->
         <div class="product-card" data-variety="robusta-banana" title="Click to view Robusta Cavendish details">
           <div class="product-img-wrapper">
-            <img src="/images/products/robusta-banana.jpg" alt="Robusta Banana" class="product-img">
-            <span class="product-badge">Export Leader</span>
+            <img src="/images/products/robusta-banana.jpg" alt="Robusta Banana" class="product-img" loading="lazy" decoding="async">
+            <span class="product-badge" data-i18n="v_robusta_badge">Export Leader</span>
           </div>
           <div class="product-body">
-            <h3 class="product-title">Robusta Cavendish (ரோபஸ்டா)</h3>
-            <div class="product-tagline">Sweet, Soft &amp; Creamy Texture</div>
-            <p class="product-benefits">Medium-to-large Cavendish banana variety known for its sweet flavor, creamy texture, and thick green peel.</p>
+            <h3 class="product-title" data-i18n="v_robusta_name">Robusta Cavendish (ரோபஸ்டா)</h3>
+            <div class="product-tagline" data-i18n="v_robusta_tag">Sweet, Soft &amp; Creamy Texture</div>
+            <p class="product-benefits" data-i18n="v_robusta_desc">Medium-to-large Cavendish banana variety known for its sweet flavor, creamy texture, and thick green peel.</p>
             <div class="product-spec-list">
-              <div class="product-spec-item"><span class="product-spec-label">Shelf Life:</span><span class="product-spec-val">14-21 Days @ 13.5°C</span></div>
-              <div class="product-spec-item"><span class="product-spec-label">Ideal Temp:</span><span class="product-spec-val">13.2°C</span></div>
+              <div class="product-spec-item"><span class="product-spec-label" data-i18n="lbl_shelf_life">Shelf Life:</span><span class="product-spec-val" data-i18n="v_robusta_shelf">14-21 Days @ 13.5°C</span></div>
+              <div class="product-spec-item"><span class="product-spec-label" data-i18n="lbl_ideal_temp">Ideal Temp:</span><span class="product-spec-val" data-i18n="v_robusta_temp">13.2°C</span></div>
             </div>
           </div>
         </div>
       </div>
 
       <div style="text-align: center; margin-top: 2.5rem;">
-        <a href="/products" class="btn btn-primary btn-lg">Browse All 8 Banana Varieties →</a>
+        <a href="/products" class="btn btn-primary btn-lg" data-i18n="btn_browse_all">Browse All 8 Banana Varieties →</a>
       </div>
     </div>
   </section>
@@ -311,33 +217,33 @@
   <section class="section" style="background-color: #ffffff;">
     <div class="container about-hero-grid">
       <div>
-        <span class="section-tag">Who We Are</span>
+        <span class="section-tag" data-i18n="about_who_title">Who We Are</span>
         <h2 class="section-title" style="margin-bottom: 1rem;">Decades of Agronomy Blended with Modern Supply Logistics</h2>
-        <p style="color: var(--text-muted); font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+        <p style="color: var(--text-muted); font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;" data-i18n="about_who_desc">
           We are VPSA YOGA, a Tamil Nadu-based wholesale fruit trading and logistics company. Direct sourcing from trusted farmers all over south india, we have grown into a reliable supply partner for hundreds of clients across India and export markets.
         </p>
         
         <div style="background-color: #f0fdf4; border-left: 4px solid var(--primary); padding: 1.25rem; border-radius: 6px; margin-bottom: 2rem;">
-          <h4 style="color: var(--primary-dark); font-size: 1.1rem; margin-bottom: 0.35rem;">Our Promise</h4>
-          <p style="color: #166534; font-size: 0.95rem; font-style: italic;">
+          <h4 style="color: var(--primary-dark); font-size: 1.1rem; margin-bottom: 0.35rem;" data-i18n="about_promise_title">Our Promise</h4>
+          <p style="color: #166534; font-size: 0.95rem; font-style: italic;" data-i18n="about_promise_desc">
             "Freshness. Fair Price. On-Time Delivery. That's not just our tagline — it's how our family has done business for 20+ years."
           </p>
         </div>
 
-        <a href="/about" class="btn btn-outline">Read Full Company Story →</a>
+        <a href="/about" class="btn btn-outline" data-i18n="btn_read_story">Read Full Company Story →</a>
       </div>
 
       <div class="about-badge-card">
-        <div class="founder-tag">Led by the Next Generation</div>
+        <div class="founder-tag" data-i18n="about_leader_title">Led by the Next Generation</div>
         <h3 class="founder-name">Megalan A</h3>
-        <div class="founder-creds">Freight Forwarding &amp; Cold-Chain Operations</div>
-        <p style="color: #e2e8f0; font-size: 0.925rem; line-height: 1.65; margin-bottom: 1.5rem;">
+        <div class="founder-creds" data-i18n="about_founder_creds">Freight Forwarding &amp; Cold-Chain Operations</div>
+        <p style="color: #e2e8f0; font-size: 0.925rem; line-height: 1.65; margin-bottom: 1.5rem;" data-i18n="about_founder_quote">
           "Combining traditional trading expertise with modern cold-chain logistics management, digital traceability, and quality assurance to deliver unprecedented reliability to our wholesale and export partners."
         </p>
         <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-          <span class="security-badge">🌱 Direct Farm Sourced</span>
-          <span class="security-badge">❄️ Reefer 13-14°C</span>
-          <span class="security-badge">📦 Export Grade</span>
+          <span class="security-badge" data-i18n="badge_farm">🌱 Direct Farm Sourced</span>
+          <span class="security-badge" data-i18n="badge_reefer">❄️ Reefer 13-14°C</span>
+          <span class="security-badge" data-i18n="badge_export">📦 Export Grade</span>
         </div>
       </div>
     </div>
@@ -454,11 +360,11 @@
 
       <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.75rem 1rem; margin-top: 1.5rem; font-size: 0.785rem; color: #94a3b8; display: flex; align-items: center; gap: 0.65rem;">
         <span style="font-size: 1.1rem; line-height: 1;">🛡️</span>
-        <div><strong style="color: #cbd5e1;">Anti-Fraud Advisory:</strong> VPSA YOGA will never request banking passwords, OTPs, UPI PINs, or upfront unverified payments via unsolicited phone calls or SMS. Verify all official communications through <a href="mailto:info@vpsayoga.in" style="color: #38bdf8; text-decoration: underline;">info@vpsayoga.in</a> or this official domain.</div>
+        <div><strong style="color: #cbd5e1;" data-i18n="anti_fraud_title">Anti-Fraud Advisory:</strong> <span data-i18n="anti_fraud_desc">VPSA YOGA will never request banking passwords, OTPs, UPI PINs, or upfront unverified payments via unsolicited phone calls or SMS. Verify all official communications through <a href="mailto:info@vpsayoga.in" style="color: #38bdf8; text-decoration: underline;">info@vpsayoga.in</a> or this official domain.</span></div>
       </div>
 
       <div class="footer-bottom">
-        <div>© 2026 VPSA YOGA. All rights reserved. | <a href="/privacy" style="color: #cbd5e1; text-decoration: underline;">Privacy Policy</a></div>
+        <div><span data-i18n="footer_rights">© 2026 VPSA YOGA. All rights reserved.</span> | <a href="/privacy" style="color: #cbd5e1; text-decoration: underline;">Privacy Policy</a></div>
         <div style="display: flex; gap: 0.75rem; align-items: center;">
           <span class="security-badge">🌱 100% Direct Farm Sourced</span>
         </div>
@@ -467,7 +373,8 @@
   </footer>
 
   <!-- Scripts -->
-  <script src="/js/main.js?v=14.0"></script>
-  <script src="/js/contact.js?v=14.0"></script>
+  <script src="/js/i18n.js?v=14.0" defer></script>
+  <script src="/js/main.js?v=14.0" defer></script>
+  <script src="/js/contact.js?v=14.0" defer></script>
 </body>
 </html>

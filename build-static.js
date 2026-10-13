@@ -54,7 +54,7 @@ for (const targetDir of targetDirs) {
     let content = fs.readFileSync(path.join(viewsDir, file), 'utf8');
 
     // Inline every referenced script directly so no external .js files are required
-    content = content.replace(/<script\s+src="(?:\/|\.\/)?(?:public\/)?js\/([a-zA-Z0-9_\-\.]+)\.js(?:\?[^"]*)?"><\/script>/gi, (match, scriptName) => {
+    content = content.replace(/<script\s+[^>]*src="(?:\/|\.\/)?(?:public\/)?js\/([a-zA-Z0-9_\-\.]+)\.js(?:\?[^"]*)?"[^>]*><\/script>/gi, (match, scriptName) => {
       const scriptFile = path.join(publicDir, 'js', `${scriptName}.js`);
       if (fs.existsSync(scriptFile)) {
         const scriptCode = fs.readFileSync(scriptFile, 'utf8');

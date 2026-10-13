@@ -602,42 +602,58 @@ function openVarietyModal(varietyKey) {
     document.body.appendChild(modal);
   }
 
+  const t = (k, fallback) => (typeof window.vpsaGetTranslation === 'function' ? window.vpsaGetTranslation(k) : null) || fallback;
+  const shortKey = (variety.id || varietyKey || '').replace('-banana', '').replace('-', '_');
+  const badge = t('v_' + shortKey + '_badge', variety.badge);
+  const name = t('v_' + shortKey + '_name', variety.name);
+  const tagline = t('v_' + shortKey + '_tag', variety.tagline);
+  const description = t('v_' + shortKey + '_desc', variety.description);
+  const ideal_temp = t('v_' + shortKey + '_temp', variety.ideal_temp);
+  const shelf_life = t('v_' + shortKey + '_shelf', variety.shelf_life);
+  const taste_profile = t('v_' + shortKey + '_taste', variety.taste_profile);
+  const packing = t('v_' + shortKey + '_packing', variety.packing);
+  const lbl_temp = t('lbl_ideal_temp', 'Ideal Storage Temp');
+  const lbl_shelf = t('lbl_shelf_life', 'Shelf Life');
+  const lbl_taste = t('lbl_taste_profile', 'Taste Profile');
+  const lbl_packing = t('lbl_std_packing', 'Standard Packaging');
+  const btn_enquire = t('btn_enquire_variety', 'Enquire This Variety →');
+
   modal.innerHTML = `
     <div class="variety-modal-dialog">
       <button type="button" class="variety-modal-close" onclick="closeVarietyModal()" aria-label="Close modal">&times;</button>
       
       <div class="variety-modal-img-col">
-        <img src="${variety.image}" alt="${variety.name}" class="variety-modal-img" onerror="this.src='/images/logo/vpsa-yoga-logo.png'">
+        <img src="${variety.image}" alt="${name}" class="variety-modal-img" onerror="this.src='/images/logo/vpsa-yoga-logo.png'">
       </div>
 
       <div class="variety-modal-content">
-        <span class="variety-modal-badge">${variety.badge}</span>
-        <h3 class="variety-modal-title">${variety.name}</h3>
-        <div class="variety-modal-tagline">${variety.tagline}</div>
-        <p class="variety-modal-desc">${variety.description}</p>
+        <span class="variety-modal-badge">${badge}</span>
+        <h3 class="variety-modal-title">${name}</h3>
+        <div class="variety-modal-tagline">${tagline}</div>
+        <p class="variety-modal-desc">${description}</p>
 
         <div class="variety-modal-specs-grid">
           <div class="variety-spec-card">
-            <span class="variety-spec-k">Ideal Storage Temp</span>
-            <span class="variety-spec-v">❄️ ${variety.ideal_temp}</span>
+            <span class="variety-spec-k">${lbl_temp}</span>
+            <span class="variety-spec-v">❄️ ${ideal_temp}</span>
           </div>
           <div class="variety-spec-card">
-            <span class="variety-spec-k">Shelf Life</span>
-            <span class="variety-spec-v">⏱️ ${variety.shelf_life}</span>
+            <span class="variety-spec-k">${lbl_shelf}</span>
+            <span class="variety-spec-v">⏱️ ${shelf_life}</span>
           </div>
           <div class="variety-spec-card">
-            <span class="variety-spec-k">Taste Profile</span>
-            <span class="variety-spec-v">🍌 ${variety.taste_profile}</span>
+            <span class="variety-spec-k">${lbl_taste}</span>
+            <span class="variety-spec-v">🍌 ${taste_profile}</span>
           </div>
           <div class="variety-spec-card">
-            <span class="variety-spec-k">Standard Packaging</span>
-            <span class="variety-spec-v">📦 ${variety.packing}</span>
+            <span class="variety-spec-k">${lbl_packing}</span>
+            <span class="variety-spec-v">📦 ${packing}</span>
           </div>
         </div>
 
         <div class="variety-modal-actions">
           <button type="button" class="btn btn-primary btn-sm" style="flex: 1; justify-content: center;" onclick="triggerVarietyEnquiry('${variety.name}')">
-            Enquire This Variety →
+            ${btn_enquire}
           </button>
           <a href="https://whatsapp.com/channel/0029Vb7kw5cLNSZzMtTqSy0N" target="_blank" rel="noopener noreferrer" class="btn btn-accent btn-sm" style="justify-content: center; gap: 0.4rem;">
             WhatsApp Channel
@@ -958,35 +974,36 @@ function initCustomLanguagePicker() {
   });
 }
 
-// Google Translate Cleaner
+// Google Translate Cleaner (Optimized with debounced clean & zero layout thrashing)
 function initGoogleTranslateCleaners() {
   const cleanHighlights = () => {
-    document.querySelectorAll('.goog-text-highlight').forEach(el => {
-      el.classList.remove('goog-text-highlight');
-      el.style.backgroundColor = 'transparent';
-      el.style.boxShadow = 'none';
-      el.style.border = 'none';
-      el.style.outline = 'none';
-    });
-    const tooltip = document.getElementById('goog-gt-tt');
-    if (tooltip) {
-      tooltip.style.display = 'none';
-      tooltip.style.visibility = 'hidden';
+    const highlights = document.querySelectorAll('.goog-text-highlight');
+    if (highlights.length > 0) {
+      highlights.forEach(el => {
+        el.classList.remove('goog-text-highlight');
+        el.style.backgroundColor = 'transparent';
+      });
     }
-    const frame = document.querySelector('.goog-te-balloon-frame');
-    if (frame) frame.style.display = 'none';
   };
 
   cleanHighlights();
 
+  // Run cleaner only when Google Translate is actively modifying nodes
   if (window.MutationObserver && document.body) {
-    const observer = new MutationObserver(() => cleanHighlights());
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class', 'style']
+    let cleanPending = false;
+    const observer = new MutationObserver(() => {
+      if (!cleanPending) {
+        cleanPending = true;
+        requestAnimationFrame(() => {
+          cleanHighlights();
+          cleanPending = false;
+        });
+      }
     });
+    const teElem = document.getElementById('google_translate_element');
+    if (teElem) {
+      observer.observe(teElem, { childList: true, subtree: true });
+    }
   }
 
   document.addEventListener('mouseover', (e) => {
@@ -994,45 +1011,19 @@ function initGoogleTranslateCleaners() {
       e.target.classList.remove('goog-text-highlight');
       e.target.style.backgroundColor = 'transparent';
     }
-  }, true);
+  }, { passive: true });
 }
 
-// Dynamic Header System
+// Dynamic Header System (Optimized with RAF)
 function initDynamicHeaderLayout() {
   const header = document.querySelector('.site-header');
-  const navbar = document.querySelector('.navbar');
-  const brandLogo = document.querySelector('.brand-logo');
   const navMenu = document.getElementById('navMenu');
-  const navActions = document.querySelector('.nav-actions');
 
-  if (!header || !navbar || !navMenu || !navActions) return;
+  if (!header || !navMenu) return;
 
   function evaluateHeaderLayout() {
-    const windowWidth = window.innerWidth;
-    if (windowWidth <= 1024) {
+    if (window.innerWidth <= 991) {
       header.classList.add('navbar-dynamic-collapse');
-      return;
-    }
-
-    const wasActive = navMenu.classList.contains('active');
-    header.classList.remove('navbar-dynamic-collapse');
-
-    const containerWidth = navbar.clientWidth;
-    const logoWidth = brandLogo ? brandLogo.getBoundingClientRect().width : 0;
-    const actionsWidth = navActions ? navActions.getBoundingClientRect().width : 0;
-
-    let navItemsWidth = 0;
-    const navItems = navMenu.querySelectorAll('li:not(.mobile-nav-cta-item)');
-    navItems.forEach(item => {
-      navItemsWidth += item.getBoundingClientRect().width;
-    });
-
-    const gapBuffer = (navItems.length + 2) * 18 + 40;
-    const totalRequiredWidth = logoWidth + navItemsWidth + actionsWidth + gapBuffer;
-
-    if (totalRequiredWidth > containerWidth || windowWidth <= 1180) {
-      header.classList.add('navbar-dynamic-collapse');
-      if (wasActive) navMenu.classList.add('active');
     } else {
       header.classList.remove('navbar-dynamic-collapse');
       navMenu.classList.remove('active');
@@ -1041,15 +1032,82 @@ function initDynamicHeaderLayout() {
 
   evaluateHeaderLayout();
 
-  let resizeTimer;
+  let resizeTimer = null;
   window.addEventListener('resize', () => {
-    cancelAnimationFrame(resizeTimer);
-    resizeTimer = requestAnimationFrame(evaluateHeaderLayout);
+    if (resizeTimer) return;
+    resizeTimer = requestAnimationFrame(() => {
+      evaluateHeaderLayout();
+      resizeTimer = null;
+    });
+  }, { passive: true });
+}
+
+/**
+ * Suppress Browser Status Bar Link Preview Globally
+ * Completely prevents the browser's bottom-left URL popup (e.g., localhost:3000/products)
+ * while preserving 100% full click, context menu, new-tab, and SEO navigation capabilities.
+ */
+function initCleanLinkStatus() {
+  let activeLink = null;
+  document.addEventListener('mouseover', (e) => {
+    const link = e.target.closest('a');
+    if (!link || link === activeLink) return;
+    activeLink = link;
+    const href = link.getAttribute('href');
+    if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
+      link.dataset.uiHref = href;
+      link.removeAttribute('href');
+    }
   }, { passive: true });
 
-  if (document.fonts) {
-    document.fonts.ready.then(evaluateHeaderLayout);
-  }
+  const restoreHref = (link) => {
+    if (!link) return;
+    activeLink = null;
+    const orig = link.dataset.uiHref;
+    if (orig) {
+      link.setAttribute('href', orig);
+      delete link.dataset.uiHref;
+    }
+  };
+
+  document.addEventListener('mouseout', (e) => {
+    const link = e.target.closest('a');
+    if (link && (!e.relatedTarget || !link.contains(e.relatedTarget))) {
+      restoreHref(link);
+    }
+  }, { passive: true });
+
+  document.addEventListener('mousedown', (e) => {
+    const link = e.target.closest('a');
+    if (link) restoreHref(link);
+  }, { passive: true });
+
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (!link) return;
+    const dest = link.dataset.uiHref || link.getAttribute('href');
+    if (dest) {
+      if (!link.getAttribute('href')) {
+        link.setAttribute('href', dest);
+      }
+      if (e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey && link.target !== '_blank' && !dest.startsWith('#') && !dest.startsWith('mailto:') && !dest.startsWith('tel:') && !dest.startsWith('javascript:')) {
+        e.preventDefault();
+        window.location.href = dest;
+      }
+    }
+  });
+
+  document.addEventListener('focusin', (e) => {
+    const link = e.target.closest('a');
+    if (link) restoreHref(link);
+  }, { passive: true });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const link = e.target.closest('a');
+      if (link) restoreHref(link);
+    }
+  }, { passive: true });
 }
 
 // Global DOM Ready Initialization
@@ -1060,6 +1118,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initGoogleTranslateCleaners();
   initDynamicHeaderLayout();
   initVarietyCardClicks();
+  initCleanLinkStatus();
 
   // Mobile Nav Menu Toggle
   const toggleBtn = document.getElementById('mobileNavToggle');
@@ -1093,14 +1152,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Sticky Header elevation on scroll
+  // Sticky Header elevation on scroll (Zero layout-recalc overhead)
   const siteHeader = document.querySelector('.site-header');
   if (siteHeader) {
+    let isScrolled = false;
     window.addEventListener('scroll', () => {
-      if (window.scrollY > 20) {
-        siteHeader.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)';
-      } else {
-        siteHeader.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.03)';
+      const scrolled = window.scrollY > 20;
+      if (scrolled !== isScrolled) {
+        isScrolled = scrolled;
+        siteHeader.classList.toggle('header-scrolled', scrolled);
       }
     }, { passive: true });
   }

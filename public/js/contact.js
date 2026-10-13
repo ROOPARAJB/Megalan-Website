@@ -1,45 +1,7 @@
 /**
- * VPSA YOGA - Enterprise Contact & RFQ Form Engine
- * Multi-device Supabase Direct Cloud Sync, Input Validation & Real-time Feedback.
+ * VPSA YOGA - High-Performance Enterprise Contact & RFQ Form Engine
+ * Fast direct submission, zero browser validation delay, multi-device cloud sync.
  */
-
-// Helper to display error on a specific form field
-function setFieldError(field, message) {
-  if (!field) return;
-  field.classList.add('input-error');
-
-  const formGroup = field.closest('.form-group') || field.parentElement;
-  if (formGroup) {
-    let errEl = formGroup.querySelector('.field-error-msg');
-    if (!errEl) {
-      errEl = document.createElement('div');
-      errEl.className = 'field-error-msg';
-      formGroup.appendChild(errEl);
-    }
-    errEl.innerHTML = `⚠️ ${message}`;
-  }
-}
-
-// Helper to clear error on a specific form field
-function clearFieldError(field) {
-  if (!field) return;
-  field.classList.remove('input-error');
-
-  const formGroup = field.closest('.form-group') || field.parentElement;
-  if (formGroup) {
-    const errEl = formGroup.querySelector('.field-error-msg');
-    if (errEl) {
-      errEl.remove();
-    }
-  }
-}
-
-// Clear all errors on a form
-function clearAllFormErrors(form) {
-  if (!form) return;
-  form.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
-  form.querySelectorAll('.field-error-msg').forEach(el => el.remove());
-}
 
 // Safe Toast Display
 function safeShowToast(message, type = 'success') {
@@ -52,20 +14,18 @@ function safeShowToast(message, type = 'success') {
   }
 }
 
-// Form Submission Core Handler
+// Form Submission Core Handler (Direct submission without browser-side validation)
 async function handleFormSubmit(e, form) {
   if (e && typeof e.preventDefault === 'function') {
     e.preventDefault();
   }
   if (!form) return false;
 
-  // Guard against double / concurrent submissions
+  // Guard against concurrent double submissions
   if (form.dataset.submitting === 'true') {
     return false;
   }
   form.dataset.submitting = 'true';
-
-  clearAllFormErrors(form);
 
   const submitBtn = form.querySelector('button[type="submit"]');
   const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Submit';
@@ -75,7 +35,6 @@ async function handleFormSubmit(e, form) {
   if (honeyEl && honeyEl.value.trim() !== '') {
     safeShowToast('✓ Wholesale inquiry submitted successfully! Our trade desk will contact you promptly.', 'success');
     form.reset();
-    clearAllFormErrors(form);
     if (typeof closeQuoteModal === 'function') {
       setTimeout(closeQuoteModal, 1500);
     }
@@ -87,7 +46,7 @@ async function handleFormSubmit(e, form) {
     return false;
   }
 
-  // 2. Client-side Rate Limiting (~6 seconds between submissions)
+  // 2. Rate Limiting Defense (~6 seconds between submissions)
   const lastSubTs = sessionStorage.getItem('vpsa_last_inquiry_ts');
   const now = Date.now();
   if (lastSubTs && (now - Number(lastSubTs)) < 6000) {
@@ -100,7 +59,7 @@ async function handleFormSubmit(e, form) {
     return false;
   }
 
-  // Extract Form Fields
+  // Extract Form Fields directly without browser validation delays
   const fullNameEl = form.querySelector('input[name="full_name"]');
   const emailEl = form.querySelector('input[name="email"]');
   const countryCodeEl = form.querySelector('select[name="country_code"]') || form.querySelector('input[name="country_code"]');
@@ -112,21 +71,11 @@ async function handleFormSubmit(e, form) {
   const messageEl = form.querySelector('textarea[name="message"]');
   const consentEl = form.querySelector('input[name="dpdp_consent"]');
 
-  let fullName = (fullNameEl ? fullNameEl.value : '').trim();
-  let email = (emailEl ? emailEl.value : '').trim().toLowerCase();
-  let countryCode = (countryCodeEl ? countryCodeEl.value : '+91').trim();
-  let rawPhone = (mobileEl ? mobileEl.value : '').trim();
-  let companyName = (companyEl ? companyEl.value : '').trim();
-  let variety = (varietyEl ? varietyEl.value : '').trim();
-  let quantity = (quantityEl ? quantityEl.value : '').trim();
-  let destination = (destinationEl ? destinationEl.value : '').trim();
-  let message = (messageEl ? messageEl.value : '').trim();
-  let hasConsent = Boolean(consentEl && consentEl.checked);
-
-  // Phone Normalization
-  let mobileNumber = rawPhone.replace(/\D/g, '');
+  const fullName = (fullNameEl ? fullNameEl.value : '').trim();
+  const email = (emailEl ? emailEl.value : '').trim().toLowerCase();
+  const countryCode = (countryCodeEl ? countryCodeEl.value : '+91').trim();
+  let mobileNumber = (mobileEl ? mobileEl.value : '').trim().replace(/\D/g, '');
   if (countryCode === '+91') {
-    // Strip leading 91 or 0 if entered
     if (mobileNumber.length === 12 && mobileNumber.startsWith('91')) {
       mobileNumber = mobileNumber.substring(2);
     } else if (mobileNumber.length === 11 && mobileNumber.startsWith('0')) {
@@ -134,78 +83,14 @@ async function handleFormSubmit(e, form) {
     }
   }
 
-  let hasError = false;
-  let firstErrorField = null;
+  const companyName = (companyEl ? companyEl.value : '').trim();
+  const variety = (varietyEl ? varietyEl.value : '').trim() || 'All Varieties / Mixed Container';
+  const quantity = (quantityEl ? quantityEl.value : '').trim() || 'Standard Wholesale Lot';
+  const destination = (destinationEl ? destinationEl.value : '').trim() || 'Pan-India Delivery';
+  const message = (messageEl ? messageEl.value : '').trim() || `Wholesale inquiry for ${variety}, Volume: ${quantity}, Destination: ${destination}`;
+  const hasConsent = Boolean(consentEl && consentEl.checked);
 
-  // Validate Full Name (2 to 100 characters)
-  if (!fullName || fullName.length < 2 || fullName.length > 100) {
-    setFieldError(fullNameEl, 'Full name is required (between 2 and 100 characters).');
-    hasError = true;
-    if (!firstErrorField) firstErrorField = fullNameEl;
-  }
-
-  // Validate Email
-  if (!email) {
-    setFieldError(emailEl, 'Email address is required.');
-    hasError = true;
-    if (!firstErrorField) firstErrorField = emailEl;
-  }
-
-  // Validate Mobile Number (7 to 15 digits)
-  if (!mobileNumber || mobileNumber.length < 7 || mobileNumber.length > 15) {
-    setFieldError(mobileEl, 'Valid contact phone number is required (7 to 15 digits).');
-    hasError = true;
-    if (!firstErrorField) firstErrorField = mobileEl;
-  }
-
-  // Validate Banana Variety Fallback
-  if (!variety || variety === '') {
-    variety = 'All Varieties / Mixed Container';
-  }
-
-  // Validate Estimated Volume Fallback
-  if (!quantity || quantity.length < 1) {
-    quantity = 'Standard Wholesale Lot';
-  }
-
-  // Validate Delivery Destination Fallback
-  if (!destination || destination.length < 1) {
-    destination = 'Pan-India Delivery';
-  }
-
-  // Validate Message Fallback & Length (5 to 2000 characters)
-  if (!message || message.length < 1) {
-    message = `Wholesale inquiry for ${variety}, Volume: ${quantity}, Destination: ${destination}`;
-  }
-  if (message.length < 5 || message.length > 2000) {
-    if (messageEl) {
-      setFieldError(messageEl, 'Message must be between 5 and 2000 characters.');
-    }
-    hasError = true;
-    if (!firstErrorField && messageEl) firstErrorField = messageEl;
-  }
-
-  // Validate Mandatory Privacy Consent (Freely Given, DPDP Act 2023)
-  if (!hasConsent) {
-    if (consentEl) {
-      setFieldError(consentEl, 'Please accept the privacy consent checkbox to proceed.');
-    }
-    hasError = true;
-    if (!firstErrorField) firstErrorField = consentEl;
-  }
-
-  // If validation failed, focus field and notify
-  if (hasError) {
-    form.dataset.submitting = 'false';
-    if (firstErrorField) {
-      firstErrorField.focus();
-      firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-    safeShowToast('Please check the highlighted fields before submitting.', 'error');
-    return false;
-  }
-
-  // Construct Clean Payload with Bound Slicing and Stripping to Null
+  // Construct Clean Payload with Bound Slicing
   const payload = {
     full_name: fullName.slice(0, 100),
     email: email.slice(0, 100),
@@ -217,7 +102,7 @@ async function handleFormSubmit(e, form) {
     destination: destination.slice(0, 100),
     message: message.slice(0, 2000),
     status: 'new',
-    dpdp_consent: true,
+    dpdp_consent: hasConsent,
     consent_at: new Date().toISOString(),
     consent_text_version: 'dpdp-v1'
   };
@@ -240,11 +125,18 @@ async function handleFormSubmit(e, form) {
       body: JSON.stringify(payload)
     });
 
-    if (response.ok) {
-      const resJson = await response.json();
-      if (resJson && resJson.success) {
-        submissionSuccess = true;
+    const resJson = await response.json().catch(() => null);
+
+    if (response.ok && resJson && resJson.success) {
+      submissionSuccess = true;
+    } else if (resJson && resJson.error) {
+      safeShowToast(resJson.error, 'error');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
       }
+      form.dataset.submitting = 'false';
+      return false;
     }
   } catch (nodeErr) {
     // Cloud fallback below
@@ -294,7 +186,6 @@ async function handleFormSubmit(e, form) {
     sessionStorage.setItem('vpsa_last_inquiry_ts', String(Date.now()));
     safeShowToast('✓ Wholesale inquiry submitted successfully! Our trade desk will contact you promptly.', 'success');
     form.reset();
-    clearAllFormErrors(form);
     if (typeof closeQuoteModal === 'function') {
       setTimeout(closeQuoteModal, 1500);
     }
@@ -311,7 +202,7 @@ async function handleFormSubmit(e, form) {
   return false;
 }
 
-// Attach Form Handlers
+// Attach Form Handlers (Zero overhead on input/keystrokes)
 function initContactForms() {
   // Pre-fill variety from URL parameter if present
   try {
@@ -334,62 +225,20 @@ function initContactForms() {
   } catch (e) {}
 
   const forms = document.querySelectorAll('.inquiry-form');
-
   forms.forEach((form) => {
-    // Avoid double binding
     if (form.dataset.bound === 'true') return;
     form.dataset.bound = 'true';
-
-    // Real-time keystroke filtering for Full Name
-    const nameInput = form.querySelector('input[name="full_name"]');
-    if (nameInput) {
-      nameInput.addEventListener('input', () => {
-        if (nameInput.value.trim().length >= 2) {
-          clearFieldError(nameInput);
-        }
-      });
-    }
-
-    // Real-time keystroke filtering for Mobile Number
-    const phoneInput = form.querySelector('input[name="mobile_number"]');
-    if (phoneInput) {
-      phoneInput.addEventListener('input', () => {
-        const digitsOnly = phoneInput.value.replace(/\D/g, '');
-        if (digitsOnly.length >= 7) {
-          clearFieldError(phoneInput);
-        }
-      });
-    }
-
-    const emailInput = form.querySelector('input[name="email"]');
-    if (emailInput) {
-      emailInput.addEventListener('input', () => {
-        if (emailInput.value.includes('@') && emailInput.value.includes('.')) {
-          clearFieldError(emailInput);
-        }
-      });
-    }
-
-    // Clear error on change for selects and other inputs
-    form.querySelectorAll('select, input, textarea').forEach(field => {
-      field.addEventListener('change', () => clearFieldError(field));
-      field.addEventListener('input', () => {
-        if (field.value.trim() !== '') clearFieldError(field);
-      });
-    });
-
-    // Form Submit Handler
     form.addEventListener('submit', (e) => handleFormSubmit(e, form));
   });
 }
 
-// Self-executing initialization (works in all lifecycle phases)
+// Self-executing initialization
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initContactForms);
 } else {
   initContactForms();
 }
 
-// Global hook
+// Global hooks
 window.initContactForms = initContactForms;
 window.handleFormSubmit = handleFormSubmit;
